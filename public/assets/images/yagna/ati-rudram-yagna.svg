@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#35030A" />
+      <stop offset="50%" stop-color="#5A0714" />
+      <stop offset="100%" stop-color="#1F0105" />
+    </linearGradient>
+    <radialGradient id="goldGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#E8C76A" stop-opacity="0.35" />
+      <stop offset="100%" stop-color="#C99A3D" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="goldText" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#E8C76A" />
+      <stop offset="50%" stop-color="#FFF8E8" />
+      <stop offset="100%" stop-color="#C99A3D" />
+    </linearGradient>
+    <pattern id="mandala" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse">
+      <circle cx="40" cy="40" r="30" fill="none" stroke="#C99A3D" stroke-width="0.75" stroke-opacity="0.2"/>
+      <circle cx="40" cy="40" r="15" fill="none" stroke="#E8C76A" stroke-width="0.5" stroke-opacity="0.15"/>
+      <path d="M40 10 L40 70 M10 40 L70 40 M19 19 L61 61 M19 61 L61 19" stroke="#C99A3D" stroke-width="0.4" stroke-opacity="0.15"/>
+    </pattern>
+  </defs>
+
+  <rect width="100%" height="100%" fill="url(#bg)" />
+  <rect width="100%" height="100%" fill="url(#mandala)" />
+  <circle cx="400" cy="270" r="220" fill="url(#goldGlow)" />
+
+  <!-- Sacred Geometric Centerpiece -->
+  <g transform="translate(400, 260)" stroke="#C99A3D" stroke-width="2" fill="none" opacity="0.85">
+    <circle r="120" stroke-dasharray="6,4"/>
+    <polygon points="0,-90 78,45 -78,45" stroke="#E8C76A" stroke-width="2.5" fill="rgba(201,154,61,0.08)"/>
+    <polygon points="0,90 -78,-45 78,-45" stroke="#E8C76A" stroke-width="2.5" fill="rgba(201,154,61,0.08)"/>
+    <circle r="40" fill="#35030A" stroke="#E8C76A" stroke-width="2"/>
+    <text x="0" y="14" font-family="'Cinzel', 'Noto Serif Telugu', serif" font-size="34" font-weight="bold" fill="#FFF8E8" text-anchor="middle" stroke="none">🔥</text>
+  </g>
+
+  <!-- Titles -->
+  <text x="400" y="470" font-family="'Cinzel', 'Noto Serif Telugu', Georgia, serif" font-size="28" font-weight="bold" fill="url(#goldText)" text-anchor="middle" letter-spacing="2">ATI RUDRA MAHAYAGNAM</text>
+  <text x="400" y="510" font-family="'Plus Jakarta Sans', sans-serif" font-size="15" fill="#F4E6CC" text-anchor="middle" opacity="0.85" letter-spacing="1">14,641 Japas with Continuous Homa Kundam Offerings</text>
+
+  <!-- Outer Border -->
+  <rect x="20" y="20" width="760" height="560" fill="none" stroke="#C99A3D" stroke-width="1.5" stroke-opacity="0.4" rx="10"/>
+  <rect x="28" y="28" width="744" height="544" fill="none" stroke="#E8C76A" stroke-width="0.75" stroke-opacity="0.25" rx="6"/>
+</svg>

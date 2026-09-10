@@ -1,0 +1,122 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=Cinzel+Decorative:wght@700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Noto+Sans+Devanagari:wght@400;500;600;700;800;900&family=Noto+Sans+Telugu:wght@400;500;600;700;800;900&family=Noto+Serif+Devanagari:wght@400;500;600;700;800;900&family=Noto+Serif+Telugu:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary-maroon: #5A0714;
+  --deep-burgundy: #35030A;
+  --temple-gold: #C99A3D;
+  --light-gold: #E8C76A;
+  --ivory: #FFF8E8;
+  --sandalwood: #F4E6CC;
+  --dark-text: #261A16;
+
+  --font-cinzel: 'Cinzel', serif;
+  --font-cinzel-dec: 'Cinzel Decorative', serif;
+  --font-cormorant: 'Cormorant Garamond', serif;
+  --font-telugu: 'Noto Serif Telugu', 'Noto Sans Telugu', 'Gautami', 'Mandali', 'Ramabhadra', serif;
+  --font-telugu-sans: 'Noto Sans Telugu', 'Noto Serif Telugu', 'Gautami', 'Segoe UI', sans-serif;
+  --font-hindi: 'Noto Serif Devanagari', 'Noto Sans Devanagari', 'Mangal', 'Utsaah', serif;
+  --font-sans: 'Plus Jakarta Sans', sans-serif;
+}
+
+/* Telugu Typography & Glyph Clipping Prevention */
+[lang="te"] .font-cinzel,
+.font-telugu {
+  font-family: var(--font-telugu);
+  letter-spacing: normal;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+[lang="te"] h1,
+[lang="te"] h2,
+[lang="te"] h3,
+[lang="te"] h4 {
+  line-height: 1.4;
+  overflow: visible;
+}
+
+/* Hindi / Devanagari Typography */
+[lang="hi"] .font-cinzel,
+.font-hindi {
+  font-family: var(--font-hindi);
+  letter-spacing: normal;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+[lang="hi"] h1,
+[lang="hi"] h2,
+[lang="hi"] h3,
+[lang="hi"] h4 {
+  line-height: 1.4;
+  overflow: visible;
+}
+
+.telugu-clip-safe {
+  padding-top: 0.25em;
+  padding-bottom: 0.35em;
+  padding-left: 0.1em;
+  padding-right: 0.1em;
+  line-height: 1.42 !important;
+  overflow: visible !important;
+  display: inline-block;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+body {
+  background-color: var(--deep-burgundy);
+  color: var(--ivory);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #230206;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #5A0714;
+  border: 1px solid #C99A3D;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #C99A3D;
+}
+
+/* Sacred Glow Elements */
+.sacred-border {
+  border: 1px solid rgba(201, 154, 61, 0.35);
+  box-shadow: 0 0 15px rgba(201, 154, 61, 0.15);
+}
+
+.gold-shimmer-text {
+  background: linear-gradient(90deg, #C99A3D 0%, #FFF8E8 50%, #C99A3D 100%);
+  background-size: 200% auto;
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: shimmer 4s linear infinite;
+}
+
+/* Hide scrollbars utility */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
