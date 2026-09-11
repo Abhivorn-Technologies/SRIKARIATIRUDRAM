@@ -88,7 +88,7 @@ export default async function SevasPage({
             </p>
 
             <div className="pt-3">
-              <Link href="/book-seva/date" className="inline-block">
+              <Link href="/special-seva-booking/day" className="inline-block">
                 <button
                   type="button"
                   className="bg-gradient-to-r from-[#F2C14E] via-[#D6A532] to-[#B38728] hover:from-[#FFE484] hover:via-[#F2C14E] hover:to-[#D6A532] text-[#280509] font-cinzel font-black text-sm sm:text-base py-3.5 px-8 rounded-xl shadow-[0_0_20px_rgba(214,165,50,0.45)] hover:shadow-[0_0_30px_rgba(214,165,50,0.75)] hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 flex items-center justify-center gap-2 uppercase tracking-wider select-none cursor-pointer"

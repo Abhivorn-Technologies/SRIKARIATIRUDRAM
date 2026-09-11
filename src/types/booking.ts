@@ -32,6 +32,7 @@ export interface BookingState {
   date: string;
   dayNumber?: number;
   nakshatra?: string;
+  mahayajnamNakshatra?: string;
   rasi?: string;
   timeSlot?: string;
   primaryDevotee: PrimaryDevotee;

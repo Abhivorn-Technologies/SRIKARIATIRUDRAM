@@ -127,7 +127,7 @@ export default async function SevaDetailPage({
               </div>
             </div>
 
-            <Link href={`/book-seva/date?seva=${seva.slug}`} className="block">
+            <Link href={`/special-seva-booking/day?seva=${seva.slug}`} className="block">
               <Button
                 variant="gold"
                 size="lg"

@@ -14,7 +14,7 @@ export function QuickSevaActions() {
     {
       title: t('bookSeva'),
       desc: t('bookSevaDesc'),
-      href: '/sevas',
+      href: '/schedule',
       icon: Flame,
       color: 'text-gold',
       badge: 'Most Popular',
@@ -22,7 +22,7 @@ export function QuickSevaActions() {
     {
       title: t('sponsorAnnadanam'),
       desc: t('sponsorAnnadanamDesc'),
-      href: '/annadanam',
+      href: '/sevas',
       icon: Utensils,
       color: 'text-amber-400',
       badge: '10,000+ Daily Meals',
@@ -30,7 +30,7 @@ export function QuickSevaActions() {
     {
       title: t('nakshatraLookup'),
       desc: t('nakshatraLookupDesc'),
-      href: '/nakshatra',
+      href: '/sevas',
       icon: Star,
       color: 'text-gold-light',
       badge: '28 Star Homams',
@@ -38,7 +38,7 @@ export function QuickSevaActions() {
     {
       title: t('watchLive'),
       desc: t('watchLiveDesc'),
-      href: '/live',
+      href: '/sevas',
       icon: Radio,
       color: 'text-red-400',
       badge: 'HD Broadcast',
@@ -91,7 +91,7 @@ export function QuickSevaActions() {
                     </div>
 
                     <div className="mt-6 pt-4 border-t border-[#D6A532]/20 flex items-center text-xs font-semibold text-[#F2C14E] group-hover:text-[#FAF4E6] gap-1 transition-colors">
-                      <span>Participate Now</span>
+                      <span>{t('participateNow')}</span>
                       <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                     </div>
                   </div>

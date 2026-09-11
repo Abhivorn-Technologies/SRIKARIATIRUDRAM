@@ -73,7 +73,7 @@ export function SevaCard({ seva }: { seva: Seva }) {
 
         {/* Action Button: 🪔 BOOK SEVA */}
         <Link
-          href={`/book-seva/date?seva=${seva.slug}`}
+          href={`/special-seva-booking/day?seva=${seva.slug}`}
           className="block w-full"
         >
           <button
