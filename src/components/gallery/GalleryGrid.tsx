@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useTranslations, useLocale } from 'next-intl';
-import { galleryImages, galleryVideos } from '@/data/gallery';
+import { galleryImages as defaultImages, galleryVideos as defaultVideos } from '@/data/gallery';
 import { GalleryItem } from '@/types/gallery';
 import { Modal } from '@/components/ui/Modal';
 import { Play, Film, Image as ImageIcon } from 'lucide-react';
@@ -16,6 +16,58 @@ export function GallerySection() {
 
   const [activeCategory, setActiveCategory] = useState<'all' | 'photos' | 'videos'>('all');
   const [activeItem, setActiveItem] = useState<GalleryItem | null>(null);
+  const [images, setImages] = useState<GalleryItem[]>(defaultImages);
+  const [videos, setVideos] = useState<GalleryItem[]>(defaultVideos);
+
+  useEffect(() => {
+    // Fetch live photos from database
+    fetch('/api/admin/gallery')
+      .then(res => res.json())
+      .then(json => {
+        if (json.success && json.data && json.data.length > 0) {
+          const mapped: GalleryItem[] = json.data.map((item: any) => ({
+            id: item.id,
+            title: item.title || item.name,
+            titleTe: item.title_te || item.title || item.name,
+            description: item.description || (item.day_number ? `Day ${item.day_number} Mahotsavam` : 'Sacred Ceremony'),
+            descriptionTe: item.description_te || item.description || (item.day_number ? `రోజు ${item.day_number} మహోత్సవం` : 'పవిత్ర పూజ'),
+            type: 'image',
+            category: item.category || 'rituals',
+            thumbnailUrl: item.thumbnail_url || item.secure_url || item.url,
+            fullUrl: item.secure_url || item.url,
+            day: item.day_number,
+            nakshatra: item.nakshatra,
+          }));
+          setImages(mapped);
+        }
+      })
+      .catch(e => console.warn('Failed to load dynamic gallery images:', e));
+
+    // Fetch live videos from database
+    fetch('/api/admin/videos')
+      .then(res => res.json())
+      .then(json => {
+        if (json.success && json.data && json.data.length > 0) {
+          const mapped: GalleryItem[] = json.data.map((item: any) => ({
+            id: item.id,
+            title: item.title || item.name,
+            titleTe: item.title_te || item.title || item.name,
+            description: item.description || 'Sacred Video Darshan',
+            descriptionTe: item.description_te || item.description || 'పవిత్ర దర్శనం',
+            type: 'video',
+            category: 'rituals',
+            thumbnailUrl: item.thumbnail_url || item.secure_url || item.url,
+            fullUrl: item.secure_url || item.url,
+            day: item.day_number,
+          }));
+          setVideos(mapped);
+        }
+      })
+      .catch(e => console.warn('Failed to load dynamic videos:', e));
+  }, []);
+
+  const galleryImages = images;
+  const galleryVideos = videos;
 
   const showPhotos = activeCategory === 'all' || activeCategory === 'photos';
   const showVideos = activeCategory === 'all' || activeCategory === 'videos';

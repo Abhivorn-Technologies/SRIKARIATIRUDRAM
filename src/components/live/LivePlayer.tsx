@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { liveArchives } from '@/data/gallery';
 import { Card } from '@/components/ui/Card';
@@ -13,6 +13,7 @@ export function LiveStreamViewer() {
   const isTe = locale === 'te';
   const t = useTranslations('live');
 
+  const [liveData, setLiveData] = useState<any>(null);
   const [chatMessage, setChatMessage] = useState('');
   const [messages, setMessages] = useState([
     { user: 'Srinivas R.', text: 'ఓం నమః శివాయ! హర హర మహాదేవ!', time: '10:42 AM' },
@@ -20,11 +21,34 @@ export function LiveStreamViewer() {
     { user: 'Ramesh Sharma', text: 'Bolo Sambho Mahadeva!', time: '10:45 AM' },
   ]);
 
+  useEffect(() => {
+    fetch('/api/live')
+      .then(res => res.json())
+      .then(json => {
+        if (json.success && json.data) {
+          setLiveData(json.data);
+        }
+      })
+      .catch(e => console.warn('Failed to fetch live status:', e));
+  }, []);
+
   const handleSendChat = (e: React.FormEvent) => {
     e.preventDefault();
     if (!chatMessage.trim()) return;
     setMessages([...messages, { user: 'You', text: chatMessage, time: 'Just now' }]);
     setChatMessage('');
+  };
+
+  const isLive = liveData?.is_live ?? true;
+  const liveUrl = liveData?.live_url || 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
+  const getEmbedUrl = (url: string) => {
+    if (url.includes('youtube.com/watch?v=')) {
+      return url.replace('watch?v=', 'embed/');
+    }
+    if (url.includes('youtu.be/')) {
+      return url.replace('youtu.be/', 'www.youtube.com/embed/');
+    }
+    return url;
   };
 
   return (
@@ -34,45 +58,52 @@ export function LiveStreamViewer() {
         {/* Video Player Box */}
         <div className="lg:col-span-8 space-y-4">
           <div className="relative aspect-video rounded-2xl overflow-hidden border-2 border-gold/50 bg-black shadow-gold-lg flex items-center justify-center group">
-            {/* Mock Live Stream Canvas */}
-            <div className="absolute inset-0 bg-gradient-to-t from-burgundy-deep/90 via-black/40 to-black/80 flex flex-col justify-between p-6">
-              {/* Live Overlay Header */}
-              <div className="flex items-center justify-between">
-                <Badge variant="live" size="md">
-                  {t('liveNow')}
-                </Badge>
-                <div className="flex items-center gap-1.5 text-xs text-ivory/80 bg-black/60 px-3 py-1 rounded-full border border-white/20">
-                  <Users className="w-3.5 h-3.5 text-red-400" />
-                  <span>3,482 Watching</span>
+            {isLive ? (
+              <iframe
+                src={`${getEmbedUrl(liveUrl)}?autoplay=1&mute=0`}
+                title={liveData?.title || 'Srikari Ati Rudram Live Telecast'}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="w-full h-full border-0"
+              />
+            ) : (
+              /* Live Overlay Header */
+              <div className="absolute inset-0 bg-gradient-to-t from-burgundy-deep/90 via-black/40 to-black/80 flex flex-col justify-between p-6">
+                <div className="flex items-center justify-between">
+                  <Badge variant="live" size="md">
+                    {t('liveNow')}
+                  </Badge>
+                  <div className="flex items-center gap-1.5 text-xs text-ivory/80 bg-black/60 px-3 py-1 rounded-full border border-white/20">
+                    <Users className="w-3.5 h-3.5 text-red-400" />
+                    <span>{liveData?.viewers_count || '3,482'} Watching</span>
+                  </div>
+                </div>
+
+                <div className="text-center space-y-2">
+                  <div className="w-16 h-16 rounded-full bg-gold/30 border-2 border-gold flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
+                    <Play className="w-8 h-8 text-gold-lighter fill-gold-lighter ml-1" />
+                  </div>
+                  <h3 className="font-cinzel text-lg md:text-xl font-bold text-gold-light">
+                    {liveData?.title || t('currentRitual')}
+                  </h3>
+                </div>
+
+                <div className="flex items-center justify-between text-xs text-ivory/80">
+                  <span className="flex items-center gap-1.5">
+                    <Volume2 className="w-4 h-4 text-gold-light" /> High Audio Quality (Vedic Chanting)
+                  </span>
+                  <span>1080p 60fps HD</span>
                 </div>
               </div>
-
-              {/* Center Play Graphic */}
-              <div className="text-center space-y-2">
-                <div className="w-16 h-16 rounded-full bg-gold/30 border-2 border-gold flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
-                  <Play className="w-8 h-8 text-gold-lighter fill-gold-lighter ml-1" />
-                </div>
-                <h3 className="font-cinzel text-lg md:text-xl font-bold text-gold-light">
-                  {t('currentRitual')}
-                </h3>
-              </div>
-
-              {/* Controls bar */}
-              <div className="flex items-center justify-between text-xs text-ivory/80">
-                <span className="flex items-center gap-1.5">
-                  <Volume2 className="w-4 h-4 text-gold-light" /> High Audio Quality (Vedic Chanting)
-                </span>
-                <span>1080p 60fps HD</span>
-              </div>
-            </div>
+            )}
           </div>
 
           <div className="space-y-1">
             <h2 className="font-cinzel text-xl md:text-2xl font-bold text-gold-lighter">
-              Day 2: Sarpa Sukta Homam & 14,641 Sri Rudra Trishathi Abhishekam
+              {liveData?.title || 'Srikari Ati Rudra Mahayagnam — Live Broadcast'}
             </h2>
             <p className="text-xs md:text-sm text-ivory/80 font-sans">
-              121 Vedic Scholars performing continuous Maha Homa Kunda Aradhana at Srikari Kshetram.
+              {liveData?.description || '121 Vedic Scholars performing continuous Maha Homa Kunda Aradhana at Srikari Kshetram.'}
             </p>
           </div>
         </div>

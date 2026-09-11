@@ -67,10 +67,10 @@ export function DayScheduleCard({ day }: { day: ScheduleDay }) {
   const isConcluding = day.dayNumber === 28;
   const isSpecial = day.isSpecial;
 
-  // Target booking URL with parameters
+  // Target booking URL with parameters (no hardcoded price in schedule)
   const bookingUrl = `/book-seva?day=${day.dayNumber}&nakshatra=${encodeURIComponent(
     day.nakshatra
-  )}${day.sevaSlug ? `&seva=${day.sevaSlug}` : ''}${day.price ? `&amount=${day.price}` : ''}`;
+  )}${day.sevaSlug ? `&seva=${day.sevaSlug}` : ''}`;
 
   const dateText = isTe ? day.dateTe : isHi ? (day.dateHi || day.date) : day.date;
   const nakshatraText = isTe
@@ -190,9 +190,9 @@ export function DayScheduleCard({ day }: { day: ScheduleDay }) {
         </div>
       </div>
 
-      {/* Bottom Section: Status & Price + Action Row with clean horizontal dividers */}
+      {/* Bottom Section: Status + Action Row (NO AMOUNT ON 28-DAY SCHEDULE CARDS) */}
       <div className="mt-3.5 space-y-3">
-        {/* Row 5: Status + Amount Row */}
+        {/* Row 5: Status Row */}
         <div className="pt-2.5 border-t border-[#D6A532]/25 flex items-center justify-between gap-3">
           {/* AVAILABLE Status: Green indicator for all cards */}
           <span
@@ -203,13 +203,6 @@ export function DayScheduleCard({ day }: { day: ScheduleDay }) {
             <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)]" />
             {isTe ? 'అందుబాటులో ఉంది' : isHi ? 'उपलब्ध' : 'AVAILABLE'}
           </span>
-
-          {/* Amount (if present in data) */}
-          {day.price ? (
-            <span className="text-xs sm:text-sm font-cinzel font-black text-[#F2C14E] px-2.5 py-0.5 rounded bg-[#3D000A] border border-[#D6A532]/30 shadow-xs">
-              ₹{day.price.toLocaleString('en-IN')}
-            </span>
-          ) : null}
         </div>
 
         {/* Row 6: Action Row (VIEW DETAILS → on Left | 🪔 BOOK NOW on Right) */}

@@ -19,7 +19,7 @@ export function Footer() {
   }
 
   return (
-    <footer className="bg-gradient-to-b from-burgundy to-burgundy-deep border-t border-gold/30 text-ivory pt-16 pb-24 lg:pb-12 mt-20 relative overflow-hidden">
+    <footer className="bg-gradient-to-b from-burgundy to-burgundy-deep border-t border-gold/30 text-ivory pt-16 pb-24 lg:pb-12 mt-20 relative overflow-hidden print:hidden no-print">
       {/* Background Mandala overlay */}
       <div className="absolute inset-0 opacity-5 pointer-events-none bg-[radial-gradient(#E8C76A_1px,transparent_1px)] [background-size:24px_24px]" />
 

@@ -6,16 +6,21 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
-import { COMMON_GOTRAMS, NAKSHATRAS, RASIS } from '@/lib/constants';
+import { COMMON_GOTRAMS, GOTRAMS_LIST, NAKSHATRAS, RASIS } from '@/lib/constants';
 import { CheckCircle } from 'lucide-react';
+import { useLocale } from 'next-intl';
 
 export default function AccountProfilePage() {
+  const locale = useLocale();
+  const isTe = locale === 'te';
+  const isHi = locale === 'hi';
+
   const [name, setName] = useState('K. Satyanarayana Sharma');
   const [phone, setPhone] = useState('+91 98765 43210');
   const [email, setEmail] = useState('satya.sharma@example.com');
   const [gotram, setGotram] = useState('Bharadwaja');
-  const [nakshatra, setNakshatra] = useState('Arudra');
-  const [rasi, setRasi] = useState('Mithuna');
+  const [nakshatra, setNakshatra] = useState('rohini');
+  const [rasi, setRasi] = useState('vrishabha');
   const [address, setAddress] = useState('Flat 402, Sri Nilayam, Banjara Hills, Hyderabad');
   const [isSaved, setIsSaved] = useState(false);
 
@@ -80,8 +85,10 @@ export default function AccountProfilePage() {
                   value={gotram}
                   onChange={(e) => setGotram(e.target.value)}
                 >
-                  {COMMON_GOTRAMS.map((g) => (
-                    <option key={g} value={g}>{g}</option>
+                  {GOTRAMS_LIST.map((g) => (
+                    <option key={g.id} value={g.id}>
+                      {isTe ? g.nameTe : isHi ? g.nameHi : g.nameEn}
+                    </option>
                   ))}
                 </Select>
               </div>
@@ -93,7 +100,9 @@ export default function AccountProfilePage() {
                   onChange={(e) => setNakshatra(e.target.value)}
                 >
                   {NAKSHATRAS.map((n) => (
-                    <option key={n.id} value={n.nameEn}>{n.nameEn}</option>
+                    <option key={n.id} value={n.id}>
+                      {isTe ? n.nameTe : n.nameEn} ({isTe ? n.rasiTe : n.rasiEn})
+                    </option>
                   ))}
                 </Select>
                 <Select
@@ -102,7 +111,9 @@ export default function AccountProfilePage() {
                   onChange={(e) => setRasi(e.target.value)}
                 >
                   {RASIS.map((r) => (
-                    <option key={r.id} value={r.nameEn}>{r.nameEn}</option>
+                    <option key={r.id} value={r.id}>
+                      {isTe ? r.nameTe : r.nameEn}
+                    </option>
                   ))}
                 </Select>
               </div>

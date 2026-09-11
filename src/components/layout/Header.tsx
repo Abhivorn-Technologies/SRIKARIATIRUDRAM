@@ -43,7 +43,7 @@ export function Header() {
 
   return (
     <header
-      className={`sticky top-0 z-50 w-full transition-all duration-300 ${
+      className={`sticky top-0 z-50 w-full transition-all duration-300 print:hidden no-print ${
         isScrolled
           ? 'bg-burgundy-deep/95 backdrop-blur-md border-b border-gold/30 shadow-gold-sm py-2'
           : 'bg-gradient-to-b from-burgundy-deep/95 via-primary/85 to-burgundy-deep/90 border-b border-gold/20 shadow-gold-sm/40 py-2.5 lg:py-3'

@@ -16,17 +16,23 @@ export interface PrimaryDevotee {
   city: string;
   country: string;
   attendingPersonally: 'yes' | 'no';
+  devoteeParticipation?: 'attending' | 'not-attending';
   rasi?: string;
   address?: string;
   pincode?: string;
+  dateOfBirth?: string;
 }
 
 export interface BookingState {
   sevaId: string;
   sevaSlug: string;
+  sevaName?: string;
+  amount?: number;
+  selectedDate?: string;
   date: string;
   dayNumber?: number;
   nakshatra?: string;
+  rasi?: string;
   timeSlot?: string;
   primaryDevotee: PrimaryDevotee;
   familyMembers: FamilyMember[];
@@ -36,6 +42,7 @@ export interface BookingState {
   totalDakshina: number;
   convenienceFee: number;
   grandTotal: number;
+  devoteeParticipation?: 'attending' | 'not-attending';
 }
 
 export interface ConfirmedBooking extends BookingState {
@@ -44,4 +51,31 @@ export interface ConfirmedBooking extends BookingState {
   status: 'confirmed' | 'completed' | 'cancelled';
   receiptUrl?: string;
   transactionRef: string;
+  paymentStatus?: 'CONFIRMED' | 'PENDING' | 'FAILED';
+  devoteeParticipation?: 'attending' | 'not-attending';
+}
+
+export interface BookingDraft {
+  sevaId: string;
+  sevaName: string;
+  sevaSlug: string;
+  amount: number;
+  selectedDate: string;
+  dayNumber?: number;
+  nakshatra?: string;
+  rasi?: string;
+  dayType?: string;
+  specialProgramme?: string;
+  devoteeName: string;
+  gotram: string;
+  janmaNakshatra: string;
+  dateOfBirth?: string;
+  familyMembers?: string;
+  mobile: string;
+  email?: string;
+  address?: string;
+  city?: string;
+  devoteeParticipation?: 'attending' | 'not-attending';
+  bookingId?: string;
+  paymentStatus?: 'CONFIRMED' | 'PENDING' | 'FAILED';
 }

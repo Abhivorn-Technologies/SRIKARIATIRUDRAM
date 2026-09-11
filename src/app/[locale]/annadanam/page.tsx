@@ -1,24 +1,13 @@
 import { AnnadanamSection } from '@/components/annadanam/AnnadanamCalendar';
-import { Badge } from '@/components/ui/Badge';
-import { getTranslations } from 'next-intl/server';
 
-export default async function AnnadanamPage({ params: { locale } }: { params: { locale: string } }) {
-  const t = await getTranslations({ locale, namespace: 'annadanam' });
+export const metadata = {
+  title: 'అన్నదానం మహాదానం | Sponsor Annadanam | Srikari Ati Rudram',
+  description: 'Sponsor consecrated Annadanam during the 28-day Srikari Ati Rudra Mahayagnam (25 Nov – 22 Dec 2026).',
+};
 
+export default function AnnadanamPage() {
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-10">
-      <div className="text-center space-y-4 max-w-3xl mx-auto">
-        <Badge variant="gold" size="lg" className="font-cinzel tracking-widest uppercase">
-          Annadanam Samam Danam Na Bhootho
-        </Badge>
-        <h1 className="font-cinzel text-3xl sm:text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-gold-lighter via-ivory to-gold">
-          {t('title')}
-        </h1>
-        <p className="text-sm md:text-base text-ivory/80 font-sans leading-relaxed">
-          {t('subtitle')}
-        </p>
-      </div>
-
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12 space-y-10">
       <AnnadanamSection />
     </div>
   );

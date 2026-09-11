@@ -13,8 +13,8 @@ export default async function BookingReceiptPage({
   if (!booking) notFound();
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-      <div className="flex items-center justify-between print:hidden">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 print:p-0 print:m-0 print:space-y-0 print:max-w-none">
+      <div className="flex items-center justify-between print:hidden no-print">
         <Link
           href="/book-seva"
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-gold-light hover:text-gold"

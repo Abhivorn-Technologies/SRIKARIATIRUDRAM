@@ -21,7 +21,7 @@ export function AccountSidebar() {
   ];
 
   return (
-    <Card variant="sacred" className="p-4 space-y-2 border-gold/30">
+    <Card variant="sacred" className="p-4 space-y-2 border-gold/30 print:hidden no-print">
       <div className="p-3 border-b border-gold/20 mb-2">
         <span className="text-[10px] uppercase font-bold text-gold tracking-widest block">
           Devotee Account

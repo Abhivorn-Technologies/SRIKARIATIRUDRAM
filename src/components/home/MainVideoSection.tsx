@@ -93,7 +93,7 @@ export function MainVideoSection() {
             {/* Native 16:9 Landscape Video Element with Autoplay Muted & Native Controls */}
             <video
               ref={videoRef}
-              src="/assets/gallary/MAINVD.mp4"
+              src="https://res.cloudinary.com/ic0bztee/video/upload/v1789120993/srikari_atirudram/MAINVD.mp4"
               autoPlay
               muted
               playsInline

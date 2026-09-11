@@ -1,0 +1,21 @@
+{
+  "id": "4d475e23-3b78-4484-b3d8-81e23be6d661",
+  "key": "main_video",
+  "name": "MAINVD.mp4",
+  "media_type": "video",
+  "cloudinary_public_id": "srikari_atirudram/MAINVD",
+  "secure_url": "https://res.cloudinary.com/ic0bztee/video/upload/v1789120993/srikari_atirudram/MAINVD.mp4",
+  "url": "https://res.cloudinary.com/ic0bztee/video/upload/v1789120993/srikari_atirudram/MAINVD.mp4",
+  "format": "mp4",
+  "duration": "580.560861",
+  "bytes": "52237841",
+  "metadata": {
+    "width": 1280,
+    "height": 720,
+    "resource_type": "video",
+    "original_filename": "MAINVD_optimized"
+  },
+  "created_at": "2026-09-11T10:03:18.654Z",
+  "updated_at": "2026-09-11T10:03:18.654Z",
+  "uploaded_at": "2026-09-11T10:03:18.902Z"
+}

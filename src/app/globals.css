@@ -4,6 +4,7 @@
 @tailwind components;
 @tailwind utilities;
 
+
 :root {
   --primary-maroon: #5A0714;
   --deep-burgundy: #35030A;
@@ -120,3 +121,116 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Universal Form Select & Option Srikari Styling */
+select, option {
+  background-color: #230005 !important;
+  color: #FAF4E6 !important;
+}
+
+option:hover, option:focus, option:checked {
+  background-color: #5A0714 !important;
+  color: #F2C14E !important;
+}
+
+/* Universal Form Input & Placeholder Styling */
+input::placeholder,
+textarea::placeholder {
+  color: #8A8A8A !important;
+  opacity: 1 !important;
+}
+
+input:focus,
+textarea:focus {
+  border-color: #D6A532 !important;
+}
+
+.print-only-logo {
+  display: none !important;
+}
+
+/* ============================================================ */
+/* DEDICATED A4 PRINT & PDF STYLESHEET                          */
+/* ============================================================ */
+@media print {
+  .print-only-logo {
+    display: block !important;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 6mm 8mm 6mm 8mm;
+  }
+
+  *, *::before, *::after {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  html, body {
+    background: #FFFFFF !important;
+    background-color: #FFFFFF !important;
+    color: #1A0004 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: auto !important;
+    width: 100% !important;
+    font-size: 11.5px !important;
+    line-height: 1.35 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Force hide all website-only elements */
+  header,
+  footer,
+  nav,
+  .no-print,
+  .print\:hidden,
+  .floating-whatsapp,
+  #whatsapp-floating-btn,
+  .booking-stepper,
+  .badge-container,
+  button,
+  a[href^="/"] {
+    /* links inside receipt will be handled or displayed as plain text */
+  }
+
+  header,
+  footer,
+  nav,
+  .no-print,
+  .print\:hidden,
+  .floating-whatsapp,
+  #whatsapp-floating-btn {
+    display: none !important;
+  }
+
+  main {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: auto !important;
+  }
+
+  .print-receipt-document {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    background: #FFFFFF !important;
+    color: #1A0004 !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  .print-avoid-break {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+}
+
+
+
