@@ -17,15 +17,32 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const isLoginPage = pathname === '/admin/login';
 
   useEffect(() => {
-    const storedUser = adminAuth.getStoredUser();
-    setUser(storedUser);
-    setIsLoading(false);
+    const checkAuth = () => {
+      const storedUser = adminAuth.getStoredUser();
+      setUser(storedUser);
+      setIsLoading(false);
 
-    if (!storedUser && !isLoginPage) {
-      router.replace('/admin/login');
-    } else if (storedUser && isLoginPage) {
-      router.replace('/admin');
-    }
+      if (!storedUser && !isLoginPage) {
+        router.replace('/admin/login');
+      } else if (storedUser && isLoginPage) {
+        router.replace('/admin');
+      }
+    };
+
+    checkAuth();
+
+    // Check session expiration every 10 seconds automatically
+    const interval = setInterval(() => {
+      if (!isLoginPage) {
+        const storedUser = adminAuth.getStoredUser();
+        if (!storedUser) {
+          setUser(null);
+          router.replace('/admin/login');
+        }
+      }
+    }, 10000);
+
+    return () => clearInterval(interval);
   }, [pathname, isLoginPage, router]);
 
   const [isCollapsed, setIsCollapsed] = useState(false);
