@@ -56,10 +56,16 @@ export default function AdminSettingsPage() {
     e.preventDefault();
     try {
       setSaving(true);
+      const payload = {
+        ...settings,
+        kalyanam_amount: settings.kalyanam_amount === '' ? 5116 : Number(settings.kalyanam_amount),
+        annadanam_slot_amount: settings.annadanam_slot_amount === '' ? 5116 : Number(settings.annadanam_slot_amount),
+        nakshatra_hawan_amount: settings.nakshatra_hawan_amount === '' ? 216 : Number(settings.nakshatra_hawan_amount),
+      };
       const res = await fetch('/api/admin/settings', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings)
+        body: JSON.stringify(payload)
       });
       const json = await res.json();
       if (json.success) {
@@ -166,6 +172,19 @@ export default function AdminSettingsPage() {
             </div>
 
             <div>
+              <label className="text-ivory/70 block mb-1">Official Temple UPI ID (VPA for QR Code)</label>
+              <Input
+                value={settings.temple_upi_id ?? ''}
+                onChange={(e) => setSettings({ ...settings, temple_upi_id: e.target.value })}
+                placeholder="e.g. srikariatirudram@icici or 9490462652@ybl"
+                className="bg-[#1A0004] border-gold/30 text-ivory text-xs font-mono"
+              />
+              <p className="text-[10px] text-gold/70 mt-1">
+                This UPI ID is used to generate the dynamic QR Code & Mobile UPI pay buttons.
+              </p>
+            </div>
+
+            <div>
               <label className="text-ivory/70 block mb-1">Yajnashala Venue Address</label>
               <textarea
                 value={settings.venue_address || ''}
@@ -176,7 +195,7 @@ export default function AdminSettingsPage() {
           </div>
         </Card>
 
-        {/* Dynamic Pricing Defaults */}
+        {/* Dynamic Pricing & Payment Settings */}
         <Card className="p-5 bg-[#240006]/90 border-gold/20 space-y-4">
           <div className="flex items-center gap-2 border-b border-gold/15 pb-2">
             <CreditCard className="w-4 h-4 text-gold" />
@@ -188,8 +207,8 @@ export default function AdminSettingsPage() {
               <label className="text-ivory/70 block mb-1">Subramanyeswara Kalyanam Dakshina (Krithika Day) ₹</label>
               <Input
                 type="number"
-                value={settings.kalyanam_amount || 5116}
-                onChange={(e) => setSettings({ ...settings, kalyanam_amount: Number(e.target.value) })}
+                value={settings.kalyanam_amount ?? ''}
+                onChange={(e) => setSettings({ ...settings, kalyanam_amount: e.target.value })}
                 className="bg-[#1A0004] border-gold/30 text-ivory text-xs"
               />
             </div>
@@ -198,8 +217,8 @@ export default function AdminSettingsPage() {
               <label className="text-ivory/70 block mb-1">Per-Day Annadanam Sponsorship Base (₹)</label>
               <Input
                 type="number"
-                value={settings.annadanam_slot_amount || 5116}
-                onChange={(e) => setSettings({ ...settings, annadanam_slot_amount: Number(e.target.value) })}
+                value={settings.annadanam_slot_amount ?? ''}
+                onChange={(e) => setSettings({ ...settings, annadanam_slot_amount: e.target.value })}
                 className="bg-[#1A0004] border-gold/30 text-ivory text-xs"
               />
             </div>
@@ -208,8 +227,8 @@ export default function AdminSettingsPage() {
               <label className="text-ivory/70 block mb-1">Nakshatra Hawan Minimum Contribution (₹)</label>
               <Input
                 type="number"
-                value={settings.nakshatra_hawan_amount || 216}
-                onChange={(e) => setSettings({ ...settings, nakshatra_hawan_amount: Number(e.target.value) })}
+                value={settings.nakshatra_hawan_amount ?? ''}
+                onChange={(e) => setSettings({ ...settings, nakshatra_hawan_amount: e.target.value })}
                 className="bg-[#1A0004] border-gold/30 text-ivory text-xs"
               />
             </div>

@@ -31,11 +31,15 @@ export default function SpecialSevaDaySelectionPage() {
   const sevaParam = searchParams.get('seva');
   const dayParam = searchParams.get('day');
 
+  // Dynamic Sevas from DB
+  const [allSevas, setAllSevas] = useState<any[]>(sevasList);
+  const [isLoadingSevas, setIsLoadingSevas] = useState<boolean>(true);
+
   // Search/Filter state for 28 programme days
   const [searchQuery, setSearchQuery] = useState('');
 
   // Selected Special Seva
-  const [selectedSeva, setSelectedSeva] = useState(() => {
+  const [selectedSeva, setSelectedSeva] = useState<any>(() => {
     if (sevaParam) {
       const match = sevasList.find(
         (s) => s.slug.toLowerCase() === sevaParam.toLowerCase() || s.id.toLowerCase() === sevaParam.toLowerCase()
@@ -60,22 +64,57 @@ export default function SpecialSevaDaySelectionPage() {
     return 1; // Default to Day 1
   });
 
+  // Fetch dynamic sevas from Database
   useEffect(() => {
+    async function loadDynamicSevas() {
+      try {
+        const res = await fetch('/api/admin/sevas');
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+          const activeOnly = json.data.filter((s: any) => s.active !== false);
+          if (activeOnly.length > 0) {
+            setAllSevas(activeOnly.map((s: any) => ({
+              id: s.id,
+              slug: s.slug,
+              title: s.title,
+              titleTe: s.title_te || s.title,
+              titleHi: s.title_hi || s.title,
+              price: Number(s.amount),
+              amount: Number(s.amount),
+              shortDesc: s.short_desc || '',
+              shortDescTe: s.short_desc_te || s.short_desc || '',
+              shortDescHi: s.short_desc_hi || s.short_desc || '',
+              category: s.category || 'homam',
+            })));
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to load dynamic sevas, fallback to static:', err);
+      } finally {
+        setIsLoadingSevas(false);
+      }
+    }
+    loadDynamicSevas();
+  }, []);
+
+  // Update selectedSeva when dynamic sevas load or sevaParam changes
+  useEffect(() => {
+    if (allSevas.length === 0) return;
     if (sevaParam) {
-      const match = sevasList.find(
+      const match = allSevas.find(
         (s) => s.slug.toLowerCase() === sevaParam.toLowerCase() || s.id.toLowerCase() === sevaParam.toLowerCase()
       );
       if (match) {
         setSelectedSeva(match);
-        specialSevaBookingService.saveActiveDraft({
-          sevaId: match.id,
-          sevaSlug: match.slug,
-          sevaName: match.title,
-          amount: match.price,
-        });
+        return;
       }
     }
-  }, [sevaParam]);
+    const draft = specialSevaBookingService.getActiveDraft();
+    const match = allSevas.find((s) => s.slug === draft.sevaSlug || s.id === draft.sevaId);
+    if (match) {
+      setSelectedSeva(match);
+    }
+  }, [allSevas, sevaParam]);
 
   // Selected Day details
   const selectedDayInfo = useMemo(() => {
@@ -105,7 +144,7 @@ export default function SpecialSevaDaySelectionPage() {
       sevaId: selectedSeva.id,
       sevaSlug: selectedSeva.slug,
       sevaName: selectedSeva.title,
-      amount: selectedSeva.price,
+      amount: selectedSeva.price || selectedSeva.amount,
       selectedDay: day.dayNumber,
       selectedDate: day.date,
       mahayajnamNakshatra: day.nameEn,
@@ -120,7 +159,7 @@ export default function SpecialSevaDaySelectionPage() {
       sevaId: selectedSeva.id,
       sevaSlug: selectedSeva.slug,
       sevaName: selectedSeva.title,
-      amount: selectedSeva.price,
+      amount: selectedSeva.price || selectedSeva.amount,
       selectedDay: selectedDayInfo.dayNumber,
       selectedDate: selectedDayInfo.date,
       mahayajnamNakshatra: selectedDayInfo.nameEn,
@@ -130,7 +169,7 @@ export default function SpecialSevaDaySelectionPage() {
     router.push(`/${locale}/special-seva-booking/details`);
   };
 
-  const sevaTitle = isTe ? selectedSeva.titleTe : isHi ? (selectedSeva.titleHi || selectedSeva.title) : selectedSeva.title;
+  const sevaTitle = isTe ? (selectedSeva.titleTe || selectedSeva.title) : isHi ? (selectedSeva.titleHi || selectedSeva.title) : selectedSeva.title;
 
   return (
     <div className="min-h-screen bg-[#35030A] text-[#FFF8E8] py-8 sm:py-12">
@@ -150,27 +189,56 @@ export default function SpecialSevaDaySelectionPage() {
         {/* Dedicated Special Seva Stepper (Step 1) */}
         <SpecialSevaStepper currentStep={1} />
 
-        {/* Selected Special Seva Header Card */}
+        {/* Selected Special Seva Header Card with Dynamic Dropdown Selector */}
         <div className="rounded-2xl bg-gradient-to-r from-[#4A0A14] via-[#5A0714] to-[#35030A] border-2 border-[#D6A532]/60 p-5 sm:p-6 shadow-[0_4px_25px_rgba(0,0,0,0.5)]">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <span className="text-[10px] uppercase font-sans tracking-widest text-[#E8C76A]/80 font-bold block">
-                {isTe ? 'ఎంచుకున్న ప్రత్యేక సేవ' : isHi ? 'चयनित विशेष सेवा' : 'SELECTED SPECIAL SEVA'}
-              </span>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-2 flex-1">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-[10px] uppercase font-sans tracking-widest text-[#E8C76A]/80 font-bold block">
+                  {isTe ? 'ఎంచుకున్న ప్రత్యేక సేవ' : isHi ? 'चयनित विशेष सेवा' : 'SELECTED SPECIAL SEVA'}
+                </span>
+
+                {/* Dynamic Seva Selector Dropdown */}
+                {allSevas.length > 1 && (
+                  <select
+                    value={selectedSeva.id || selectedSeva.slug}
+                    onChange={(e) => {
+                      const found = allSevas.find((s) => s.id === e.target.value || s.slug === e.target.value);
+                      if (found) {
+                        setSelectedSeva(found);
+                        specialSevaBookingService.saveActiveDraft({
+                          sevaId: found.id,
+                          sevaSlug: found.slug,
+                          sevaName: found.title,
+                          amount: found.price || found.amount,
+                        });
+                      }
+                    }}
+                    className="bg-[#230206] border border-[#D6A532]/50 text-[#F2C14E] text-xs font-cinzel font-bold rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-[#F2C14E] cursor-pointer"
+                  >
+                    {allSevas.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {isTe ? (s.titleTe || s.title) : (s.titleHi || s.title)} ({formatCurrency(s.price || s.amount)})
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+
               <h2 className="font-cinzel text-xl sm:text-2xl font-black text-[#FAF4E6]">
                 {sevaTitle}
               </h2>
               <p className="text-xs sm:text-sm text-[#F2C14E] font-medium font-sans">
-                {isTe ? selectedSeva.shortDescTe : isHi ? (selectedSeva.shortDescHi || selectedSeva.shortDesc) : selectedSeva.shortDesc}
+                {isTe ? (selectedSeva.shortDescTe || selectedSeva.shortDesc) : isHi ? (selectedSeva.shortDescHi || selectedSeva.shortDesc) : selectedSeva.shortDesc}
               </p>
             </div>
 
-            <div className="text-left sm:text-right border-t sm:border-t-0 border-[#D6A532]/20 pt-3 sm:pt-0 shrink-0">
+            <div className="text-left md:text-right border-t md:border-t-0 border-[#D6A532]/20 pt-3 md:pt-0 shrink-0">
               <span className="text-[10px] uppercase font-sans tracking-widest text-[#E8C76A]/80 font-bold block">
                 {isTe ? 'విరాళం' : isHi ? 'सहयोग राशि' : 'CONTRIBUTION'}
               </span>
               <span className="font-cinzel text-2xl sm:text-3xl font-black text-[#F2C14E]">
-                {formatCurrency(selectedSeva.price)}
+                {formatCurrency(selectedSeva.price || selectedSeva.amount)}
               </span>
             </div>
           </div>

@@ -1,4 +1,4 @@
-import { query } from '@/lib/db';
+import { connectToDatabase } from '@/lib/mongodb';
 
 export interface AuditLogRecord {
   id: string;
@@ -24,40 +24,39 @@ export const auditServerService = {
     new_value?: any;
     ip_address?: string;
   }): Promise<AuditLogRecord> {
-    const res = await query<AuditLogRecord>(`
-      INSERT INTO public.audit_logs (
-        admin_id, admin_name, action, module, record_id, old_value, new_value, ip_address, created_at
-      ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, NOW()
-      )
-      RETURNING *;
-    `, [
-      data.admin_id || null,
-      data.admin_name || 'Admin',
-      data.action,
-      data.module,
-      data.record_id || null,
-      JSON.stringify(data.old_value || {}),
-      JSON.stringify(data.new_value || {}),
-      data.ip_address || null
-    ]);
+    const { db } = await connectToDatabase();
+    const logId = 'log_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
+    const newLog: AuditLogRecord = {
+      id: logId,
+      admin_id: data.admin_id || undefined,
+      admin_name: data.admin_name || 'Admin',
+      action: data.action,
+      module: data.module,
+      record_id: data.record_id || undefined,
+      old_value: data.old_value || {},
+      new_value: data.new_value || {},
+      ip_address: data.ip_address || undefined,
+      created_at: new Date().toISOString()
+    };
 
-    return res.rows[0];
+    await db.collection('audit_logs').insertOne(newLog as any);
+    return newLog;
   },
 
   async getAuditLogs(module?: string, limit = 50): Promise<AuditLogRecord[]> {
-    let sql = `SELECT * FROM public.audit_logs`;
-    const params: any[] = [];
+    const { db } = await connectToDatabase();
+    const filter: any = {};
+    if (module) filter.module = module;
 
-    if (module) {
-      sql += ` WHERE module = $1`;
-      params.push(module);
-    }
+    const docs = await db.collection('audit_logs')
+      .find(filter)
+      .sort({ created_at: -1 })
+      .limit(limit)
+      .toArray();
 
-    sql += ` ORDER BY created_at DESC LIMIT $${params.length + 1};`;
-    params.push(limit);
-
-    const res = await query<AuditLogRecord>(sql, params);
-    return res.rows;
+    return docs.map((doc: any) => ({
+      ...doc,
+      id: doc.id || doc._id.toString()
+    }));
   }
 };

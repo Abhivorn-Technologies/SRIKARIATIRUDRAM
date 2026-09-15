@@ -50,3 +50,7 @@ pnpm-debug.log*
 public/assets/gallary/MAINVD.mp4
 public/assets/gallary/MAINVD_optimized.mp4
 
+# Temporary & scratch files
+/scratch/
+/.gemini/
+

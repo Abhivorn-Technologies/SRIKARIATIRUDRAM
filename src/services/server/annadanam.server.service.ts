@@ -1,8 +1,9 @@
-import { query } from '@/lib/db';
+import { connectToDatabase } from '@/lib/mongodb';
 import { scheduleServerService } from './schedule.server.service';
+import { annadanamCalendarDays, AnnadanamDay } from '@/data/annadanam';
 
 export interface AnnadanamRecord {
-  id: string;
+  id?: string;
   date: string;
   day_number?: number;
   sponsor_name: string;
@@ -15,106 +16,116 @@ export interface AnnadanamRecord {
   status: 'PENDING' | 'CONFIRMED' | 'CANCELLED';
   is_anonymous: boolean;
   transaction_id?: string;
-  created_at?: string;
-  updated_at?: string;
+  created_at?: string | Date;
+  updated_at?: string | Date;
 }
 
 export const annadanamServerService = {
   async getAllAnnadanam(date?: string): Promise<AnnadanamRecord[]> {
-    let sql = `SELECT * FROM public.annadanam`;
-    const params: any[] = [];
+    const { db } = await connectToDatabase();
+    const filter: any = {};
+    if (date) filter.date = date;
 
-    if (date) {
-      sql += ` WHERE date = $1::date`;
-      params.push(date);
-    }
-
-    sql += ` ORDER BY date ASC, created_at DESC;`;
-
-    const res = await query<AnnadanamRecord>(sql, params);
-    return res.rows;
+    const docs = await db.collection('annadanam').find(filter).sort({ date: 1, created_at: -1 }).toArray();
+    return docs as any;
   },
 
-  async getAnnadanamById(id: string): Promise<AnnadanamRecord | null> {
-    const res = await query<AnnadanamRecord>(`
-      SELECT * FROM public.annadanam
-      WHERE id::text = $1
-      LIMIT 1;
-    `, [id]);
-    return res.rows[0] || null;
-  },
+  async getCalendarDays(): Promise<AnnadanamDay[]> {
+    const sponsors = await this.getAllAnnadanam();
 
-  async createAnnadanam(data: Partial<AnnadanamRecord>): Promise<AnnadanamRecord> {
-    const cleanDate = new Date(data.date || '2026-11-25').toISOString().split('T')[0];
-    const schedule = await scheduleServerService.getScheduleByDate(cleanDate);
-    const dayNumber = schedule?.day_number || 1;
-
-    const res = await query<AnnadanamRecord>(`
-      INSERT INTO public.annadanam (
-        date, day_number, sponsor_name, mobile, email, amount, occasion, display_name,
-        payment_status, status, is_anonymous, transaction_id, created_at, updated_at
-      ) VALUES (
-        $1::date, $2, $3, $4, $5, $6, $7, $8,
-        $9, $10, $11, $12, NOW(), NOW()
-      )
-      RETURNING *;
-    `, [
-      cleanDate,
-      dayNumber,
-      data.sponsor_name || 'Anonymous Devotee',
-      data.mobile || '',
-      data.email || null,
-      data.amount || 5116,
-      data.occasion || null,
-      data.display_name || data.sponsor_name || null,
-      data.payment_status || 'PENDING',
-      data.status || 'CONFIRMED',
-      data.is_anonymous || false,
-      data.transaction_id || null
-    ]);
-
-    return res.rows[0];
-  },
-
-  async updateAnnadanam(id: string, updates: Partial<AnnadanamRecord>): Promise<AnnadanamRecord | null> {
-    const fields: string[] = [];
-    const values: any[] = [];
-    let idx = 1;
-
-    const allowed: (keyof AnnadanamRecord)[] = [
-      'date', 'sponsor_name', 'mobile', 'email', 'amount', 'occasion',
-      'display_name', 'payment_status', 'status', 'is_anonymous', 'transaction_id'
-    ];
-
-    for (const k of allowed) {
-      if (updates[k] !== undefined) {
-        fields.push(`${String(k)} = $${idx}`);
-        values.push(updates[k]);
-        idx++;
+    const sponsorMap = new Map<number, AnnadanamRecord>();
+    for (const sp of sponsors) {
+      if (sp.status === 'CANCELLED') continue;
+      if (sp.day_number && sp.day_number >= 1 && sp.day_number <= 28) {
+        if (!sponsorMap.has(sp.day_number) || Number(sp.amount) >= 25116) {
+          sponsorMap.set(sp.day_number, sp);
+        }
+      } else if (sp.date) {
+        const dStr = new Date(sp.date).toISOString().split('T')[0];
+        const start = new Date('2026-11-25').getTime();
+        const cur = new Date(dStr).getTime();
+        const dayNo = Math.round((cur - start) / (86400 * 1000)) + 1;
+        if (dayNo >= 1 && dayNo <= 28) {
+          if (!sponsorMap.has(dayNo) || Number(sp.amount) >= 25116) {
+            sponsorMap.set(dayNo, sp);
+          }
+        }
       }
     }
 
-    if (fields.length === 0) return null;
+    return annadanamCalendarDays.map((d) => {
+      const sp = sponsorMap.get(d.day);
+      if (sp) {
+        return {
+          ...d,
+          status: 'SPONSORED' as const,
+          sponsorName: sp.is_anonymous ? 'Private Devotee' : (sp.display_name || sp.sponsor_name),
+          occasion: sp.occasion || undefined
+        };
+      }
+      return {
+        ...d,
+        status: 'AVAILABLE' as const,
+        sponsorName: undefined,
+        occasion: undefined
+      };
+    });
+  },
 
-    fields.push(`updated_at = NOW()`);
-    values.push(id);
+  async getAnnadanamById(id: string): Promise<AnnadanamRecord | null> {
+    const { db } = await connectToDatabase();
+    const doc = await db.collection('annadanam').findOne({
+      $or: [{ id }, { transaction_id: id }]
+    });
+    return doc as any;
+  },
 
-    const sql = `
-      UPDATE public.annadanam
-      SET ${fields.join(', ')}
-      WHERE id::text = $${idx}
-      RETURNING *;
-    `;
+  async createAnnadanam(data: Partial<AnnadanamRecord>): Promise<AnnadanamRecord> {
+    const { db } = await connectToDatabase();
+    const cleanDate = data.date ? new Date(data.date).toISOString().split('T')[0] : '2026-11-25';
+    let dayNumber = data.day_number;
+    if (!dayNumber) {
+      const schedule = await scheduleServerService.getScheduleByDate(cleanDate);
+      dayNumber = schedule?.day_number || 1;
+    }
 
-    const res = await query<AnnadanamRecord>(sql, values);
-    return res.rows[0] || null;
+    const newRecord: AnnadanamRecord = {
+      id: data.id || `ann-${Date.now()}`,
+      date: cleanDate,
+      day_number: dayNumber,
+      sponsor_name: data.sponsor_name || 'Anonymous Devotee',
+      mobile: data.mobile || '',
+      email: data.email || undefined,
+      amount: Number(data.amount || 5116),
+      occasion: data.occasion || undefined,
+      display_name: data.display_name || data.sponsor_name || undefined,
+      payment_status: data.payment_status || 'SUCCESS',
+      status: data.status || 'CONFIRMED',
+      is_anonymous: data.is_anonymous || false,
+      transaction_id: data.transaction_id || `ANN-TXN-${Date.now().toString().slice(-8)}`,
+      created_at: new Date(),
+      updated_at: new Date()
+    };
+
+    await db.collection('annadanam').insertOne(newRecord as any);
+    return newRecord;
+  },
+
+  async updateAnnadanam(id: string, updates: Partial<AnnadanamRecord>): Promise<AnnadanamRecord | null> {
+    const { db } = await connectToDatabase();
+    const res = await db.collection('annadanam').findOneAndUpdate(
+      { $or: [{ id }, { transaction_id: id }] },
+      { $set: { ...updates, updated_at: new Date() } },
+      { returnDocument: 'after' }
+    );
+    return res?.value as any;
   },
 
   async deleteAnnadanam(id: string): Promise<boolean> {
-    const res = await query(`
-      DELETE FROM public.annadanam
-      WHERE id::text = $1;
-    `, [id]);
-    return res.rowCount > 0;
+    const { db } = await connectToDatabase();
+    const res = await db.collection('annadanam').deleteOne({
+      $or: [{ id }, { transaction_id: id }]
+    });
+    return res.deletedCount > 0;
   }
 };

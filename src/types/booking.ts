@@ -79,4 +79,5 @@ export interface BookingDraft {
   devoteeParticipation?: 'attending' | 'not-attending';
   bookingId?: string;
   paymentStatus?: 'CONFIRMED' | 'PENDING' | 'FAILED';
+  transactionId?: string;
 }

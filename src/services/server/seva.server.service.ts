@@ -1,4 +1,4 @@
-import { query } from '@/lib/db';
+import { connectToDatabase } from '@/lib/mongodb';
 
 export interface SevaItem {
   id: string;
@@ -23,8 +23,8 @@ export interface SevaItem {
   active: boolean;
   featured: boolean;
   sort_order: number;
-  created_at?: string;
-  updated_at?: string;
+  created_at?: string | Date;
+  updated_at?: string | Date;
 }
 
 export interface SevaAvailabilityItem {
@@ -40,155 +40,116 @@ export interface SevaAvailabilityItem {
 
 export const sevaServerService = {
   async getAllSevas(onlyActive = false): Promise<SevaItem[]> {
-    const where = onlyActive ? 'WHERE active = true' : '';
-    const res = await query<SevaItem>(`
-      SELECT * FROM public.sevas
-      ${where}
-      ORDER BY sort_order ASC, amount ASC;
-    `);
-    return res.rows;
+    const { db } = await connectToDatabase();
+    const filter = onlyActive ? { active: true } : {};
+    const docs = await db.collection('sevas')
+      .find(filter)
+      .sort({ sort_order: 1, amount: 1 })
+      .toArray();
+
+    return docs as any;
   },
 
   async getSevaByIdOrSlug(idOrSlug: string): Promise<SevaItem | null> {
-    const res = await query<SevaItem>(`
-      SELECT * FROM public.sevas
-      WHERE id = $1 OR slug = $1
-      LIMIT 1;
-    `, [idOrSlug]);
-    return res.rows[0] || null;
+    const { db } = await connectToDatabase();
+    const doc = await db.collection('sevas').findOne({
+      $or: [{ id: idOrSlug }, { slug: idOrSlug }]
+    });
+    return doc as any;
   },
 
   async createSeva(data: Partial<SevaItem>): Promise<SevaItem> {
+    const { db } = await connectToDatabase();
     const id = data.id || data.slug || `seva-${Date.now()}`;
     const slug = data.slug || id;
 
-    const res = await query<SevaItem>(`
-      INSERT INTO public.sevas (
-        id, slug, title, title_te, title_hi, amount, short_desc, short_desc_te, short_desc_hi,
-        full_desc, full_desc_te, full_desc_hi, category, icon, duration, time,
-        capacity, active, featured, sort_order, benefits, prasadam, updated_at
-      ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, NOW()
-      )
-      RETURNING *;
-    `, [
-      id, slug, data.title, data.title_te, data.title_hi, data.amount || 216,
-      data.short_desc, data.short_desc_te, data.short_desc_hi,
-      data.full_desc, data.full_desc_te, data.full_desc_hi,
-      data.category || 'homam', data.icon || '🕉️', data.duration, data.time,
-      data.capacity || 100, data.active !== false, data.featured || false, data.sort_order || 0,
-      JSON.stringify(data.benefits || []), JSON.stringify(data.prasadam || [])
-    ]);
+    const newSeva: SevaItem = {
+      id,
+      slug,
+      title: data.title || 'Untitled Seva',
+      title_te: data.title_te,
+      title_hi: data.title_hi,
+      amount: Number(data.amount || 216),
+      short_desc: data.short_desc,
+      short_desc_te: data.short_desc_te,
+      short_desc_hi: data.short_desc_hi,
+      full_desc: data.full_desc,
+      full_desc_te: data.full_desc_te,
+      full_desc_hi: data.full_desc_hi,
+      category: data.category || 'homam',
+      icon: data.icon || '🕉️',
+      duration: data.duration,
+      time: data.time,
+      capacity: Number(data.capacity || 100),
+      active: data.active !== false,
+      featured: data.featured || false,
+      sort_order: Number(data.sort_order || 0),
+      benefits: data.benefits || [],
+      prasadam: data.prasadam || [],
+      updated_at: new Date(),
+      created_at: new Date()
+    };
 
-    return res.rows[0];
+    await db.collection('sevas').insertOne(newSeva as any);
+    return newSeva;
   },
 
   async updateSeva(id: string, updates: Partial<SevaItem>): Promise<SevaItem | null> {
-    const fields: string[] = [];
-    const values: any[] = [];
-    let idx = 1;
-
-    const allowedKeys: (keyof SevaItem)[] = [
-      'slug', 'title', 'title_te', 'title_hi', 'amount', 'short_desc',
-      'short_desc_te', 'short_desc_hi', 'full_desc', 'full_desc_te', 'full_desc_hi',
-      'category', 'icon', 'duration', 'time', 'capacity', 'active', 'featured', 'sort_order'
-    ];
-
-    for (const key of allowedKeys) {
-      if (updates[key] !== undefined) {
-        fields.push(`${String(key)} = $${idx}`);
-        values.push(updates[key]);
-        idx++;
-      }
-    }
-
-    if (updates.benefits !== undefined) {
-      fields.push(`benefits = $${idx}`);
-      values.push(JSON.stringify(updates.benefits));
-      idx++;
-    }
-
-    if (updates.prasadam !== undefined) {
-      fields.push(`prasadam = $${idx}`);
-      values.push(JSON.stringify(updates.prasadam));
-      idx++;
-    }
-
-    if (fields.length === 0) return null;
-
-    fields.push(`updated_at = NOW()`);
-    values.push(id);
-
-    const sql = `
-      UPDATE public.sevas
-      SET ${fields.join(', ')}
-      WHERE id = $${idx} OR slug = $${idx}
-      RETURNING *;
-    `;
-
-    const res = await query<SevaItem>(sql, values);
-    return res.rows[0] || null;
+    const { db } = await connectToDatabase();
+    const res = await db.collection('sevas').findOneAndUpdate(
+      { $or: [{ id }, { slug: id }] },
+      { $set: { ...updates, updated_at: new Date() } },
+      { returnDocument: 'after' }
+    );
+    const doc = (res as any)?.value || res;
+    if (!doc) return null;
+    return {
+      ...doc,
+      id: doc.id || doc._id.toString()
+    } as any;
   },
 
   async deleteSeva(id: string): Promise<boolean> {
-    const res = await query(`
-      DELETE FROM public.sevas
-      WHERE id = $1;
-    `, [id]);
-    return res.rowCount > 0;
+    const { db } = await connectToDatabase();
+    const res = await db.collection('sevas').deleteOne({
+      $or: [{ id }, { slug: id }]
+    });
+    return res.deletedCount > 0;
   },
 
   async getSevaAvailability(date?: string, sevaId?: string): Promise<SevaAvailabilityItem[]> {
-    let whereClause = '';
-    const params: any[] = [];
+    const { db } = await connectToDatabase();
+    const filter: any = {};
+    if (date) filter.date = date;
+    if (sevaId) filter.seva_id = sevaId;
 
-    if (date && sevaId) {
-      whereClause = 'WHERE sa.date = $1::date AND sa.seva_id = $2';
-      params.push(date, sevaId);
-    } else if (date) {
-      whereClause = 'WHERE sa.date = $1::date';
-      params.push(date);
-    } else if (sevaId) {
-      whereClause = 'WHERE sa.seva_id = $1';
-      params.push(sevaId);
-    }
-
-    const sql = `
-      SELECT 
-        sa.id,
-        sa.date::text as date,
-        sa.seva_id,
-        s.title as seva_title,
-        sa.capacity,
-        sa.booked_count,
-        sa.status,
-        GREATEST(0, sa.capacity - sa.booked_count) as available_slots
-      FROM public.seva_availability sa
-      JOIN public.sevas s ON s.id = sa.seva_id
-      ${whereClause}
-      ORDER BY sa.date ASC, s.sort_order ASC;
-    `;
-
-    const res = await query<SevaAvailabilityItem>(sql, params);
-    return res.rows;
+    const docs = await db.collection('seva_availability').find(filter).toArray();
+    return docs as any;
   },
 
   async updateSevaAvailability(date: string, sevaId: string, capacity: number): Promise<SevaAvailabilityItem | null> {
-    const sql = `
-      INSERT INTO public.seva_availability (date, seva_id, capacity, booked_count, status, updated_at)
-      VALUES ($1::date, $2, $3, 0, 'AVAILABLE', NOW())
-      ON CONFLICT (date, seva_id) DO UPDATE SET
-        capacity = EXCLUDED.capacity,
-        status = CASE 
-          WHEN EXCLUDED.capacity <= public.seva_availability.booked_count THEN 'FULLY_BOOKED'
-          WHEN (EXCLUDED.capacity - public.seva_availability.booked_count) <= 5 THEN 'FEW_SLOTS_LEFT'
-          ELSE 'AVAILABLE'
-        END,
-        updated_at = NOW()
-      RETURNING *, GREATEST(0, capacity - booked_count) as available_slots;
-    `;
+    const { db } = await connectToDatabase();
+    const existing = await db.collection('seva_availability').findOne({ date, seva_id: sevaId });
+    const bookedCount = existing?.booked_count || 0;
+    const availableSlots = Math.max(0, capacity - bookedCount);
+    const status = availableSlots === 0 ? 'FULLY_BOOKED' : availableSlots <= 5 ? 'FEW_SLOTS_LEFT' : 'AVAILABLE';
 
-    const res = await query<SevaAvailabilityItem>(sql, [date, sevaId, capacity]);
-    return res.rows[0] || null;
+    const item: SevaAvailabilityItem = {
+      id: existing?.id || `sa-${Date.now()}`,
+      date,
+      seva_id: sevaId,
+      capacity,
+      booked_count: bookedCount,
+      status,
+      available_slots: availableSlots
+    };
+
+    await db.collection('seva_availability').updateOne(
+      { date, seva_id: sevaId },
+      { $set: item },
+      { upsert: true }
+    );
+
+    return item;
   }
 };

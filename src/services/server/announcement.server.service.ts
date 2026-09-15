@@ -1,4 +1,4 @@
-import { query } from '@/lib/db';
+import { connectToDatabase } from '@/lib/mongodb';
 
 export interface AnnouncementItem {
   id: string;
@@ -14,77 +14,59 @@ export interface AnnouncementItem {
 
 export const announcementServerService = {
   async getAnnouncements(onlyActive = false): Promise<AnnouncementItem[]> {
-    const where = onlyActive ? 'WHERE active = true' : '';
-    const res = await query<AnnouncementItem>(`
-      SELECT * FROM public.announcements
-      ${where}
-      ORDER BY 
-        CASE priority 
-          WHEN 'URGENT' THEN 1 
-          WHEN 'HIGH' THEN 2 
-          ELSE 3 
-        END, 
-        created_at DESC;
-    `);
-    return res.rows;
+    const { db } = await connectToDatabase();
+    const filter: any = {};
+    if (onlyActive) filter.active = true;
+
+    const docs = await db.collection('announcements')
+      .find(filter)
+      .sort({ priority: 1, created_at: -1 })
+      .toArray();
+
+    return docs.map((doc: any) => ({
+      ...doc,
+      id: doc.id || doc._id.toString()
+    }));
   },
 
   async createAnnouncement(data: Partial<AnnouncementItem>): Promise<AnnouncementItem> {
-    const res = await query<AnnouncementItem>(`
-      INSERT INTO public.announcements (
-        title, description, start_date, end_date, priority, active, created_at, updated_at
-      ) VALUES (
-        $1, $2, $3, $4, $5, $6, NOW(), NOW()
-      )
-      RETURNING *;
-    `, [
-      data.title || 'Important Announcement',
-      data.description || null,
-      data.start_date || new Date().toISOString().split('T')[0],
-      data.end_date || null,
-      data.priority || 'NORMAL',
-      data.active !== false
-    ]);
+    const { db } = await connectToDatabase();
+    const announcementId = 'announcement_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
+    const newAnnouncement: AnnouncementItem = {
+      id: announcementId,
+      title: data.title || 'Important Announcement',
+      description: data.description || undefined,
+      start_date: data.start_date || new Date().toISOString().split('T')[0],
+      end_date: data.end_date || undefined,
+      priority: data.priority || 'NORMAL',
+      active: data.active !== false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
 
-    return res.rows[0];
+    await db.collection('announcements').insertOne(newAnnouncement as any);
+    return newAnnouncement;
   },
 
   async updateAnnouncement(id: string, updates: Partial<AnnouncementItem>): Promise<AnnouncementItem | null> {
-    const fields: string[] = [];
-    const values: any[] = [];
-    let idx = 1;
-
-    const allowed: (keyof AnnouncementItem)[] = ['title', 'description', 'start_date', 'end_date', 'priority', 'active'];
-
-    for (const k of allowed) {
-      if (updates[k] !== undefined) {
-        fields.push(`${String(k)} = $${idx}`);
-        values.push(updates[k]);
-        idx++;
-      }
-    }
-
-    if (fields.length === 0) return null;
-
-    fields.push(`updated_at = NOW()`);
-    values.push(id);
-
-    const sql = `
-      UPDATE public.announcements
-      SET ${fields.join(', ')}
-      WHERE id::text = $${idx}
-      RETURNING *;
-    `;
-
-    const res = await query<AnnouncementItem>(sql, values);
-    return res.rows[0] || null;
+    const { db } = await connectToDatabase();
+    const res = await db.collection('announcements').findOneAndUpdate(
+      { $or: [{ id }, { _id: id as any }] },
+      { $set: { ...updates, updated_at: new Date().toISOString() } },
+      { returnDocument: 'after' }
+    );
+    if (!res || !res.value) return null;
+    return {
+      ...res.value,
+      id: res.value.id || res.value._id.toString()
+    } as any;
   },
 
   async deleteAnnouncement(id: string): Promise<boolean> {
-    const res = await query(`
-      DELETE FROM public.announcements
-      WHERE id::text = $1;
-    `, [id]);
-    return res.rowCount > 0;
+    const { db } = await connectToDatabase();
+    const res = await db.collection('announcements').deleteOne({
+      $or: [{ id }, { _id: id as any }]
+    });
+    return res.deletedCount > 0;
   }
 };

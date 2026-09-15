@@ -123,26 +123,80 @@ body {
 }
 
 /* Universal Form Select & Option Srikari Styling */
+/* Universal Form Select & Option Srikari Styling */
 select, option {
-  background-color: #230005 !important;
-  color: #FAF4E6 !important;
+  background-color: #FFFFFF !important;
+  color: #000000 !important;
 }
 
 option:hover, option:focus, option:checked {
-  background-color: #5A0714 !important;
-  color: #F2C14E !important;
+  background-color: #F4E6CC !important;
+  color: #000000 !important;
 }
 
 /* Universal Form Input & Placeholder Styling */
 input::placeholder,
 textarea::placeholder {
-  color: #8A8A8A !important;
+  color: #666666 !important;
   opacity: 1 !important;
 }
 
 input:focus,
 textarea:focus {
-  border-color: #D6A532 !important;
+  border-color: #C99A3D !important;
+  box-shadow: 0 0 0 2px rgba(201, 154, 61, 0.3) !important;
+}
+
+/* Explicit Admin White Background Input Controls with Solid Black Text */
+.admin-input,
+.admin-textarea,
+input.admin-input,
+textarea.admin-textarea,
+select.admin-input,
+input[type="text"].admin-input,
+input[type="number"].admin-input {
+  background-color: #FFFFFF !important;
+  color: #000000 !important;
+  border: 1.5px solid #C99A3D !important;
+  font-weight: 700 !important;
+}
+
+.admin-input:focus,
+.admin-textarea:focus {
+  border-color: #5A0714 !important;
+  outline: none !important;
+  background-color: #FFFFFF !important;
+  color: #000000 !important;
+}
+
+/* Browser Autofill override to preserve white bg and black text */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+  -webkit-text-fill-color: #000000 !important;
+  -webkit-box-shadow: 0 0 0px 1000px #ffffff inset !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Universal Button Single-Line Whitespace Rule for Action Buttons */
+.btn,
+a.btn,
+.whitespace-nowrap-btn {
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+}
+
+button svg,
+.btn svg,
+a.btn svg {
+  flex-shrink: 0 !important;
+  vertical-align: middle !important;
 }
 
 .print-only-logo {

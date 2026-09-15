@@ -26,6 +26,7 @@ const config: Config = {
         burgundy: {
           DEFAULT: "#35030A",
           deep: "#230206",
+          dark: "#180205",
           light: "#4D0510",
         },
         gold: {

@@ -1,5 +1,5 @@
-import { query } from '@/lib/db';
-import { SevaItem, sevaServerService } from './seva.server.service';
+import { connectToDatabase } from '@/lib/mongodb';
+import { sevaServerService } from './seva.server.service';
 
 export interface NakshatraItem {
   id: string;
@@ -52,97 +52,88 @@ export interface NakshatraProgrammeResult {
 
 export const nakshatraServerService = {
   async getAllNakshatras(): Promise<NakshatraItem[]> {
-    const res = await query<NakshatraItem>(`
-      SELECT * FROM public.nakshatras
-      ORDER BY day_number ASC NULLS LAST, name ASC;
-    `);
-    return res.rows;
+    const { db } = await connectToDatabase();
+    const docs = await db.collection('nakshatras')
+      .find({})
+      .sort({ day_number: 1, name: 1 })
+      .toArray();
+
+    return docs.map((doc: any) => ({
+      ...doc,
+      id: doc.id || doc._id.toString()
+    }));
   },
 
   async getNakshatraByName(name: string): Promise<NakshatraItem | null> {
-    const clean = name.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-    const res = await query<NakshatraItem>(`
-      SELECT * FROM public.nakshatras
-      WHERE LOWER(REGEXP_REPLACE(name, '[^a-zA-Z0-9]', '', 'g')) = $1
-      LIMIT 1;
-    `, [clean]);
-    return res.rows[0] || null;
+    const { db } = await connectToDatabase();
+    const cleanName = name.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+    const docs = await db.collection('nakshatras').find({}).toArray();
+
+    const matched = docs.find((d: any) => {
+      const dClean = (d.name || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+      return dClean === cleanName;
+    });
+
+    if (!matched) return null;
+    return {
+      ...matched,
+      id: matched.id || matched._id.toString()
+    } as any;
   },
 
   async createNakshatra(data: Partial<NakshatraItem>): Promise<NakshatraItem> {
-    const res = await query<NakshatraItem>(`
-      INSERT INTO public.nakshatras (
-        name, name_te, name_hi, deity, rasi, lord, programme_date, day_number, day_type, special_seva_id, special_seva_name, active, updated_at
-      ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW()
-      )
-      RETURNING *;
-    `, [
-      data.name, data.name_te, data.name_hi, data.deity, data.rasi, data.lord,
-      data.programme_date, data.day_number, data.day_type || 'REGULAR',
-      data.special_seva_id, data.special_seva_name, data.active !== false
-    ]);
-    return res.rows[0];
+    const { db } = await connectToDatabase();
+    const nakId = 'nak_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
+    const newNak: NakshatraItem = {
+      id: nakId,
+      name: data.name || '',
+      name_te: data.name_te || undefined,
+      name_hi: data.name_hi || undefined,
+      deity: data.deity || undefined,
+      rasi: data.rasi || undefined,
+      lord: data.lord || undefined,
+      programme_date: data.programme_date || undefined,
+      day_number: data.day_number || 1,
+      day_type: data.day_type || 'REGULAR',
+      special_seva_id: data.special_seva_id || undefined,
+      special_seva_name: data.special_seva_name || undefined,
+      active: data.active !== false
+    };
+
+    await db.collection('nakshatras').insertOne(newNak as any);
+    return newNak;
   },
 
   async updateNakshatra(id: string, updates: Partial<NakshatraItem>): Promise<NakshatraItem | null> {
-    const fields: string[] = [];
-    const values: any[] = [];
-    let idx = 1;
-
-    const allowedKeys: (keyof NakshatraItem)[] = [
-      'name', 'name_te', 'name_hi', 'deity', 'rasi', 'lord', 'programme_date',
-      'day_number', 'day_type', 'special_seva_id', 'special_seva_name', 'active'
-    ];
-
-    for (const key of allowedKeys) {
-      if (updates[key] !== undefined) {
-        fields.push(`${String(key)} = $${idx}`);
-        values.push(updates[key]);
-        idx++;
-      }
-    }
-
-    if (fields.length === 0) return null;
-
-    fields.push(`updated_at = NOW()`);
-    values.push(id);
-
-    const sql = `
-      UPDATE public.nakshatras
-      SET ${fields.join(', ')}
-      WHERE id::text = $${idx} OR name ILIKE $${idx}
-      RETURNING *;
-    `;
-
-    const res = await query<NakshatraItem>(sql, values);
-    return res.rows[0] || null;
+    const { db } = await connectToDatabase();
+    const res = await db.collection('nakshatras').findOneAndUpdate(
+      { $or: [{ id }, { name: id }] },
+      { $set: { ...updates, updated_at: new Date().toISOString() } },
+      { returnDocument: 'after' }
+    );
+    if (!res || !res.value) return null;
+    return {
+      ...res.value,
+      id: res.value.id || res.value._id.toString()
+    } as any;
   },
 
   async deleteNakshatra(id: string): Promise<boolean> {
-    const res = await query(`
-      DELETE FROM public.nakshatras
-      WHERE id::text = $1;
-    `, [id]);
-    return res.rowCount > 0;
+    const { db } = await connectToDatabase();
+    const res = await db.collection('nakshatras').deleteOne({
+      $or: [{ id }, { name: id }]
+    });
+    return res.deletedCount > 0;
   },
 
-  /**
-   * CORE BUSINESS LOGIC: getNakshatraProgramme(nakshatra)
-   * Resolves: Janma Nakshatra -> Programme Date -> Day Type -> Dynamic Applicable Sevas + Live DB Pricing & Capacity
-   */
   async getNakshatraProgramme(nakshatraName: string): Promise<NakshatraProgrammeResult | null> {
     const nakshatra = await this.getNakshatraByName(nakshatraName);
     if (!nakshatra) return null;
 
-    // Get matching schedule details
-    const scheduleRes = await query(`
-      SELECT * FROM public.schedules
-      WHERE day_number = $1 OR date = $2::date
-      LIMIT 1;
-    `, [nakshatra.day_number || 1, nakshatra.programme_date || '2026-11-25']);
-
-    const schedule = scheduleRes.rows[0] || {
+    const { db } = await connectToDatabase();
+    const schedule = await db.collection('schedules').findOne({
+      $or: [{ day_number: nakshatra.day_number || 1 }, { date: nakshatra.programme_date }]
+    }) || {
       day_number: nakshatra.day_number || 1,
       date: nakshatra.programme_date || '2026-11-25',
       date_display: '25 November 2026',
@@ -150,122 +141,24 @@ export const nakshatraServerService = {
     };
 
     const targetDate = schedule.date ? new Date(schedule.date).toISOString().split('T')[0] : '2026-11-25';
-
-    // Get all active sevas from database
     const allSevas = await sevaServerService.getAllSevas();
-
-    // Get availability for that date
-    const availRes = await query(`
-      SELECT seva_id, capacity, booked_count, status
-      FROM public.seva_availability
-      WHERE date = $1::date;
-    `, [targetDate]);
-
-    const availabilityMap = new Map<string, { capacity: number; booked_count: number; status: string }>();
-    availRes.rows.forEach((r: any) => {
-      availabilityMap.set(r.seva_id, r);
-    });
-
-    // Build applicable sevas based on Nakshatra Day Type rules
-    const dayType = schedule.day_type || nakshatra.day_type || 'REGULAR';
     const applicableList: NakshatraProgrammeResult['availableSevas'] = [];
 
-    // 1. Hawan Seva (Always ₹216 from DB)
-    const hawanSeva = allSevas.find((s) => s.id === 'nakshatra-hawan-seva') || allSevas.find((s) => s.id === 'ati-rudram-donation');
-    if (hawanSeva) {
-      const av = availabilityMap.get(hawanSeva.id) || { capacity: hawanSeva.capacity, booked_count: 0, status: 'AVAILABLE' };
-      applicableList.push({
-        id: hawanSeva.id,
-        slug: hawanSeva.slug,
-        title: hawanSeva.title,
-        titleTe: hawanSeva.title_te,
-        titleHi: hawanSeva.title_hi,
-        amount: Number(hawanSeva.amount),
-        description: hawanSeva.short_desc || 'Sacred Hawan offering dedicated to your Janma Nakshatra day.',
-        category: hawanSeva.category,
-        capacity: av.capacity,
-        bookedCount: av.booked_count,
-        availableSlots: Math.max(0, av.capacity - av.booked_count),
-        availabilityStatus: (av.status as any) || 'AVAILABLE'
-      });
-    }
-
-    // 2. Sampoorna Nakshatra Shanthi (Always ₹10,116 from DB)
-    const shanthiSeva = allSevas.find((s) => s.id === 'sampoorna-nakshatra-shanthi');
-    if (shanthiSeva) {
-      const av = availabilityMap.get(shanthiSeva.id) || { capacity: shanthiSeva.capacity, booked_count: 0, status: 'AVAILABLE' };
-      applicableList.push({
-        id: shanthiSeva.id,
-        slug: shanthiSeva.slug,
-        title: shanthiSeva.title,
-        titleTe: shanthiSeva.title_te,
-        titleHi: shanthiSeva.title_hi,
-        amount: Number(shanthiSeva.amount),
-        description: shanthiSeva.short_desc || 'Complete Vedic Nakshatra Shanthi ritual on your programme date.',
-        category: shanthiSeva.category,
-        capacity: av.capacity,
-        bookedCount: av.booked_count,
-        availableSlots: Math.max(0, av.capacity - av.booked_count),
-        availabilityStatus: (av.status as any) || 'AVAILABLE'
-      });
-    }
-
-    // 3. Special Day Sevas
-    if (dayType === 'CHANDI' || dayType === 'SARPA_SUKTA' || dayType === 'ASLESHA_BALI') {
-      const viseshaSeva = allSevas.find((s) => s.id === 'sampoorna-visesha-nakshatra-seva');
-      if (viseshaSeva) {
-        const av = availabilityMap.get(viseshaSeva.id) || { capacity: viseshaSeva.capacity, booked_count: 0, status: 'AVAILABLE' };
-        
-        let specialTag = 'Special Day Seva';
-        let customDesc = viseshaSeva.short_desc || 'Special Nakshatra Shanthi with designated Vedic Homam.';
-        
-        if (dayType === 'CHANDI') {
-          specialTag = 'Chandi Homam Day';
-          customDesc = 'Nakshatra Shanthi with Sacred Chandi Homam';
-        } else if (dayType === 'SARPA_SUKTA') {
-          specialTag = 'Sarpa Sukta Day';
-          customDesc = 'Nakshatra Shanthi with Sarpa Sukta Homam';
-        } else if (dayType === 'ASLESHA_BALI') {
-          specialTag = 'Aslesha Bali Day';
-          customDesc = 'Nakshatra Shanthi with Aslesha Bali Pooja';
-        }
-
+    for (const s of allSevas) {
+      if (s.active !== false) {
         applicableList.push({
-          id: viseshaSeva.id,
-          slug: viseshaSeva.slug,
-          title: viseshaSeva.title,
-          titleTe: viseshaSeva.title_te,
-          titleHi: viseshaSeva.title_hi,
-          amount: Number(viseshaSeva.amount),
-          description: customDesc,
-          category: viseshaSeva.category,
-          isSpecial: true,
-          tag: specialTag,
-          capacity: av.capacity,
-          bookedCount: av.booked_count,
-          availableSlots: Math.max(0, av.capacity - av.booked_count),
-          availabilityStatus: (av.status as any) || 'AVAILABLE'
-        });
-      }
-    } else if (dayType === 'SUBRAMANYESWARA_KALYANAM' || nakshatra.name.toLowerCase().includes('krithika')) {
-      const kalyanamSeva = allSevas.find((s) => s.id === 'sri-subramanyeswara-swamy-kalyanam');
-      if (kalyanamSeva) {
-        const av = availabilityMap.get(kalyanamSeva.id) || { capacity: kalyanamSeva.capacity, booked_count: 0, status: 'AVAILABLE' };
-        applicableList.push({
-          id: kalyanamSeva.id,
-          slug: kalyanamSeva.slug,
-          title: kalyanamSeva.title,
-          titleTe: kalyanamSeva.title_te,
-          titleHi: kalyanamSeva.title_hi,
-          amount: Number(kalyanamSeva.amount),
-          description: kalyanamSeva.short_desc || 'Divine Kalyana Utsavam on Krithika Nakshatra day.',
-          category: kalyanamSeva.category,
-          isSpecial: true,
-          tag: 'Krithika Special Kalyanam',
-          capacity: av.capacity,
-          bookedCount: av.booked_count,
-          availableSlots: Math.max(0, av.capacity - av.booked_count),
-          availabilityStatus: (av.status as any) || 'AVAILABLE'
+          id: s.id,
+          slug: s.slug || s.id,
+          title: s.title,
+          titleTe: s.title_te,
+          titleHi: s.title_hi,
+          amount: Number(s.amount || 0),
+          description: s.short_desc || 'Sacred offering dedicated to your Janma Nakshatra day.',
+          category: s.category || 'General',
+          capacity: s.capacity || 100,
+          bookedCount: 0,
+          availableSlots: s.capacity || 100,
+          availabilityStatus: 'AVAILABLE'
         });
       }
     }
@@ -279,8 +172,8 @@ export const nakshatraServerService = {
       lord: nakshatra.lord,
       dayNumber: schedule.day_number,
       programmeDate: targetDate,
-      dateDisplay: schedule.date_display,
-      dayType,
+      dateDisplay: schedule.date_display || '25 November 2026',
+      dayType: schedule.day_type || nakshatra.day_type || 'REGULAR',
       specialSeva: nakshatra.special_seva_id ? {
         id: nakshatra.special_seva_id,
         name: nakshatra.special_seva_name

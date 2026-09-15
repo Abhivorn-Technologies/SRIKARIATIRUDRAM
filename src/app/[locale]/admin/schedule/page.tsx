@@ -5,6 +5,8 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
+import { Link } from '@/i18n/routing';
+
 import {
   Calendar,
   Save,
@@ -17,8 +19,12 @@ import {
   Check,
   X,
   RefreshCw,
-  AlertCircle
+  AlertCircle,
+  Database,
+  Upload
 } from 'lucide-react';
+
+
 
 export default function AdminSchedulePage() {
   const [schedules, setSchedules] = useState<any[]>([]);
@@ -27,11 +33,20 @@ export default function AdminSchedulePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [editingItem, setEditingItem] = useState<any | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [dbCount, setDbCount] = useState<number | null>(null);
+  const [isSeeding, setIsSeeding] = useState(false);
+  const [seedResult, setSeedResult] = useState<{ success: boolean; message: string } | null>(null);
+
 
   const fetchSchedules = async () => {
     try {
       setLoading(true);
       setError(null);
+      // Check DB seed status
+      const statusRes = await fetch('/api/admin/schedule/seed');
+      const statusJson = await statusRes.json();
+      if (statusJson.success) setDbCount(statusJson.count);
+
       const res = await fetch('/api/admin/schedule');
       const json = await res.json();
       if (json.success) {
@@ -45,6 +60,29 @@ export default function AdminSchedulePage() {
       setLoading(false);
     }
   };
+
+  const handleSeedDatabase = async (force = false) => {
+    try {
+      setIsSeeding(true);
+      setSeedResult(null);
+      const res = await fetch('/api/admin/schedule/seed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ force }),
+      });
+      const json = await res.json();
+      setSeedResult({ success: json.success, message: json.message });
+      if (json.success) {
+        // Reload schedule list from DB
+        await fetchSchedules();
+      }
+    } catch (err: any) {
+      setSeedResult({ success: false, message: err.message || 'Seed failed' });
+    } finally {
+      setIsSeeding(false);
+    }
+  };
+
 
   useEffect(() => {
     fetchSchedules();
@@ -98,7 +136,7 @@ export default function AdminSchedulePage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="outline"
             size="sm"
@@ -109,7 +147,55 @@ export default function AdminSchedulePage() {
             <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
+
+          {/* DB Status indicator */}
+          {dbCount !== null && (
+            <span className={`flex items-center gap-1.5 text-[11px] font-mono px-2 py-1 rounded-lg border ${
+              dbCount >= 28
+                ? 'bg-emerald-950/60 border-emerald-500/30 text-emerald-400'
+                : 'bg-amber-950/60 border-amber-500/30 text-amber-400'
+            }`}>
+              <Database className="w-3 h-3" />
+              {dbCount >= 28 ? `DB: All 28 days ✓` : `DB: ${dbCount}/28 days`}
+            </span>
+          )}
+
+          {/* Seed Button — shown when DB has < 28 days */}
+          {(dbCount === null || dbCount < 28) && (
+            <Button
+              size="sm"
+              onClick={() => handleSeedDatabase(false)}
+              disabled={isSeeding}
+              className="bg-gold text-maroon font-bold hover:bg-gold-light text-xs"
+            >
+              <Upload className={`w-3.5 h-3.5 mr-1.5 ${isSeeding ? 'animate-pulse' : ''}`} />
+              {isSeeding ? 'Seeding...' : 'Seed 28 Days to Database'}
+            </Button>
+          )}
+
+          {/* Re-seed Button — shown when DB already has 28 days */}
+          {dbCount !== null && dbCount >= 28 && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleSeedDatabase(true)}
+              disabled={isSeeding}
+              className="border-gold/30 text-gold/70 hover:bg-gold/10 text-xs"
+            >
+              <Upload className={`w-3.5 h-3.5 mr-1.5 ${isSeeding ? 'animate-pulse' : ''}`} />
+              {isSeeding ? 'Re-seeding...' : 'Re-seed All Days'}
+            </Button>
+          )}
+
+          {/* Manage Day Sevas — always visible */}
+          <Link href="/admin/schedule/sevas">
+            <Button size="sm" className="bg-gold text-maroon font-bold hover:bg-gold-light text-xs">
+              <Flame className="w-3.5 h-3.5 mr-1.5" />
+              Manage Day Sevas
+            </Button>
+          </Link>
         </div>
+
       </div>
 
       {error && (
@@ -118,6 +204,44 @@ export default function AdminSchedulePage() {
           <p className="text-sm">{error}</p>
         </div>
       )}
+
+      {/* Seed Result Banner */}
+      {seedResult && (
+        <div className={`p-4 rounded-xl flex items-start gap-3 border ${
+          seedResult.success
+            ? 'bg-emerald-950/50 border-emerald-500/40 text-emerald-200'
+            : 'bg-red-950/50 border-red-500/50 text-red-200'
+        }`}>
+          {seedResult.success
+            ? <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+            : <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />}
+          <div>
+            <p className="text-sm font-semibold">{seedResult.success ? 'Seed Successful!' : 'Seed Failed'}</p>
+            <p className="text-xs mt-0.5 opacity-80">{seedResult.message}</p>
+            {seedResult.success && (
+              <p className="text-xs mt-1 opacity-60">Admin edits will now reflect instantly on the public website.</p>
+            )}
+          </div>
+          <button onClick={() => setSeedResult(null)} className="ml-auto text-current/60 hover:text-current">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* DB Empty Warning */}
+      {!loading && dbCount === 0 && !seedResult && (
+        <div className="p-4 rounded-xl bg-amber-950/50 border border-amber-500/40 text-amber-200 flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-semibold">Database is Empty</p>
+            <p className="text-xs mt-0.5 opacity-80">
+              The schedule table has no data. Click <strong>&quot;Seed 28 Days to Database&quot;</strong> above to populate it.
+              Until seeded, the public website shows static hardcoded data and admin edits have no effect.
+            </p>
+          </div>
+        </div>
+      )}
+
 
       {/* Search Bar */}
       <Card className="p-4 bg-[#240006]/90 border-gold/20 flex items-center justify-between gap-4">

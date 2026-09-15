@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { siteConfig } from '@/data/site';
 import { faqList } from '@/data/about';
@@ -20,13 +20,32 @@ export function ContactInfoAndForm() {
   const [isSent, setIsSent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setTimeout(() => {
+    if (!name.trim() || !phone.trim() || !message.trim()) return;
+    try {
+      setIsLoading(true);
+      const res = await fetch('/api/enquiries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: name.trim(),
+          phone: phone.trim(),
+          message: message.trim(),
+          subject: 'General Enquiry from Contact Page'
+        })
+      });
+      const json = await res.json();
+      if (json.success) {
+        setIsSent(true);
+      } else {
+        alert(json.error || 'Failed to submit enquiry');
+      }
+    } catch (err: any) {
+      alert(err.message || 'Error submitting enquiry');
+    } finally {
       setIsLoading(false);
-      setIsSent(true);
-    }, 1000);
+    }
   };
 
   return (
@@ -177,6 +196,29 @@ export function FaqSection() {
   const isHi = locale === 'hi';
   const t = useTranslations('contact');
 
+  const [dynamicFaqs, setDynamicFaqs] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch('/api/faq', { cache: 'no-store' })
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.success && json.data && json.data.length > 0) {
+          const mapped = json.data.map((item: any) => ({
+            q: item.question,
+            qTe: item.question_te || item.question,
+            qHi: item.question_hi || item.question,
+            a: item.answer,
+            aTe: item.answer_te || item.answer,
+            aHi: item.answer_hi || item.answer,
+          }));
+          setDynamicFaqs(mapped);
+        }
+      })
+      .catch((err) => console.warn('Failed to fetch dynamic FAQs:', err));
+  }, []);
+
+  const displayList = dynamicFaqs.length > 0 ? dynamicFaqs : faqList;
+
   return (
     <section className="w-full bg-[#FAF4E6] text-[#3A0008] py-16 lg:py-20 border-t border-[#D6A532]/30">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
@@ -189,7 +231,7 @@ export function FaqSection() {
         </h3>
 
         <div className="max-w-3xl mx-auto space-y-3">
-          {faqList.map((faq, idx) => {
+          {displayList.map((faq, idx) => {
             const question = isTe ? faq.qTe : isHi ? faq.qHi : faq.q;
             const answer = isTe ? faq.aTe : isHi ? faq.aHi : faq.a;
 

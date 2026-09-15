@@ -7,17 +7,9 @@ import { Link } from '@/i18n/routing';
 import { bookingService } from '@/services/booking.service';
 import { BookingStepper } from '@/components/booking/BookingStepper';
 import { Card } from '@/components/ui/Card';
+import { PaymentUI, PaymentMethodType } from '@/components/booking/PaymentUI';
 import { formatCurrency } from '@/lib/utils';
-import {
-  ShieldCheck,
-  ArrowLeft,
-  Check,
-  Lock,
-  QrCode,
-  CreditCard,
-  Building2,
-  Smartphone,
-} from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 export default function PaymentPage() {
@@ -26,12 +18,12 @@ export default function PaymentPage() {
   const isTe = locale === 'te';
   const isHi = locale === 'hi';
 
-  const [draft, setDraft] = useState(() => bookingService.getActiveDraft());
-  const [paymentMethod, setPaymentMethod] = useState<'upi' | 'qr' | 'card' | 'netbanking'>('upi');
+  const [mounted, setMounted] = useState(false);
+  const [draft, setDraft] = useState<any>({ amount: 0, devoteeName: '', sevaName: '', selectedDate: '' });
   const [isProcessing, setIsProcessing] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
+    setMounted(true);
     const current = bookingService.getActiveDraft();
     if (!current.devoteeName || !current.selectedDate || !current.sevaName) {
       router.push(`/${locale}/book-seva/review`);
@@ -40,13 +32,13 @@ export default function PaymentPage() {
     setDraft(current);
   }, [locale, router]);
 
-  const handleMakePayment = async () => {
+  const handlePaymentSuccess = async (method: PaymentMethodType, transactionId?: string) => {
     setIsProcessing(true);
-    setErrorMessage('');
     try {
       const confirmed = await bookingService.createBooking({
         ...draft,
         paymentStatus: 'CONFIRMED',
+        transactionId: transactionId || `RAZORPAY_${Date.now()}`,
       });
 
       if (typeof window !== 'undefined') {
@@ -63,11 +55,21 @@ export default function PaymentPage() {
       router.push(`/${locale}/book-seva/success?id=${confirmed.bookingId}`);
     } catch (err: any) {
       console.error('Payment confirmation error', err);
-      setErrorMessage(err.message || 'Payment processing failed. Please try again.');
     } finally {
       setIsProcessing(false);
     }
   };
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-[#35030A] text-[#FFF8E8] py-12 flex items-center justify-center">
+        <div className="text-center space-y-3">
+          <div className="w-8 h-8 border-2 border-[#D6A532] border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="font-cinzel text-xs text-[#F2C14E]">Loading Sacred Payment Portal...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#35030A] text-[#FFF8E8] py-8 sm:py-12">
@@ -158,7 +160,7 @@ export default function PaymentPage() {
           </div>
         </Card>
 
-        {/* Payment Methods Card */}
+        {/* Razorpay Payment Card */}
         <Card variant="sacred" className="p-6 sm:p-8 space-y-6 bg-[#2B040A]/95 border-[#D6A532]/40 shadow-xl">
           <div className="space-y-1">
             <h2 className="font-cinzel text-base sm:text-lg font-bold text-[#FAF4E6] tracking-wide">
@@ -171,132 +173,14 @@ export default function PaymentPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {/* UPI Option */}
-            <div
-              onClick={() => setPaymentMethod('upi')}
-              className={`p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
-                paymentMethod === 'upi'
-                  ? 'bg-[#5A0714] border-[#F2C14E] shadow-[0_0_15px_rgba(214,165,50,0.4)] ring-1 ring-[#F2C14E]'
-                  : 'bg-[#230206] border-[#D6A532]/25 hover:border-[#D6A532]/60'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <Smartphone className="w-5 h-5 text-[#F2C14E]" />
-                <div className="text-left">
-                  <span className="text-xs sm:text-sm font-bold text-[#FAF4E6] block">UPI / GPay / PhonePe</span>
-                  <span className="text-[10px] text-[#FFF8E8]/60">Instant payment via any UPI App</span>
-                </div>
-              </div>
-              {paymentMethod === 'upi' && (
-                <div className="w-5 h-5 rounded-full bg-[#F2C14E] text-[#280509] flex items-center justify-center shrink-0">
-                  <Check className="w-3 h-3 stroke-[3]" />
-                </div>
-              )}
-            </div>
-
-            {/* QR Code Option */}
-            <div
-              onClick={() => setPaymentMethod('qr')}
-              className={`p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
-                paymentMethod === 'qr'
-                  ? 'bg-[#5A0714] border-[#F2C14E] shadow-[0_0_15px_rgba(214,165,50,0.4)] ring-1 ring-[#F2C14E]'
-                  : 'bg-[#230206] border-[#D6A532]/25 hover:border-[#D6A532]/60'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <QrCode className="w-5 h-5 text-[#F2C14E]" />
-                <div className="text-left">
-                  <span className="text-xs sm:text-sm font-bold text-[#FAF4E6] block">Scan Mandir QR</span>
-                  <span className="text-[10px] text-[#FFF8E8]/60">Scan and pay from banking app</span>
-                </div>
-              </div>
-              {paymentMethod === 'qr' && (
-                <div className="w-5 h-5 rounded-full bg-[#F2C14E] text-[#280509] flex items-center justify-center shrink-0">
-                  <Check className="w-3 h-3 stroke-[3]" />
-                </div>
-              )}
-            </div>
-
-            {/* Card Option */}
-            <div
-              onClick={() => setPaymentMethod('card')}
-              className={`p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
-                paymentMethod === 'card'
-                  ? 'bg-[#5A0714] border-[#F2C14E] shadow-[0_0_15px_rgba(214,165,50,0.4)] ring-1 ring-[#F2C14E]'
-                  : 'bg-[#230206] border-[#D6A532]/25 hover:border-[#D6A532]/60'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <CreditCard className="w-5 h-5 text-[#F2C14E]" />
-                <div className="text-left">
-                  <span className="text-xs sm:text-sm font-bold text-[#FAF4E6] block">Credit / Debit Cards</span>
-                  <span className="text-[10px] text-[#FFF8E8]/60">Visa, Mastercard, RuPay</span>
-                </div>
-              </div>
-              {paymentMethod === 'card' && (
-                <div className="w-5 h-5 rounded-full bg-[#F2C14E] text-[#280509] flex items-center justify-center shrink-0">
-                  <Check className="w-3 h-3 stroke-[3]" />
-                </div>
-              )}
-            </div>
-
-            {/* Net Banking Option */}
-            <div
-              onClick={() => setPaymentMethod('netbanking')}
-              className={`p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
-                paymentMethod === 'netbanking'
-                  ? 'bg-[#5A0714] border-[#F2C14E] shadow-[0_0_15px_rgba(214,165,50,0.4)] ring-1 ring-[#F2C14E]'
-                  : 'bg-[#230206] border-[#D6A532]/25 hover:border-[#D6A532]/60'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <Building2 className="w-5 h-5 text-[#F2C14E]" />
-                <div className="text-left">
-                  <span className="text-xs sm:text-sm font-bold text-[#FAF4E6] block">Net Banking</span>
-                  <span className="text-[10px] text-[#FFF8E8]/60">All Indian Banks supported</span>
-                </div>
-              </div>
-              {paymentMethod === 'netbanking' && (
-                <div className="w-5 h-5 rounded-full bg-[#F2C14E] text-[#280509] flex items-center justify-center shrink-0">
-                  <Check className="w-3 h-3 stroke-[3]" />
-                </div>
-              )}
-            </div>
-          </div>
-
-          {errorMessage && (
-            <div className="p-3 rounded-lg bg-rose-950/80 border border-rose-500/50 text-rose-300 text-xs font-sans">
-              {errorMessage}
-            </div>
-          )}
-
-          <div className="flex items-center gap-2 text-xs text-[#E8C76A]/80 pt-2">
-            <Lock className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span>256-bit encrypted secure checkout. Consecrated digital receipt generated instantly.</span>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="pt-4 border-t border-[#D6A532]/20 flex flex-col-reverse sm:flex-row items-center justify-between gap-3">
-            <Link href="/book-seva/review" className="w-full sm:w-auto">
-              <button
-                type="button"
-                className="w-full sm:w-auto px-6 py-3 rounded-xl border border-[#D6A532]/50 text-[#FAF4E6] hover:bg-[#5A0714] font-cinzel text-xs sm:text-sm font-bold flex items-center justify-center gap-2 uppercase tracking-wider transition-all"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span>{isTe ? 'సమీక్షకు తిరిగి వెళ్లండి' : isHi ? 'समीक्षा पर लौटें' : 'BACK TO REVIEW'}</span>
-              </button>
-            </Link>
-
-            <button
-              type="button"
-              disabled={isProcessing}
-              onClick={handleMakePayment}
-              className="w-full sm:w-auto bg-gradient-to-r from-[#F2C14E] via-[#D6A532] to-[#B38728] hover:from-[#FFE484] hover:via-[#F2C14E] hover:to-[#D6A532] text-[#280509] font-cinzel font-black text-sm sm:text-base py-3.5 px-8 rounded-xl shadow-[0_0_20px_rgba(214,165,50,0.4)] hover:shadow-[0_0_30px_rgba(214,165,50,0.7)] hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 flex items-center justify-center gap-2 uppercase tracking-wider select-none cursor-pointer disabled:opacity-50"
-            >
-              <span>{isProcessing ? 'PROCESSING PAYMENT...' : 'COMPLETE DONATION & REGISTER SEVA'}</span>
-            </button>
-          </div>
+          <PaymentUI
+            amount={draft.amount}
+            devoteeName={draft.devoteeName}
+            devoteePhone={draft.mobile}
+            devoteeEmail={draft.email}
+            onPaymentSuccess={handlePaymentSuccess}
+            isProcessing={isProcessing}
+          />
         </Card>
 
       </div>

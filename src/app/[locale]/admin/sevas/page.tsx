@@ -16,7 +16,10 @@ import {
   ShieldCheck,
   RefreshCw,
   X,
-  AlertCircle
+  AlertCircle,
+  Eye,
+  EyeOff,
+  Trash2
 } from 'lucide-react';
 
 export default function AdminSevasPage() {
@@ -56,10 +59,15 @@ export default function AdminSevasPage() {
 
     try {
       setIsSaving(true);
+      const payload = {
+        ...editingSeva,
+        amount: editingSeva.amount === '' ? 0 : Number(editingSeva.amount),
+        capacity: editingSeva.capacity === '' ? 50 : Number(editingSeva.capacity)
+      };
       const res = await fetch(`/api/admin/sevas/${editingSeva.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editingSeva)
+        body: JSON.stringify(payload)
       });
       const json = await res.json();
       if (json.success) {
@@ -70,6 +78,90 @@ export default function AdminSevasPage() {
       }
     } catch (err: any) {
       alert(err.message || 'Error saving Seva');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleToggleSevaActive = async (seva: any) => {
+    const newActiveState = !(seva.active !== false);
+    try {
+      const res = await fetch(`/api/admin/sevas/${seva.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ active: newActiveState }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setSevas((prev) => prev.map((s) => (s.id === seva.id ? { ...s, active: newActiveState } : s)));
+      } else {
+        alert(json.error || 'Failed to update visibility status');
+      }
+    } catch (err: any) {
+      alert(err.message || 'Error updating visibility');
+    }
+  };
+
+  const handleDeleteSeva = async (seva: any) => {
+    if (!confirm(`Are you sure you want to permanently delete "${seva.title}"?`)) return;
+    try {
+      const res = await fetch(`/api/admin/sevas/${seva.id}`, {
+        method: 'DELETE',
+      });
+      const json = await res.json();
+      if (json.success) {
+        setSevas((prev) => prev.filter((s) => s.id !== seva.id));
+        if (editingSeva?.id === seva.id) setEditingSeva(null);
+      } else {
+        alert(json.error || 'Failed to delete Seva');
+      }
+    } catch (err: any) {
+      alert(err.message || 'Error deleting Seva');
+    }
+  };
+
+  const [isCreatingNew, setIsCreatingNew] = useState(false);
+  const [newSevaData, setNewSevaData] = useState({
+    title: '',
+    title_te: '',
+    amount: 1008,
+    capacity: 50,
+    category: 'homam',
+    icon: '🕉️',
+    active: true,
+    short_desc: '',
+    short_desc_te: '',
+  });
+
+  const handleCreateSevaSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setIsSaving(true);
+      const res = await fetch('/api/admin/sevas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newSevaData),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setSevas((prev) => [...prev, json.data]);
+        setIsCreatingNew(false);
+        setNewSevaData({
+          title: '',
+          title_te: '',
+          amount: 1008,
+          capacity: 50,
+          category: 'homam',
+          icon: '🕉️',
+          active: true,
+          short_desc: '',
+          short_desc_te: '',
+        });
+      } else {
+        alert(json.error || 'Failed to create Seva');
+      }
+    } catch (err: any) {
+      alert(err.message || 'Error creating Seva');
     } finally {
       setIsSaving(false);
     }
@@ -95,11 +187,20 @@ export default function AdminSevasPage() {
             </h1>
           </div>
           <p className="text-xs text-ivory/70">
-            Database-driven pricing, daily devotee limits, and online booking statuses
+            Database-driven pricing, daily devotee limits, and online booking statuses (Dynamic Special Sevas)
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            size="sm"
+            onClick={() => setIsCreatingNew(true)}
+            className="bg-gold text-maroon font-bold hover:bg-gold-light text-xs"
+          >
+            <Plus className="w-3.5 h-3.5 mr-1.5" />
+            Add New Special Seva
+          </Button>
+
           <Button
             variant="outline"
             size="sm"
@@ -129,7 +230,7 @@ export default function AdminSevasPage() {
         <Card className="p-4 bg-[#240006]/90 border-gold/20">
           <span className="text-[10px] uppercase font-cinzel text-gold/70">Active Online</span>
           <h3 className="text-xl font-bold font-cinzel text-emerald-400 mt-1">
-            {sevas.filter(s => s.active).length}
+            {sevas.filter(s => s.active !== false).length}
           </h3>
         </Card>
         <Card className="p-4 bg-[#240006]/90 border-gold/20">
@@ -166,70 +267,224 @@ export default function AdminSevasPage() {
           <option value="abhishekam">Abhishekam</option>
           <option value="archana">Archana</option>
           <option value="kalyanam">Kalyanam</option>
+          <option value="special">Special Seva</option>
           <option value="donation">Donation / Annadanam</option>
         </select>
       </Card>
 
       {/* Sevas Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredSevas.map((seva) => (
-          <Card
-            key={seva.id}
-            className="p-5 bg-[#240006]/90 border-gold/20 flex flex-col justify-between space-y-4 hover:border-gold/40 transition-all shadow-md"
-          >
-            <div className="space-y-2">
-              <div className="flex items-start justify-between gap-2">
-                <span className="text-2xl">{seva.icon || '🕉️'}</span>
-                <div className="flex items-center gap-1.5">
-                  <Badge
-                    variant="outline"
-                    className={`text-[10px] uppercase ${
-                      seva.active
-                        ? 'border-emerald-500/40 text-emerald-400 bg-emerald-950/30'
-                        : 'border-zinc-500/40 text-zinc-400'
-                    }`}
+        {filteredSevas.map((seva) => {
+          const isActive = seva.active !== false;
+
+          return (
+            <Card
+              key={seva.id}
+              className={`p-5 flex flex-col justify-between space-y-4 transition-all shadow-md ${
+                isActive
+                  ? 'bg-[#240006]/90 border-gold/20 hover:border-gold/40'
+                  : 'bg-zinc-950/80 border-zinc-800 opacity-70'
+              }`}
+            >
+              <div className="space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <span className="text-2xl">{seva.icon || '🕉️'}</span>
+                  <div className="flex items-center gap-1.5">
+                    {/* Hide / Unhide Quick Toggle Button */}
+                    <button
+                      type="button"
+                      onClick={() => handleToggleSevaActive(seva)}
+                      className={`px-2 py-1 rounded-lg border text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer ${
+                        isActive
+                          ? 'border-emerald-500/40 text-emerald-300 bg-emerald-950/60 hover:bg-emerald-900/80'
+                          : 'border-red-500/40 text-red-300 bg-red-950/60 hover:bg-red-900/80'
+                      }`}
+                      title={isActive ? 'Click to HIDE from devotees' : 'Click to SHOW to devotees'}
+                    >
+                      {isActive ? (
+                        <>
+                          <Eye className="w-3 h-3 text-emerald-400" />
+                          <span>VISIBLE TO USERS</span>
+                        </>
+                      ) : (
+                        <>
+                          <EyeOff className="w-3 h-3 text-red-400" />
+                          <span>HIDDEN FROM USERS</span>
+                        </>
+                      )}
+                    </button>
+
+                    {/* Edit Seva Button */}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setEditingSeva({ ...seva })}
+                      className="h-7 w-7 p-0 text-gold hover:bg-gold/10"
+                      title="Edit Seva"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </Button>
+
+                    {/* Delete Seva Button */}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleDeleteSeva(seva)}
+                      className="h-7 w-7 p-0 text-red-400 hover:bg-red-950/40"
+                      title="Delete Seva"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="font-cinzel text-sm font-bold text-ivory tracking-wide">
+                    {seva.title}
+                  </h3>
+                  {seva.title_te && (
+                    <p className="text-[11px] text-gold/80 mt-0.5">{seva.title_te}</p>
+                  )}
+                  <p className="text-xs text-ivory/60 mt-1.5 line-clamp-2">
+                    {seva.short_desc}
+                  </p>
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-gold/15 flex items-center justify-between text-xs">
+                <div>
+                  <span className="text-[10px] text-ivory/50 block">Dakshina</span>
+                  <span className="font-mono font-bold text-base text-gold">
+                    ₹{Number(seva.amount).toLocaleString('en-IN')}
+                  </span>
+                </div>
+                <div className="text-right">
+                  <span className="text-[10px] text-ivory/50 block">Daily Quota</span>
+                  <span className="font-semibold text-ivory">{seva.capacity} slots</span>
+                </div>
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Add New Special Seva Modal */}
+      {isCreatingNew && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <form onSubmit={handleCreateSevaSubmit} className="w-full max-w-lg bg-[#240006] border border-gold/40 rounded-2xl p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-gold/20 pb-3">
+              <div>
+                <h3 className="font-cinzel text-lg font-bold text-gold">Add New Special Seva</h3>
+                <p className="text-xs text-ivory/60">Create a new offering visible to devotees</p>
+              </div>
+              <button type="button" onClick={() => setIsCreatingNew(false)} className="text-ivory/60 hover:text-ivory">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="text-ivory/70 block mb-1">Seva Title (English) *</label>
+                <Input
+                  value={newSevaData.title}
+                  onChange={(e) => setNewSevaData({ ...newSevaData, title: e.target.value })}
+                  placeholder="e.g. Special Chandi Maha Homam"
+                  className="bg-[#1A0004] border-gold/30 text-ivory text-xs"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="text-ivory/70 block mb-1">Telugu Title</label>
+                <Input
+                  value={newSevaData.title_te}
+                  onChange={(e) => setNewSevaData({ ...newSevaData, title_te: e.target.value })}
+                  placeholder="e.g. విశేష చండీ మహా హోమం"
+                  className="bg-[#1A0004] border-gold/30 text-ivory text-xs"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-ivory/70 block mb-1">Dakshina Amount (₹) *</label>
+                  <Input
+                    type="number"
+                    value={newSevaData.amount}
+                    onChange={(e) => setNewSevaData({ ...newSevaData, amount: Number(e.target.value) })}
+                    className="bg-[#1A0004] border-gold/30 text-ivory text-xs"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="text-ivory/70 block mb-1">Daily Capacity Limit *</label>
+                  <Input
+                    type="number"
+                    value={newSevaData.capacity}
+                    onChange={(e) => setNewSevaData({ ...newSevaData, capacity: Number(e.target.value) })}
+                    className="bg-[#1A0004] border-gold/30 text-ivory text-xs"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-ivory/70 block mb-1">Category</label>
+                  <select
+                    value={newSevaData.category}
+                    onChange={(e) => setNewSevaData({ ...newSevaData, category: e.target.value })}
+                    className="w-full bg-[#1A0004] border border-gold/30 text-ivory rounded-lg p-2 text-xs"
                   >
-                    {seva.active ? 'Active' : 'Disabled'}
-                  </Badge>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setEditingSeva({ ...seva })}
-                    className="h-7 w-7 p-0 text-gold hover:bg-gold/10"
-                  >
-                    <Edit2 className="w-3.5 h-3.5" />
-                  </Button>
+                    <option value="homam">Homam</option>
+                    <option value="abhishekam">Abhishekam</option>
+                    <option value="archana">Archana</option>
+                    <option value="kalyanam">Kalyanam</option>
+                    <option value="special">Special Seva</option>
+                    <option value="donation">Donation</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-ivory/70 block mb-1">Icon Emoji</label>
+                  <Input
+                    value={newSevaData.icon}
+                    onChange={(e) => setNewSevaData({ ...newSevaData, icon: e.target.value })}
+                    className="bg-[#1A0004] border-gold/30 text-ivory text-xs"
+                  />
                 </div>
               </div>
 
               <div>
-                <h3 className="font-cinzel text-sm font-bold text-ivory tracking-wide">
-                  {seva.title}
-                </h3>
-                {seva.title_te && (
-                  <p className="text-[11px] text-gold/80 mt-0.5">{seva.title_te}</p>
-                )}
-                <p className="text-xs text-ivory/60 mt-1.5 line-clamp-2">
-                  {seva.short_desc}
-                </p>
+                <label className="text-ivory/70 block mb-1">Short Description (English)</label>
+                <textarea
+                  value={newSevaData.short_desc}
+                  onChange={(e) => setNewSevaData({ ...newSevaData, short_desc: e.target.value })}
+                  placeholder="Auspicious homam performed with special Vedic sankalpam..."
+                  className="w-full bg-[#1A0004] border border-gold/30 text-ivory rounded-lg p-2 text-xs h-16"
+                />
+              </div>
+
+              <div>
+                <label className="text-ivory/70 block mb-1">Short Description (Telugu)</label>
+                <textarea
+                  value={newSevaData.short_desc_te}
+                  onChange={(e) => setNewSevaData({ ...newSevaData, short_desc_te: e.target.value })}
+                  placeholder="ప్రత్యేక వేద సంకల్పంతో నిర్వహించబడే పవిత్ర హోమము..."
+                  className="w-full bg-[#1A0004] border border-gold/30 text-ivory rounded-lg p-2 text-xs h-16"
+                />
               </div>
             </div>
 
-            <div className="pt-3 border-t border-gold/15 flex items-center justify-between text-xs">
-              <div>
-                <span className="text-[10px] text-ivory/50 block">Dakshina</span>
-                <span className="font-mono font-bold text-base text-gold">
-                  ₹{Number(seva.amount).toLocaleString('en-IN')}
-                </span>
-              </div>
-              <div className="text-right">
-                <span className="text-[10px] text-ivory/50 block">Daily Quota</span>
-                <span className="font-semibold text-ivory">{seva.capacity} slots</span>
-              </div>
+            <div className="pt-3 flex justify-end gap-2 border-t border-gold/20">
+              <Button type="button" variant="outline" onClick={() => setIsCreatingNew(false)} className="border-gold/30 text-gold text-xs">
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSaving} className="bg-gold text-maroon font-bold text-xs hover:bg-gold-light">
+                {isSaving ? 'Creating...' : 'Save & Publish to Website'}
+              </Button>
             </div>
-          </Card>
-        ))}
-      </div>
+          </form>
+        </div>
+      )}
 
       {/* Edit Seva Modal */}
       {editingSeva && (
@@ -270,8 +525,8 @@ export default function AdminSevasPage() {
                   <label className="text-ivory/70 block mb-1">Dakshina Amount (₹) *</label>
                   <Input
                     type="number"
-                    value={editingSeva.amount || 0}
-                    onChange={(e) => setEditingSeva({ ...editingSeva, amount: Number(e.target.value) })}
+                    value={editingSeva.amount ?? ''}
+                    onChange={(e) => setEditingSeva({ ...editingSeva, amount: e.target.value })}
                     className="bg-[#1A0004] border-gold/30 text-ivory text-xs"
                     required
                   />
@@ -280,8 +535,8 @@ export default function AdminSevasPage() {
                   <label className="text-ivory/70 block mb-1">Daily Capacity Limit *</label>
                   <Input
                     type="number"
-                    value={editingSeva.capacity || 50}
-                    onChange={(e) => setEditingSeva({ ...editingSeva, capacity: Number(e.target.value) })}
+                    value={editingSeva.capacity ?? ''}
+                    onChange={(e) => setEditingSeva({ ...editingSeva, capacity: e.target.value })}
                     className="bg-[#1A0004] border-gold/30 text-ivory text-xs"
                     required
                   />
@@ -300,13 +555,14 @@ export default function AdminSevasPage() {
                     <option value="abhishekam">Abhishekam</option>
                     <option value="archana">Archana</option>
                     <option value="kalyanam">Kalyanam</option>
+                    <option value="special">Special Seva</option>
                     <option value="donation">Donation</option>
                   </select>
                 </div>
                 <div>
                   <label className="text-ivory/70 block mb-1">Online Booking Status</label>
                   <select
-                    value={editingSeva.active ? 'true' : 'false'}
+                    value={editingSeva.active !== false ? 'true' : 'false'}
                     onChange={(e) => setEditingSeva({ ...editingSeva, active: e.target.value === 'true' })}
                     className="w-full bg-[#1A0004] border border-gold/30 text-ivory rounded-lg p-2 text-xs"
                   >
@@ -317,22 +573,43 @@ export default function AdminSevasPage() {
               </div>
 
               <div>
-                <label className="text-ivory/70 block mb-1">Short Description</label>
+                <label className="text-ivory/70 block mb-1">Short Description (English)</label>
                 <textarea
                   value={editingSeva.short_desc || ''}
                   onChange={(e) => setEditingSeva({ ...editingSeva, short_desc: e.target.value })}
-                  className="w-full bg-[#1A0004] border border-gold/30 text-ivory rounded-lg p-2 text-xs h-20"
+                  className="w-full bg-[#1A0004] border border-gold/30 text-ivory rounded-lg p-2 text-xs h-16"
+                />
+              </div>
+
+              <div>
+                <label className="text-ivory/70 block mb-1">Short Description (Telugu)</label>
+                <textarea
+                  value={editingSeva.short_desc_te || ''}
+                  onChange={(e) => setEditingSeva({ ...editingSeva, short_desc_te: e.target.value })}
+                  className="w-full bg-[#1A0004] border border-gold/30 text-ivory rounded-lg p-2 text-xs h-16"
                 />
               </div>
             </div>
 
-            <div className="pt-3 flex justify-end gap-2 border-t border-gold/20">
-              <Button type="button" variant="outline" onClick={() => setEditingSeva(null)} className="border-gold/30 text-gold text-xs">
-                Cancel
+            <div className="pt-3 flex items-center justify-between border-t border-gold/20">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => handleDeleteSeva(editingSeva)}
+                className="border-red-500/50 text-red-400 hover:bg-red-950/50 text-xs"
+              >
+                <Trash2 className="w-3.5 h-3.5 mr-1" />
+                Delete Seva
               </Button>
-              <Button type="submit" disabled={isSaving} className="bg-gold text-maroon font-bold text-xs hover:bg-gold-light">
-                {isSaving ? 'Saving...' : 'Save Pricing & Quota to Supabase'}
-              </Button>
+
+              <div className="flex items-center gap-2">
+                <Button type="button" variant="outline" onClick={() => setEditingSeva(null)} className="border-gold/30 text-gold text-xs">
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isSaving} className="bg-gold text-maroon font-bold text-xs hover:bg-gold-light">
+                  {isSaving ? 'Saving...' : 'Save Pricing & Quota to Database'}
+                </Button>
+              </div>
             </div>
           </form>
         </div>

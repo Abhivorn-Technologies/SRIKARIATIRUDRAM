@@ -114,8 +114,11 @@ export default function SpecialSevaDevoteeDetailsPage() {
       specialSevaBookingService.saveActiveDraft({
         ...draft,
         gotram: effectiveGotram,
+        devoteeParticipation: draft.devoteeParticipation || 'attending',
       });
       router.push(`/${locale}/special-seva-booking/payment`);
+    } else {
+      window.scrollTo({ top: 250, behavior: 'smooth' });
     }
   };
 
@@ -483,6 +486,15 @@ export default function SpecialSevaDevoteeDetailsPage() {
                 )}
               </div>
             </div>
+
+            {Object.keys(errors).length > 0 && (
+              <div className="p-3.5 rounded-xl bg-rose-950/80 border border-rose-500/60 text-rose-300 text-xs font-sans font-medium flex items-center gap-2">
+                <span>⚠️</span>
+                <span>
+                  {Object.values(errors)[0]}
+                </span>
+              </div>
+            )}
 
             {/* Actions: Back & Continue to Payment */}
             <div className="pt-4 border-t border-[#D6A532]/20 flex flex-col-reverse sm:flex-row items-center justify-between gap-3">

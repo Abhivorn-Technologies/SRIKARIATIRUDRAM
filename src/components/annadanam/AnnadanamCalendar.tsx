@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useLocale } from 'next-intl';
 import Image from 'next/image';
 import { annadanamCalendarDays, annadanamAmounts, AnnadanamDay } from '@/data/annadanam';
@@ -64,6 +64,25 @@ export function AnnadanamSection() {
   const [flowStep, setFlowStep] = useState<number>(1);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
+  // Dynamic 28-day calendar state
+  const [calendarDays, setCalendarDays] = useState<AnnadanamDay[]>(annadanamCalendarDays);
+
+  const fetchLiveCalendar = async () => {
+    try {
+      const res = await fetch('/api/annadanam', { cache: 'no-store' });
+      const json = await res.json();
+      if (json.success && Array.isArray(json.calendarDays)) {
+        setCalendarDays(json.calendarDays);
+      }
+    } catch (err) {
+      console.error('Failed to fetch dynamic Annadanam calendar:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchLiveCalendar();
+  }, []);
+
   // Sponsor Form State
   const [formData, setFormData] = useState<SponsorFormData>({
     sponsorName: '',
@@ -93,10 +112,10 @@ export function AnnadanamSection() {
   // Active Selected Day Object
   const selectedDay: AnnadanamDay = useMemo(() => {
     return (
-      annadanamCalendarDays.find((d) => d.day === selectedDayNumber) ||
-      annadanamCalendarDays[0]
+      calendarDays.find((d) => d.day === selectedDayNumber) ||
+      calendarDays[0]
     );
-  }, [selectedDayNumber]);
+  }, [selectedDayNumber, calendarDays]);
 
   // Effective Amount
   const effectiveAmount = isCustomAmount
@@ -210,12 +229,33 @@ export function AnnadanamSection() {
   // Payment Completion Handler
   const handlePaymentSuccess = async (method: PaymentMethodType) => {
     setIsProcessingPayment(true);
-    // Simulate brief processing
-    await new Promise((resolve) => setTimeout(resolve, 800));
-
     const randomSuffix = Math.floor(10000 + Math.random() * 90000);
     const bookingRef = `ANN-2026-${randomSuffix}`;
     const txRef = `TXN${Date.now().toString().slice(-8)}`;
+
+    try {
+      await fetch('/api/annadanam', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sponsor_name: formData.sponsorName.trim(),
+          mobile: formData.mobile.trim(),
+          email: formData.email.trim() || undefined,
+          amount: effectiveAmount,
+          occasion: formData.occasion.trim() || undefined,
+          display_name: formData.displayName.trim() || undefined,
+          is_anonymous: formData.isPrivate,
+          date: selectedDay.date,
+          day_number: selectedDay.day,
+          transaction_id: txRef,
+          payment_status: 'SUCCESS',
+          status: 'CONFIRMED'
+        })
+      });
+      fetchLiveCalendar();
+    } catch (err) {
+      console.error('Failed to save sponsorship:', err);
+    }
 
     const confirmed = {
       sponsorshipId: bookingRef,
@@ -379,7 +419,7 @@ export function AnnadanamSection() {
 
           {/* Calendar Grid: 4 cols (desktop) / 2 cols (tablet) / 1 col (mobile) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {annadanamCalendarDays.map((day) => {
+            {calendarDays.map((day) => {
               const isSelected = selectedDayNumber === day.day;
               const isAvailable = day.status === 'AVAILABLE';
               const displayDate = isTe ? day.dateTe : isHi ? day.dateHi : day.date;
@@ -892,6 +932,10 @@ export function AnnadanamSection() {
 
             <PaymentUI
               amount={effectiveAmount}
+              bookingId={`ANN-DAY-${selectedDay.day}`}
+              devoteeName={formData.sponsorName}
+              devoteePhone={formData.mobile}
+              devoteeEmail={formData.email}
               onPaymentSuccess={handlePaymentSuccess}
               isProcessing={isProcessingPayment}
             />

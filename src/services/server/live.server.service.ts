@@ -1,4 +1,4 @@
-import { query } from '@/lib/db';
+import { connectToDatabase } from '@/lib/mongodb';
 
 export interface LiveStreamConfig {
   id: string;
@@ -12,16 +12,25 @@ export interface LiveStreamConfig {
   updated_at?: string;
 }
 
+export interface LiveArchiveRecord {
+  id: string;
+  day: number;
+  title: string;
+  title_te?: string;
+  duration?: string;
+  views?: string;
+  youtube_id?: string;
+  published?: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export const liveServerService = {
   async getLiveConfig(): Promise<LiveStreamConfig> {
-    const res = await query<LiveStreamConfig>(`
-      SELECT * FROM public.live_stream
-      ORDER BY updated_at DESC
-      LIMIT 1;
-    `);
+    const { db } = await connectToDatabase();
+    const doc = await db.collection('live_stream').findOne({}, { sort: { updated_at: -1 } });
 
-    if (res.rows.length === 0) {
-      // Return default configuration
+    if (!doc) {
       return {
         id: '00000000-0000-0000-0000-000000000001',
         live_url: 'https://www.youtube.com/watch?v=live_stream_placeholder',
@@ -34,39 +43,87 @@ export const liveServerService = {
       };
     }
 
-    return res.rows[0];
+    return {
+      ...doc,
+      id: doc.id || doc._id.toString()
+    } as any;
   },
 
   async updateLiveConfig(updates: Partial<LiveStreamConfig>): Promise<LiveStreamConfig> {
+    const { db } = await connectToDatabase();
     const current = await this.getLiveConfig();
+    const newConfig = {
+      ...current,
+      ...updates,
+      updated_at: new Date().toISOString()
+    };
 
-    const res = await query<LiveStreamConfig>(`
-      INSERT INTO public.live_stream (
-        id, live_url, title, description, is_live, platform, channel_name, viewers_count, updated_at
-      ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, NOW()
-      )
-      ON CONFLICT (id) DO UPDATE SET
-        live_url = EXCLUDED.live_url,
-        title = EXCLUDED.title,
-        description = EXCLUDED.description,
-        is_live = EXCLUDED.is_live,
-        platform = EXCLUDED.platform,
-        channel_name = EXCLUDED.channel_name,
-        viewers_count = EXCLUDED.viewers_count,
-        updated_at = NOW()
-      RETURNING *;
-    `, [
-      current.id,
-      updates.live_url !== undefined ? updates.live_url : current.live_url,
-      updates.title !== undefined ? updates.title : current.title,
-      updates.description !== undefined ? updates.description : current.description,
-      updates.is_live !== undefined ? updates.is_live : current.is_live,
-      updates.platform !== undefined ? updates.platform : current.platform,
-      updates.channel_name !== undefined ? updates.channel_name : current.channel_name,
-      updates.viewers_count !== undefined ? updates.viewers_count : (current.viewers_count || 0)
-    ]);
+    await db.collection('live_stream').updateOne(
+      { id: current.id },
+      { $set: newConfig },
+      { upsert: true }
+    );
 
-    return res.rows[0];
+    return newConfig;
+  },
+
+  async getArchives(onlyPublished: boolean = false): Promise<LiveArchiveRecord[]> {
+    const { db } = await connectToDatabase();
+    const filter: any = {};
+    if (onlyPublished) filter.published = { $ne: false };
+
+    const docs = await db.collection('live_archives')
+      .find(filter)
+      .sort({ day: 1, created_at: -1 })
+      .toArray();
+
+    return docs.map((doc: any) => ({
+      ...doc,
+      id: doc.id || doc._id.toString()
+    }));
+  },
+
+  async createArchive(data: Partial<LiveArchiveRecord>): Promise<LiveArchiveRecord> {
+    const { db } = await connectToDatabase();
+    const archiveId = 'archive_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
+    const newArchive: LiveArchiveRecord = {
+      id: archiveId,
+      day: data.day || 1,
+      title: data.title || 'Day Broadcast Recording',
+      title_te: data.title_te || data.title || undefined,
+      duration: data.duration || '3h 45m',
+      views: data.views || '10.5K',
+      youtube_id: data.youtube_id || undefined,
+      published: data.published !== false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    await db.collection('live_archives').insertOne(newArchive as any);
+    return newArchive;
+  },
+
+  async updateArchive(id: string, updates: Partial<LiveArchiveRecord>): Promise<LiveArchiveRecord | null> {
+    const { db } = await connectToDatabase();
+    const res = await db.collection('live_archives').findOneAndUpdate(
+      { $or: [{ id }, { _id: id as any }] },
+      { $set: { ...updates, updated_at: new Date().toISOString() } },
+      { returnDocument: 'after' }
+    );
+    const doc = (res as any)?.value || res;
+    if (!doc) return null;
+    return {
+      ...doc,
+      id: doc.id || doc._id.toString()
+    } as any;
+  },
+
+  async deleteArchive(id: string): Promise<boolean> {
+    const { db } = await connectToDatabase();
+    const res = await db.collection('live_archives').deleteOne({
+      $or: [{ id }, { _id: id as any }]
+    });
+    return res.deletedCount > 0;
   }
 };
+

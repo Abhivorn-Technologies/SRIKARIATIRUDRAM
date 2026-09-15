@@ -26,6 +26,8 @@ import {
   Search,
   Flame,
   CheckCircle2,
+  Lock,
+  Unlock,
 } from 'lucide-react';
 
 export default function SelectNakshatraAndSevaPage() {
@@ -69,6 +71,9 @@ export default function SelectNakshatraAndSevaPage() {
     }
     return 1; // Default to Day 1 Rohini
   });
+
+  // Lock day selection state (locked by default when booking a day so user cannot select other days)
+  const [isDayLocked, setIsDayLocked] = useState<boolean>(true);
 
   // Auto-resolve Day, Date, Rasi, DayType, Programme Highlights and Available Sevas
   const bookingOptions: NakshatraBookingInfo = useMemo(() => {
@@ -125,6 +130,9 @@ export default function SelectNakshatraAndSevaPage() {
     setSelectedDayNumber(dayNum);
     const opts = getNakshatraBookingOptions(dayNum);
     const chosenSeva = opts.availableSevas.find((s) => s.id === selectedSeva.id) || opts.availableSevas[0];
+
+    const newUrl = `/${locale}/book-seva/date?day=${dayNum}&nakshatra=${encodeURIComponent(opts.nakshatra)}&seva=${chosenSeva.slug}`;
+    router.replace(newUrl, { scroll: false });
 
     bookingService.saveActiveDraft({
       nakshatra: opts.nakshatra,
@@ -229,23 +237,66 @@ export default function SelectNakshatraAndSevaPage() {
             </div>
           </div>
 
+          {/* Active Selected Day Indicator Banner */}
+          <div className="p-3.5 sm:p-4 rounded-xl bg-gradient-to-r from-[#5A0714] via-[#4A0A14] to-[#35030A] border border-[#F2C14E] flex flex-wrap items-center justify-between gap-3 shadow-lg">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-full bg-[#F2C14E] text-[#280509] flex items-center justify-center font-bold font-mono text-xs shadow shrink-0">
+                {selectedDayNumber}
+              </div>
+              <div>
+                <span className="text-[10px] uppercase font-sans font-bold tracking-widest text-[#E8C76A] block">
+                  {isTe ? 'సక్రియ దినం & నక్షత్రం' : 'ACTIVE PROGRAMME DAY & NAKSHATRA'}
+                </span>
+                <h4 className="font-cinzel text-sm sm:text-base font-black text-[#FAF4E6]">
+                  DAY {bookingOptions.dayNumber} — {bookingOptions.nakshatra} ({bookingOptions.date})
+                </h4>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsDayLocked(!isDayLocked)}
+              className={`text-[11px] font-sans font-bold px-3 py-1 rounded-lg border transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
+                isDayLocked
+                  ? 'bg-[#F2C14E]/15 border-[#F2C14E]/60 text-[#F2C14E] hover:bg-[#F2C14E]/25'
+                  : 'bg-[#5A0714] border-[#D6A532]/60 text-[#FAF4E6] hover:bg-[#8B1E2D]'
+              }`}
+            >
+              {isDayLocked ? (
+                <>
+                  <Lock className="w-3.5 h-3.5 text-[#F2C14E]" />
+                  <span>{isTe ? '✓ దినం స్థిరీకరించబడింది (అన్‌లాక్ చేయడానికి క్లిక్ చేయండి)' : '✓ DAY NAKSHATRA LOCKED (Click to Unlock)'}</span>
+                </>
+              ) : (
+                <>
+                  <Unlock className="w-3.5 h-3.5 text-[#E8C76A]" />
+                  <span>{isTe ? 'అన్‌లాక్ చేయబడింది (ఇతర రోజు ఎంచుకోవచ్చు)' : 'UNLOCKED (Click to Lock)'}</span>
+                </>
+              )}
+            </button>
+          </div>
+
           {/* 28 Programme Days Grid (Zero clipping, natural flow) */}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2.5 sm:gap-3">
             {filteredDays.map((d) => {
               const isSelected = selectedDayNumber === d.dayNumber;
               const isConcludingCard = d.dayNumber === 28;
+              const isDisabled = isDayLocked && !isSelected;
 
               return (
                 <button
                   key={d.id}
                   type="button"
-                  onClick={() => handleSelectDay(d.dayNumber)}
-                  className={`group relative flex flex-col items-center justify-between p-3 rounded-xl border text-center transition-all duration-200 cursor-pointer select-none min-h-[110px] ${
+                  disabled={isDisabled}
+                  onClick={() => !isDisabled && handleSelectDay(d.dayNumber)}
+                  className={`group relative flex flex-col items-center justify-between p-3 rounded-xl border text-center transition-all duration-200 select-none min-h-[110px] ${
                     isSelected
                       ? 'bg-gradient-to-b from-[#5A0714] to-[#3B040B] border-[#F2C14E] shadow-[0_0_18px_rgba(214,165,50,0.5)] ring-2 ring-[#D6A532] scale-[1.03]'
+                      : isDisabled
+                      ? 'bg-[#1F0205]/40 border-[#D6A532]/10 opacity-30 cursor-not-allowed pointer-events-none'
                       : isConcludingCard
-                      ? 'bg-[#3A040B]/90 border-[#F2C14E]/40 hover:border-[#F2C14E] hover:bg-[#4A0714]'
-                      : 'bg-[#230206]/90 border-[#D6A532]/25 hover:border-[#D6A532]/60 hover:bg-[#35030A]'
+                      ? 'bg-[#3A040B]/90 border-[#F2C14E]/40 hover:border-[#F2C14E] hover:bg-[#4A0714] cursor-pointer'
+                      : 'bg-[#230206]/90 border-[#D6A532]/25 hover:border-[#D6A532]/60 hover:bg-[#35030A] cursor-pointer'
                   }`}
                 >
                   {/* Top Badge: Day Number */}
@@ -253,6 +304,8 @@ export default function SelectNakshatraAndSevaPage() {
                     className={`text-[9px] font-sans font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
                       isSelected
                         ? 'bg-[#F2C14E] text-[#280509]'
+                        : isDisabled
+                        ? 'bg-[#5A0714]/30 text-[#E8C76A]/40'
                         : isConcludingCard
                         ? 'bg-[#F2C14E]/20 text-[#F2C14E] border border-[#F2C14E]/50'
                         : d.isSpecial
@@ -267,12 +320,12 @@ export default function SelectNakshatraAndSevaPage() {
                   <div className="my-1 space-y-0.5">
                     <span
                       className={`font-cinzel text-xs sm:text-sm font-black block leading-tight ${
-                        isSelected ? 'text-[#F2C14E]' : 'text-[#FAF4E6]'
+                        isSelected ? 'text-[#F2C14E]' : isDisabled ? 'text-[#FAF4E6]/40' : 'text-[#FAF4E6]'
                       }`}
                     >
                       {d.nameEn}
                     </span>
-                    <span className="font-sans text-[10px] font-medium text-[#E8C76A]/80 block">
+                    <span className={`font-sans text-[10px] font-medium block ${isDisabled ? 'text-[#E8C76A]/30' : 'text-[#E8C76A]/80'}`}>
                       {isTe ? d.nameTe : isHi ? (d.nameHi || d.nameEn) : d.nameTe}
                     </span>
                   </div>
@@ -280,7 +333,7 @@ export default function SelectNakshatraAndSevaPage() {
                   {/* Rasi Label */}
                   <span
                     className={`text-[9px] font-sans truncate max-w-full px-1 ${
-                      isSelected ? 'text-[#FAF4E6] font-semibold' : 'text-[#FFF8E8]/60'
+                      isSelected ? 'text-[#FAF4E6] font-semibold' : isDisabled ? 'text-[#FFF8E8]/30' : 'text-[#FFF8E8]/60'
                     }`}
                   >
                     {d.rasi}
@@ -290,6 +343,13 @@ export default function SelectNakshatraAndSevaPage() {
                   {isSelected && (
                     <div className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-[#F2C14E] text-[#280509] flex items-center justify-center shadow-md">
                       <Check className="w-3 h-3 stroke-[3]" />
+                    </div>
+                  )}
+
+                  {/* Locked indicator when disabled */}
+                  {isDisabled && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-[#1F0205]/20 rounded-xl">
+                      <Lock className="w-3.5 h-3.5 text-[#D6A532]/40" />
                     </div>
                   )}
                 </button>

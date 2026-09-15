@@ -9,8 +9,10 @@ export async function GET(req: NextRequest, { params }: { params: { type: string
     const type = params.type.toLowerCase();
 
     if (type === 'sankalpam') {
-      const date = searchParams.get('date') || new Date().toISOString().split('T')[0];
-      const data = await reportServerService.getSankalpamReport(date);
+      const date = searchParams.get('date') || undefined;
+      const dayStr = searchParams.get('day');
+      const dayNumber = dayStr ? Number(dayStr) : undefined;
+      const data = await reportServerService.getSankalpamReport(date, dayNumber);
       return NextResponse.json({ success: true, data });
     }
 

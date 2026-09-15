@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
-import { liveArchives } from '@/data/gallery';
+import { liveArchives as defaultArchives } from '@/data/gallery';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
 import { Radio, Users, MessageSquare, Play, Send, Volume2 } from 'lucide-react';
 
 export function LiveStreamViewer() {
@@ -14,6 +15,8 @@ export function LiveStreamViewer() {
   const t = useTranslations('live');
 
   const [liveData, setLiveData] = useState<any>(null);
+  const [archives, setArchives] = useState<any[]>(defaultArchives);
+  const [selectedArchive, setSelectedArchive] = useState<any | null>(null);
   const [chatMessage, setChatMessage] = useState('');
   const [messages, setMessages] = useState([
     { user: 'Srinivas R.', text: 'ఓం నమః శివాయ! హర హర మహాదేవ!', time: '10:42 AM' },
@@ -30,6 +33,15 @@ export function LiveStreamViewer() {
         }
       })
       .catch(e => console.warn('Failed to fetch live status:', e));
+
+    fetch('/api/live/archives')
+      .then(res => res.json())
+      .then(json => {
+        if (json.success && json.data && json.data.length > 0) {
+          setArchives(json.data);
+        }
+      })
+      .catch(e => console.warn('Failed to fetch live archives:', e));
   }, []);
 
   const handleSendChat = (e: React.FormEvent) => {
@@ -42,11 +54,17 @@ export function LiveStreamViewer() {
   const isLive = liveData?.is_live ?? true;
   const liveUrl = liveData?.live_url || 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
   const getEmbedUrl = (url: string) => {
+    if (!url) return '';
     if (url.includes('youtube.com/watch?v=')) {
-      return url.replace('watch?v=', 'embed/');
+      const id = url.split('v=')[1]?.split('&')[0];
+      return `https://www.youtube-nocookie.com/embed/${id}`;
     }
     if (url.includes('youtu.be/')) {
-      return url.replace('youtu.be/', 'www.youtube.com/embed/');
+      const id = url.split('youtu.be/')[1]?.split('?')[0];
+      return `https://www.youtube-nocookie.com/embed/${id}`;
+    }
+    if (!url.startsWith('http')) {
+      return `https://www.youtube-nocookie.com/embed/${url}`;
     }
     return url;
   };
@@ -155,26 +173,65 @@ export function LiveStreamViewer() {
         </h3>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {liveArchives.map((rec) => (
-            <Card key={rec.day} variant="sacred" interactive className="p-4 border-gold/25 group">
+          {archives.map((rec, idx) => (
+            <Card
+              key={rec.id || rec.day || idx}
+              variant="sacred"
+              interactive
+              onClick={() => setSelectedArchive(rec)}
+              className="p-4 border-gold/25 group cursor-pointer"
+            >
               <div className="aspect-video rounded-lg overflow-hidden bg-burgundy-deep mb-3 relative flex items-center justify-center">
                 <div className="w-10 h-10 rounded-full bg-gold/20 border border-gold flex items-center justify-center group-hover:scale-110 transition-transform">
                   <Play className="w-5 h-5 text-gold-lighter fill-gold-lighter ml-0.5" />
                 </div>
                 <span className="absolute bottom-2 right-2 text-[10px] font-bold bg-black/80 px-2 py-0.5 rounded text-ivory">
-                  {rec.duration}
+                  {rec.duration || '3h 45m'}
                 </span>
               </div>
               <h4 className="font-cinzel text-sm font-bold text-ivory group-hover:text-gold-light line-clamp-1">
-                {isTe ? rec.titleTe : rec.title}
+                {isTe ? (rec.title_te || rec.titleTe || rec.title) : (rec.title || rec.titleTe || rec.title)}
               </h4>
               <span className="text-xs text-ivory/60 font-sans mt-1 block">
-                {rec.views} views • Recorded
+                {rec.views || '15K'} views • Recorded
               </span>
             </Card>
           ))}
         </div>
       </div>
+
+      {/* Archive Recording Playback Modal */}
+      <Modal
+        isOpen={!!selectedArchive}
+        onClose={() => setSelectedArchive(null)}
+        maxWidth="xl"
+      >
+        {selectedArchive && (
+          <div className="space-y-4">
+            <div className="aspect-video rounded-xl overflow-hidden bg-black border border-gold/40 shadow-2xl">
+              <iframe
+                src={`${getEmbedUrl(selectedArchive.youtube_id || selectedArchive.url)}?autoplay=1`}
+                title={selectedArchive.title}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="w-full h-full border-0"
+              />
+            </div>
+            <div className="space-y-1 text-center">
+              <Badge variant="gold" size="sm" className="mb-1">
+                Day {selectedArchive.day} Recording Archive
+              </Badge>
+              <h3 className="font-cinzel text-lg md:text-xl font-bold text-gold-light">
+                {isTe ? (selectedArchive.title_te || selectedArchive.titleTe || selectedArchive.title) : (selectedArchive.title || selectedArchive.titleTe || selectedArchive.title)}
+              </h3>
+              <p className="text-xs text-ivory/70 font-sans">
+                Duration: {selectedArchive.duration || '3h 45m'} • {selectedArchive.views || '15K'} Views
+              </p>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }
+

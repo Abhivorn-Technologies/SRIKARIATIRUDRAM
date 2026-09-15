@@ -1,7 +1,7 @@
-import { query } from '@/lib/db';
+import { connectToDatabase } from '@/lib/mongodb';
 
 export interface ScheduleItem {
-  id: string;
+  id?: string;
   day_number: number;
   date: string;
   date_display: string;
@@ -9,7 +9,7 @@ export interface ScheduleItem {
   rasi?: string;
   day_type: string;
   special_seva_id?: string;
-  status: string;
+  status?: string;
   title?: string;
   title_te?: string;
   title_hi?: string;
@@ -21,108 +21,80 @@ export interface ScheduleItem {
   special_programme?: string;
   evening_programme?: string;
   annadanam_menu?: string;
-  created_at?: string;
-  updated_at?: string;
+  created_at?: string | Date;
+  updated_at?: string | Date;
 }
 
 export const scheduleServerService = {
   async getAllSchedules(): Promise<ScheduleItem[]> {
-    const res = await query<ScheduleItem>(`
-      SELECT * FROM public.schedules
-      ORDER BY day_number ASC;
-    `);
-    return res.rows;
+    const { db } = await connectToDatabase();
+    const docs = await db.collection('schedules').find({}).sort({ day_number: 1 }).toArray();
+    return docs as any;
   },
 
   async getScheduleById(id: string): Promise<ScheduleItem | null> {
-    const res = await query<ScheduleItem>(`
-      SELECT * FROM public.schedules
-      WHERE id::text = $1 OR day_number::text = $1 OR date::text = $1
-      LIMIT 1;
-    `, [id]);
-    return res.rows[0] || null;
+    const { db } = await connectToDatabase();
+    const dayNum = Number(id);
+    const filter = !isNaN(dayNum) ? { $or: [{ day_number: dayNum }, { date: id }, { id }] } : { $or: [{ date: id }, { id }] };
+    const doc = await db.collection('schedules').findOne(filter);
+    return doc as any;
   },
 
   async getScheduleByDate(dateStr: string): Promise<ScheduleItem | null> {
-    const res = await query<ScheduleItem>(`
-      SELECT * FROM public.schedules
-      WHERE date = $1::date OR date_display ILIKE $2
-      LIMIT 1;
-    `, [dateStr, `%${dateStr}%`]);
-    return res.rows[0] || null;
+    const { db } = await connectToDatabase();
+    const doc = await db.collection('schedules').findOne({
+      $or: [{ date: dateStr }, { date_display: new RegExp(dateStr, 'i') }]
+    });
+    return doc as any;
   },
 
   async createSchedule(data: Partial<ScheduleItem>): Promise<ScheduleItem> {
-    const res = await query<ScheduleItem>(`
-      INSERT INTO public.schedules (
-        day_number, date, date_display, nakshatra, rasi, day_type, special_seva_id, status, title,
-        morning_programme, madhyahnika, special_programme, evening_programme, annadanam_menu, updated_at
-      ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW()
-      )
-      RETURNING *;
-    `, [
-      data.day_number,
-      data.date,
-      data.date_display || data.date,
-      data.nakshatra || 'Sarva Nakshatras',
-      data.rasi || '',
-      data.day_type || 'REGULAR',
-      data.special_seva_id || null,
-      data.status || 'SCHEDULED',
-      data.title || `Day ${data.day_number} Mahotsavam`,
-      data.morning_programme || '06:30 AM Suprabhatam & Rudra Abhishekam',
-      data.madhyahnika || '11:30 AM Madhyahnika Pooja',
-      data.special_programme || '08:30 AM Nakshatra Hawan',
-      data.evening_programme || '06:00 PM Deeparadhana & Harathi',
-      data.annadanam_menu || 'Sattvic Annaprasadam'
-    ]);
-    return res.rows[0];
+    const { db } = await connectToDatabase();
+    const newSchedule: ScheduleItem = {
+      day_number: Number(data.day_number || 1),
+      date: data.date || '2026-11-25',
+      date_display: data.date_display || data.date || '25 Nov 2026',
+      nakshatra: data.nakshatra || 'Sarva Nakshatras',
+      rasi: data.rasi || '',
+      day_type: data.day_type || 'REGULAR',
+      special_seva_id: data.special_seva_id,
+      status: data.status || 'SCHEDULED',
+      title: data.title || `Day ${data.day_number} Mahotsavam`,
+      morning_programme: data.morning_programme || '06:30 AM Suprabhatam & Rudra Abhishekam',
+      madhyahnika: data.madhyahnika || '11:30 AM Madhyahnika Pooja',
+      special_programme: data.special_programme || '08:30 AM Nakshatra Hawan',
+      evening_programme: data.evening_programme || '06:00 PM Deeparadhana & Harathi',
+      annadanam_menu: data.annadanam_menu || 'Sattvic Annaprasadam',
+      created_at: new Date(),
+      updated_at: new Date()
+    };
+
+    await db.collection('schedules').updateOne(
+      { day_number: newSchedule.day_number },
+      { $set: newSchedule },
+      { upsert: true }
+    );
+    return newSchedule;
   },
 
   async updateSchedule(id: string, updates: Partial<ScheduleItem>): Promise<ScheduleItem | null> {
-    const fields: string[] = [];
-    const values: any[] = [];
-    let idx = 1;
+    const { db } = await connectToDatabase();
+    const dayNum = Number(id);
+    const filter = !isNaN(dayNum) ? { $or: [{ day_number: dayNum }, { date: id }, { id }] } : { $or: [{ date: id }, { id }] };
 
-    const allowedKeys: (keyof ScheduleItem)[] = [
-      'day_number', 'date', 'date_display', 'nakshatra', 'rasi', 'day_type',
-      'special_seva_id', 'status', 'title', 'title_te', 'title_hi', 'description',
-      'tithi', 'morning_programme', 'madhyahnika', 'special_programme',
-      'evening_programme', 'annadanam_menu'
-    ];
-
-    for (const key of allowedKeys) {
-      if (updates[key] !== undefined) {
-        fields.push(`${String(key)} = $${idx}`);
-        values.push(updates[key]);
-        idx++;
-      }
-    }
-
-    if (fields.length === 0) {
-      return this.getScheduleById(id);
-    }
-
-    fields.push(`updated_at = NOW()`);
-    values.push(id);
-
-    const sql = `
-      UPDATE public.schedules
-      SET ${fields.join(', ')}
-      WHERE id::text = $${idx} OR day_number::text = $${idx}
-      RETURNING *;
-    `;
-
-    const res = await query<ScheduleItem>(sql, values);
-    return res.rows[0] || null;
+    const res = await db.collection('schedules').findOneAndUpdate(
+      filter,
+      { $set: { ...updates, updated_at: new Date() } },
+      { returnDocument: 'after' }
+    );
+    return res?.value as any;
   },
 
   async deleteSchedule(id: string): Promise<boolean> {
-    const res = await query(`
-      DELETE FROM public.schedules
-      WHERE id::text = $1 OR day_number::text = $1;
-    `, [id]);
-    return res.rowCount > 0;
+    const { db } = await connectToDatabase();
+    const dayNum = Number(id);
+    const filter = !isNaN(dayNum) ? { $or: [{ day_number: dayNum }, { date: id }, { id }] } : { $or: [{ date: id }, { id }] };
+    const res = await db.collection('schedules').deleteOne(filter);
+    return res.deletedCount > 0;
   }
 };

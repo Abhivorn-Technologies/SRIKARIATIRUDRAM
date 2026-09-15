@@ -1,4 +1,4 @@
-import { query } from '@/lib/db';
+import { connectToDatabase } from '@/lib/mongodb';
 
 export interface DashboardMetrics {
   todayBookings: number;
@@ -23,142 +23,144 @@ export interface DashboardMetrics {
 
 export const dashboardServerService = {
   async getDashboardMetrics(): Promise<DashboardMetrics> {
+    const { db } = await connectToDatabase();
     const today = new Date().toISOString().split('T')[0];
 
-    // 1. Bookings Aggregations
-    const bookingsAggSql = `
-      SELECT 
-        COUNT(*) as total_bookings,
-        COALESCE(SUM(CASE WHEN payment_status = 'SUCCESS' THEN amount ELSE 0 END), 0) as total_revenue,
-        COUNT(CASE WHEN created_at::date = $1::date THEN 1 END) as today_bookings,
-        COALESCE(SUM(CASE WHEN created_at::date = $1::date AND payment_status = 'SUCCESS' THEN amount ELSE 0 END), 0) as today_revenue,
-        COUNT(CASE WHEN payment_status = 'PENDING' THEN 1 END) as pending_payments,
-        COUNT(CASE WHEN attendance = 'PRESENT' THEN 1 END) as attendance_present,
-        COUNT(CASE WHEN attendance = 'PENDING' THEN 1 END) as attendance_pending
-      FROM public.bookings;
-    `;
-    const bookingsAggRes = await query(bookingsAggSql, [today]);
-    const bAgg = bookingsAggRes.rows[0] || {};
+    // Fetch all bookings
+    const bookings = await db.collection('bookings').find({}).toArray();
+    const donations = await db.collection('donations').find({}).toArray();
+    const annadanams = await db.collection('annadanam').find({}).toArray();
+    const schedules = await db.collection('schedules').find({}).sort({ day_number: 1 }).toArray();
 
-    // 2. Donations Aggregations
-    const donationsAggSql = `
-      SELECT 
-        COALESCE(SUM(CASE WHEN created_at::date = $1::date AND payment_status = 'SUCCESS' THEN amount ELSE 0 END), 0) as today_donations,
-        COALESCE(SUM(CASE WHEN payment_status = 'SUCCESS' THEN amount ELSE 0 END), 0) as total_donations
-      FROM public.donations;
-    `;
-    const donationsAggRes = await query(donationsAggSql, [today]);
-    const dAgg = donationsAggRes.rows[0] || {};
+    let totalBookings = bookings.length;
+    let totalRevenue = 0;
+    let todayBookings = 0;
+    let todayRevenue = 0;
+    let pendingPayments = 0;
+    let attendancePresent = 0;
+    let attendancePending = 0;
 
-    // 3. Annadanam Aggregations
-    const annadanamAggSql = `
-      SELECT 
-        COUNT(*) as total_sponsors,
-        COALESCE(SUM(CASE WHEN payment_status = 'SUCCESS' THEN amount ELSE 0 END), 0) as total_annadanam_revenue
-      FROM public.annadanam;
-    `;
-    const annadanamAggRes = await query(annadanamAggSql);
-    const aAgg = annadanamAggRes.rows[0] || {};
+    const sevasMap: Record<string, { count: number; revenue: number }> = {};
+    const nakshatrasMap: Record<string, number> = {};
+    const dateBookingsMap: Record<string, { bookings: number; revenue: number }> = {};
 
-    // 4. Seva Availability Aggregations
-    const availAggSql = `
-      SELECT 
-        COALESCE(SUM(capacity), 0) as total_capacity,
-        COALESCE(SUM(booked_count), 0) as total_booked
-      FROM public.seva_availability;
-    `;
-    const availAggRes = await query(availAggSql);
-    const totalCapacity = parseInt(availAggRes.rows[0]?.total_capacity || '0', 10);
-    const totalBooked = parseInt(availAggRes.rows[0]?.total_booked || '0', 10);
+    for (const b of bookings) {
+      const amt = Number(b.amount || 0);
+      const isSuccess = b.payment_status === 'SUCCESS' || b.payment_status === 'CONFIRMED' || b.payment_status === 'success';
+      const createdDate = b.created_at ? new Date(b.created_at).toISOString().split('T')[0] : '';
 
-    // 5. Sevas Breakdown
-    const sevasBreakdownSql = `
-      SELECT 
-        seva_name as name,
-        COUNT(*) as count,
-        COALESCE(SUM(CASE WHEN payment_status = 'SUCCESS' THEN amount ELSE 0 END), 0) as revenue
-      FROM public.bookings
-      GROUP BY seva_name
-      ORDER BY count DESC
-      LIMIT 8;
-    `;
-    const sevasBreakdownRes = await query(sevasBreakdownSql);
+      if (isSuccess) {
+        totalRevenue += amt;
+      }
+      if (createdDate === today) {
+        todayBookings++;
+        if (isSuccess) todayRevenue += amt;
+      }
+      if (b.payment_status === 'PENDING') {
+        pendingPayments++;
+      }
+      if (b.attendance === 'PRESENT') {
+        attendancePresent++;
+      } else {
+        attendancePending++;
+      }
 
-    // 6. Nakshatras Breakdown
-    const nakshatrasBreakdownSql = `
-      SELECT 
-        COALESCE(janma_nakshatra, nakshatra) as name,
-        COUNT(*) as count
-      FROM public.bookings
-      GROUP BY name
-      ORDER BY count DESC
-      LIMIT 8;
-    `;
-    const nakshatrasBreakdownRes = await query(nakshatrasBreakdownSql);
+      // Seva breakdown
+      const sevaName = b.seva_name || 'Seva';
+      if (!sevasMap[sevaName]) sevasMap[sevaName] = { count: 0, revenue: 0 };
+      sevasMap[sevaName].count++;
+      if (isSuccess) sevasMap[sevaName].revenue += amt;
 
-    // 7. Daily 28-day schedule Chart
-    const dailyChartSql = `
-      SELECT 
-        s.date::text as date,
-        s.date_display as display,
-        COUNT(b.id) as bookings,
-        COALESCE(SUM(CASE WHEN b.payment_status = 'SUCCESS' THEN b.amount ELSE 0 END), 0) as revenue
-      FROM public.schedules s
-      LEFT JOIN public.bookings b ON b.selected_date = s.date
-      GROUP BY s.day_number, s.date, s.date_display
-      ORDER BY s.day_number ASC;
-    `;
-    const dailyChartRes = await query(dailyChartSql);
+      // Nakshatra breakdown
+      const nak = b.janma_nakshatra || b.nakshatra || 'Sarva Nakshatra';
+      nakshatrasMap[nak] = (nakshatrasMap[nak] || 0) + 1;
 
-    // 8. Today's Programme
-    const todayProgSql = `
-      SELECT * FROM public.schedules
-      WHERE date = $1::date
-      LIMIT 1;
-    `;
-    const todayProgRes = await query(todayProgSql, [today]);
-    const fallbackProg = dailyChartRes.rows[0] ? await query('SELECT * FROM public.schedules ORDER BY day_number ASC LIMIT 1') : { rows: [] };
-    const todayProgramme = todayProgRes.rows[0] || fallbackProg.rows[0] || null;
+      // Date chart map
+      if (b.selected_date) {
+        if (!dateBookingsMap[b.selected_date]) {
+          dateBookingsMap[b.selected_date] = { bookings: 0, revenue: 0 };
+        }
+        dateBookingsMap[b.selected_date].bookings++;
+        if (isSuccess) dateBookingsMap[b.selected_date].revenue += amt;
+      }
+    }
 
-    // 9. Recent 6 bookings
-    const recentBookingsSql = `
-      SELECT * FROM public.bookings
-      ORDER BY created_at DESC
-      LIMIT 6;
-    `;
-    const recentBookingsRes = await query(recentBookingsSql);
+    // Donations
+    let todayDonations = 0;
+    let totalDonations = 0;
+    for (const d of donations) {
+      const amt = Number(d.amount || 0);
+      const isSuccess = d.payment_status === 'SUCCESS' || d.payment_status === 'CONFIRMED' || d.payment_status === 'success' || !d.payment_status;
+      if (isSuccess) {
+        totalDonations += amt;
+        const createdDate = d.created_at ? new Date(d.created_at).toISOString().split('T')[0] : '';
+        if (createdDate === today) todayDonations += amt;
+      }
+    }
+
+    // Annadanam
+    let annadanamSponsors = annadanams.length;
+    let annadanamRevenue = 0;
+    for (const a of annadanams) {
+      const amt = Number(a.amount || 0);
+      const isSuccess = a.payment_status === 'SUCCESS' || a.payment_status === 'CONFIRMED' || a.payment_status === 'success' || !a.payment_status;
+      if (isSuccess) annadanamRevenue += amt;
+    }
+
+    // Daily Chart from 28-day schedule
+    const dailyChart = schedules.map((s: any) => {
+      const dateStr = s.date ? new Date(s.date).toISOString().split('T')[0] : '';
+      const mapped = dateBookingsMap[dateStr] || { bookings: 0, revenue: 0 };
+      return {
+        date: dateStr,
+        display: s.date_display || `Day ${s.day_number}`,
+        bookings: mapped.bookings,
+        revenue: mapped.revenue
+      };
+    });
+
+    const todayProgramme = schedules.find((s: any) => {
+      const dateStr = s.date ? new Date(s.date).toISOString().split('T')[0] : '';
+      return dateStr === today;
+    }) || schedules[0] || null;
+
+    const recentBookings = [...bookings]
+      .sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
+      .slice(0, 6)
+      .map((b: any) => ({
+        ...b,
+        id: b.booking_id || b.id || b._id.toString()
+      }));
+
+    const sevasBreakdown = Object.entries(sevasMap)
+      .map(([name, val]) => ({ name, count: val.count, revenue: val.revenue }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 8);
+
+    const nakshatrasBreakdown = Object.entries(nakshatrasMap)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 8);
 
     return {
-      todayBookings: parseInt(bAgg.today_bookings || '0', 10),
-      todayRevenue: parseFloat(bAgg.today_revenue || '0'),
-      totalBookings: parseInt(bAgg.total_bookings || '0', 10),
-      totalRevenue: parseFloat(bAgg.total_revenue || '0'),
-      todayDonations: parseFloat(dAgg.today_donations || '0'),
-      totalDonations: parseFloat(dAgg.total_donations || '0'),
-      annadanamSponsors: parseInt(aAgg.total_sponsors || '0', 10),
-      annadanamRevenue: parseFloat(aAgg.total_annadanam_revenue || '0'),
-      pendingPayments: parseInt(bAgg.pending_payments || '0', 10),
-      availableSlots: Math.max(0, totalCapacity - totalBooked),
-      bookedSlots: totalBooked,
-      attendancePresent: parseInt(bAgg.attendance_present || '0', 10),
-      attendancePending: parseInt(bAgg.attendance_pending || '0', 10),
+      todayBookings,
+      todayRevenue,
+      totalBookings,
+      totalRevenue,
+      todayDonations,
+      totalDonations,
+      annadanamSponsors,
+      annadanamRevenue,
+      pendingPayments,
+      availableSlots: Math.max(0, 5000 - totalBookings),
+      bookedSlots: totalBookings,
+      attendancePresent,
+      attendancePending,
       todayProgramme,
-      sevasBreakdown: sevasBreakdownRes.rows.map((r: any) => ({
-        name: r.name,
-        count: parseInt(r.count || '0', 10),
-        revenue: parseFloat(r.revenue || '0')
-      })),
-      nakshatrasBreakdown: nakshatrasBreakdownRes.rows.map((r: any) => ({
-        name: r.name,
-        count: parseInt(r.count || '0', 10)
-      })),
-      dailyChart: dailyChartRes.rows.map((r: any) => ({
-        date: r.date,
-        display: r.display,
-        bookings: parseInt(r.bookings || '0', 10),
-        revenue: parseFloat(r.revenue || '0')
-      })),
-      recentBookings: recentBookingsRes.rows
+      sevasBreakdown,
+      nakshatrasBreakdown,
+      dailyChart,
+      recentBookings
     };
   }
 };

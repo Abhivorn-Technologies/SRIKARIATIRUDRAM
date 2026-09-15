@@ -22,6 +22,7 @@ export interface SpecialSevaBookingDraft {
   devoteeParticipation?: 'attending' | 'not-attending';
   bookingId?: string;
   paymentStatus?: 'CONFIRMED' | 'PENDING' | 'FAILED';
+  transactionId?: string;
 }
 
 const SPECIAL_SEVA_DRAFT_KEY = 'srikari_active_special_seva_draft';

@@ -52,12 +52,12 @@ export default async function LocaleLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale} className="scroll-smooth">
+    <html lang={locale} suppressHydrationWarning className="scroll-smooth">
       <head>
         <link rel="icon" href="/assets/icons/FAVICON.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="/assets/icons/FAVICON.svg" />
       </head>
-      <body className="bg-burgundy-deep text-ivory min-h-screen flex flex-col selection:bg-gold selection:text-burgundy-deep">
+      <body suppressHydrationWarning className="bg-burgundy-deep text-ivory min-h-screen flex flex-col selection:bg-gold selection:text-burgundy-deep">
         <NextIntlClientProvider messages={messages}>
           <Header />
           <main className="flex-1">{children}</main>

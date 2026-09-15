@@ -3,6 +3,7 @@ import { annadanamServerService } from '@/services/server/annadanam.server.servi
 import { auditServerService } from '@/services/server/audit.server.service';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function GET(req: NextRequest) {
   try {

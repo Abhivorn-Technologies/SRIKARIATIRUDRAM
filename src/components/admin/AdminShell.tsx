@@ -5,6 +5,7 @@ import { usePathname, useRouter } from '@/i18n/routing';
 import { adminAuth, AdminUser } from '@/lib/adminAuth';
 import { AdminSidebar } from './AdminSidebar';
 import { AdminTopNav } from './AdminTopNav';
+import { ToastProvider } from '@/components/ui/Toast';
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -27,9 +28,11 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     }
   }, [pathname, isLoginPage, router]);
 
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
   // If on login page, just render the login page without the admin sidebar/topbar
   if (isLoginPage) {
-    return <>{children}</>;
+    return <ToastProvider>{children}</ToastProvider>;
   }
 
   // Loading state while checking auth
@@ -52,25 +55,30 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#180004] text-ivory flex">
-      {/* Sidebar */}
-      <AdminSidebar
-        user={user}
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-      />
-
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 lg:pl-72">
-        <AdminTopNav
+    <ToastProvider>
+      <div className="min-h-screen bg-[#180004] text-ivory flex">
+        {/* Sidebar */}
+        <AdminSidebar
           user={user}
-          onOpenSidebar={() => setSidebarOpen(true)}
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          isCollapsed={isCollapsed}
+          onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
         />
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1600px] w-full mx-auto">
-          {children}
-        </main>
+        {/* Main Content Area */}
+        <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${isCollapsed ? 'lg:pl-20' : 'lg:pl-60'}`}>
+          <AdminTopNav
+            user={user}
+            onOpenSidebar={() => setSidebarOpen(true)}
+          />
+
+          <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1600px] w-full mx-auto">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </ToastProvider>
   );
 }
+

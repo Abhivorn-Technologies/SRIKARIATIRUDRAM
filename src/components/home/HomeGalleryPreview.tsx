@@ -63,7 +63,7 @@ export function HomeGalleryPreview() {
                     {/* Actual Video Element (NO cover/poster image) */}
                     <video
                       src={item.fullUrl}
-                      preload="metadata"
+                      preload="none"
                       muted
                       playsInline
                       className="w-full h-full object-cover pointer-events-none"
@@ -87,6 +87,7 @@ export function HomeGalleryPreview() {
                       fill
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 20vw"
                       loading="lazy"
+                      unoptimized
                       className="object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#2B0005] via-[#2B0005]/30 to-transparent opacity-85 group-hover:opacity-95 transition-opacity" />
@@ -169,6 +170,7 @@ export function HomeGalleryPreview() {
                   alt={activeItem.title}
                   fill
                   sizes="(max-width: 1024px) 100vw, 800px"
+                  unoptimized
                   className="object-contain"
                 />
               )}

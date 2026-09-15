@@ -3,10 +3,14 @@ import { mediaServerService } from '@/services/server/media.server.service';
 import { auditServerService } from '@/services/server/audit.server.service';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const list = await mediaServerService.getMediaAssets('image');
+    const typeParam = req.nextUrl.searchParams.get('type');
+    const type = (typeParam === 'image' || typeParam === 'video' || typeParam === 'audio') ? typeParam : undefined;
+
+    const list = await mediaServerService.getMediaAssets(type);
     return NextResponse.json({ success: true, data: list });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
@@ -17,12 +21,12 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     if (!body.url && !body.secure_url) {
-      return NextResponse.json({ success: false, error: 'url is required' }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'File URL is required' }, { status: 400 });
     }
 
     const created = await mediaServerService.createMediaAsset({
       ...body,
-      media_type: 'image'
+      media_type: body.media_type || 'image'
     });
 
     await auditServerService.logAction({
@@ -38,3 +42,4 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
+

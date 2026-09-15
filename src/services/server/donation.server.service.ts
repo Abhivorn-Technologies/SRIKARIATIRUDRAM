@@ -1,7 +1,7 @@
-import { query } from '@/lib/db';
+import { connectToDatabase } from '@/lib/mongodb';
 
 export interface DonationRecord {
-  id: string;
+  id?: string;
   donation_id: string;
   donor_name: string;
   mobile: string;
@@ -14,101 +14,73 @@ export interface DonationRecord {
   payment_status: string;
   transaction_id?: string;
   notes?: string;
-  created_at?: string;
-  updated_at?: string;
+  created_at?: string | Date;
+  updated_at?: string | Date;
 }
 
 export const donationServerService = {
   async getDonations(purpose?: string, search?: string): Promise<DonationRecord[]> {
-    const conditions: string[] = [];
-    const params: any[] = [];
-    let idx = 1;
-
-    if (purpose) {
-      conditions.push(`purpose = $${idx}`);
-      params.push(purpose);
-      idx++;
-    }
-
+    const { db } = await connectToDatabase();
+    const filter: any = {};
+    if (purpose) filter.purpose = purpose;
     if (search) {
-      conditions.push(`(donor_name ILIKE $${idx} OR mobile ILIKE $${idx} OR donation_id ILIKE $${idx} OR gotram ILIKE $${idx})`);
-      params.push(`%${search}%`);
-      idx++;
+      const q = new RegExp(search, 'i');
+      filter.$or = [{ donor_name: q }, { mobile: q }, { donation_id: q }, { gotram: q }];
     }
 
-    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
-    const sql = `
-      SELECT * FROM public.donations
-      ${whereClause}
-      ORDER BY created_at DESC;
-    `;
-
-    const res = await query<DonationRecord>(sql, params);
-    return res.rows;
+    const docs = await db.collection('donations').find(filter).sort({ created_at: -1 }).toArray();
+    return docs as any;
   },
 
   async createDonation(data: Partial<DonationRecord>): Promise<DonationRecord> {
+    const { db } = await connectToDatabase();
     const rand = Math.floor(100000 + Math.random() * 900000);
     const donationId = data.donation_id || `SAR-DON-${rand}`;
 
-    const res = await query<DonationRecord>(`
-      INSERT INTO public.donations (
-        donation_id, donor_name, mobile, email, amount, purpose,
-        gotram, nakshatram, address, payment_status, transaction_id, notes, created_at, updated_at
-      ) VALUES (
-        $1, $2, $3, $4, $5, $6,
-        $7, $8, $9, $10, $11, $12, NOW(), NOW()
-      )
-      RETURNING *;
-    `, [
-      donationId,
-      data.donor_name || 'Anonymous Donor',
-      data.mobile || '',
-      data.email || null,
-      data.amount || 216,
-      data.purpose || 'ATI_RUDRAM',
-      data.gotram || null,
-      data.nakshatram || null,
-      data.address || null,
-      data.payment_status || 'SUCCESS',
-      data.transaction_id || `UPI/TXN${Date.now().toString().slice(-8)}`,
-      data.notes || null
-    ]);
+    const newDonation: DonationRecord = {
+      donation_id: donationId,
+      donor_name: data.donor_name || 'Anonymous Donor',
+      mobile: data.mobile || '',
+      email: data.email || undefined,
+      amount: Number(data.amount || 216),
+      purpose: data.purpose || 'ATI_RUDRAM',
+      gotram: data.gotram || undefined,
+      nakshatram: data.nakshatram || undefined,
+      address: data.address || undefined,
+      payment_status: data.payment_status || 'SUCCESS',
+      transaction_id: data.transaction_id || `UPI/TXN${Date.now().toString().slice(-8)}`,
+      notes: data.notes || undefined,
+      created_at: new Date(),
+      updated_at: new Date()
+    };
 
-    return res.rows[0];
+    await db.collection('donations').insertOne(newDonation as any);
+    return newDonation;
   },
 
   async updateDonation(id: string, updates: Partial<DonationRecord>): Promise<DonationRecord | null> {
-    const fields: string[] = [];
-    const values: any[] = [];
-    let idx = 1;
+    const { db } = await connectToDatabase();
+    const res = await db.collection('donations').findOneAndUpdate(
+      { $or: [{ donation_id: id }, { id }] },
+      { $set: { ...updates, updated_at: new Date() } },
+      { returnDocument: 'after' }
+    );
+    return res?.value as any;
+  },
 
-    const allowed: (keyof DonationRecord)[] = [
-      'donor_name', 'mobile', 'email', 'amount', 'purpose', 'gotram',
-      'nakshatram', 'address', 'payment_status', 'transaction_id', 'notes'
-    ];
+  async getDonationById(id: string): Promise<DonationRecord | null> {
+    const { db } = await connectToDatabase();
+    const doc = await db.collection('donations').findOne({
+      $or: [{ donation_id: id }, { id }]
+    });
+    return doc as any;
+  },
 
-    for (const k of allowed) {
-      if (updates[k] !== undefined) {
-        fields.push(`${String(k)} = $${idx}`);
-        values.push(updates[k]);
-        idx++;
-      }
-    }
-
-    if (fields.length === 0) return null;
-
-    fields.push(`updated_at = NOW()`);
-    values.push(id);
-
-    const sql = `
-      UPDATE public.donations
-      SET ${fields.join(', ')}
-      WHERE id::text = $${idx} OR donation_id = $${idx}
-      RETURNING *;
-    `;
-
-    const res = await query<DonationRecord>(sql, values);
-    return res.rows[0] || null;
+  async deleteDonation(id: string): Promise<boolean> {
+    const { db } = await connectToDatabase();
+    const res = await db.collection('donations').deleteOne({
+      $or: [{ donation_id: id }, { id }]
+    });
+    return res.deletedCount > 0;
   }
 };

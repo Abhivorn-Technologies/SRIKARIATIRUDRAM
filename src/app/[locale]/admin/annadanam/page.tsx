@@ -5,13 +5,18 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
+import { useToast } from '@/components/ui/Toast';
 import { Utensils, PlusCircle, RefreshCw, Trash2, X, AlertCircle } from 'lucide-react';
 
 export default function AdminAnnadanamPage() {
+  const { showToast } = useToast();
   const [sponsors, setSponsors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [deletingItem, setDeletingItem] = useState<any | null>(null);
+  const [deletingLoading, setDeletingLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -28,7 +33,7 @@ export default function AdminAnnadanamPage() {
     try {
       setLoading(true);
       setError(null);
-      const res = await fetch('/api/admin/annadanam');
+      const res = await fetch('/api/admin/annadanam', { cache: 'no-store' });
       const json = await res.json();
       if (json.success) {
         setSponsors(json.data || []);
@@ -58,25 +63,35 @@ export default function AdminAnnadanamPage() {
       const json = await res.json();
       if (json.success) {
         setIsAddOpen(false);
+        showToast('Annadanam sponsorship added successfully!', 'success');
         fetchAnnadanam();
       } else {
-        alert(json.error || 'Failed to add sponsor');
+        showToast(json.error || 'Failed to add sponsor', 'error');
       }
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, 'error');
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to remove this Annadanam record?')) return;
+  const confirmDelete = async () => {
+    if (!deletingItem) return;
     try {
-      const res = await fetch(`/api/admin/annadanam/${id}`, { method: 'DELETE' });
+      setDeletingLoading(true);
+      const res = await fetch(`/api/admin/annadanam/${deletingItem.id}`, { method: 'DELETE' });
       const json = await res.json();
-      if (json.success) fetchAnnadanam();
+      if (json.success) {
+        showToast('Annadanam record removed successfully!', 'success');
+        fetchAnnadanam();
+      } else {
+        showToast(json.error || 'Failed to delete record', 'error');
+      }
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, 'error');
+    } finally {
+      setDeletingLoading(false);
+      setDeletingItem(null);
     }
   };
 
@@ -165,7 +180,17 @@ export default function AdminAnnadanamPage() {
                 sponsors.map((s) => (
                   <tr key={s.id} className="hover:bg-gold/5 transition-colors">
                     <td className="py-3 px-4 font-medium text-ivory">
-                      {s.date} (Day {s.day_number || 1})
+                      {s.date ? (() => {
+                        const clean = s.date.includes('T') ? s.date.split('T')[0] : s.date;
+                        const parts = clean.split('-');
+                        if (parts.length === 3) {
+                          const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+                          if (!isNaN(d.getTime())) {
+                            return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+                          }
+                        }
+                        return clean;
+                      })() : '-'} (Day {s.day_number || 1})
                     </td>
                     <td className="py-3 px-4 font-semibold text-ivory">
                       {s.sponsor_name}
@@ -191,7 +216,7 @@ export default function AdminAnnadanamPage() {
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => handleDelete(s.id)}
+                        onClick={() => setDeletingItem(s)}
                         className="h-7 w-7 p-0 text-red-400 hover:bg-red-950/40"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -216,7 +241,7 @@ export default function AdminAnnadanamPage() {
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
           <form onSubmit={handleCreate} className="w-full max-w-lg bg-[#240006] border border-gold/40 rounded-2xl p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-gold/20 pb-3">
-              <h3 className="font-cinzel text-lg font-bold text-gold">Add Annadanam Sponsorship</h3>
+              <h3 className="font-cinzel text-lg font-bold text-gold">Add Annadanam Sponsor Record</h3>
               <button type="button" onClick={() => setIsAddOpen(false)} className="text-ivory/60 hover:text-ivory">
                 <X className="w-5 h-5" />
               </button>
@@ -225,64 +250,67 @@ export default function AdminAnnadanamPage() {
             <div className="space-y-3 text-xs">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-ivory/70 block mb-1">Sponsor Full Name *</label>
+                  <label className="text-gold font-bold uppercase tracking-wider block mb-1">Sponsor Full Name *</label>
                   <Input
+                    required
+                    placeholder="e.g. Venkatramaiah Sharma"
                     value={formData.sponsor_name}
                     onChange={(e) => setFormData({ ...formData, sponsor_name: e.target.value })}
-                    className="bg-[#1A0004] border-gold/30 text-ivory text-xs"
-                    required
+                    className="bg-white border-[#D6A532]/40 text-[#3A0A0A] placeholder:text-[#8A8A8A] font-bold text-xs"
                   />
                 </div>
                 <div>
-                  <label className="text-ivory/70 block mb-1">Contact Mobile *</label>
+                  <label className="text-gold font-bold uppercase tracking-wider block mb-1">Mobile Phone *</label>
                   <Input
+                    required
+                    placeholder="e.g. +91 98480 12345"
                     value={formData.mobile}
                     onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
-                    className="bg-[#1A0004] border-gold/30 text-ivory text-xs"
-                    required
+                    className="bg-white border-[#D6A532]/40 text-[#3A0A0A] placeholder:text-[#8A8A8A] font-bold text-xs"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-ivory/70 block mb-1">Sponsorship Date *</label>
-                  <input
+                  <label className="text-gold font-bold uppercase tracking-wider block mb-1">Sponsorship Date *</label>
+                  <Input
                     type="date"
+                    required
                     value={formData.date}
                     onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                    className="w-full bg-[#1A0004] border border-gold/30 text-ivory rounded-lg p-2 text-xs"
-                    required
+                    className="bg-white border-[#D6A532]/40 text-[#3A0A0A] font-bold text-xs"
                   />
                 </div>
                 <div>
-                  <label className="text-ivory/70 block mb-1">Amount (₹) *</label>
+                  <label className="text-gold font-bold uppercase tracking-wider block mb-1">Contribution Amount (₹) *</label>
                   <Input
                     type="number"
+                    required
                     value={formData.amount}
                     onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })}
-                    className="bg-[#1A0004] border-gold/30 text-ivory text-xs"
-                    required
+                    className="bg-white border-[#D6A532]/40 text-[#3A0A0A] font-bold text-xs"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="text-ivory/70 block mb-1">Occasion / In Memory Of</label>
+                <label className="text-gold font-bold uppercase tracking-wider block mb-1">Special Occasion / Sankalpam</label>
                 <Input
+                  placeholder="e.g. Birthday / In Memory of Parents"
                   value={formData.occasion}
                   onChange={(e) => setFormData({ ...formData, occasion: e.target.value })}
-                  className="bg-[#1A0004] border-gold/30 text-ivory text-xs"
+                  className="bg-white border-[#D6A532]/40 text-[#3A0A0A] placeholder:text-[#8A8A8A] font-bold text-xs"
                 />
               </div>
 
               <div>
-                <label className="text-ivory/70 block mb-1">Public Display Name</label>
+                <label className="text-gold font-bold uppercase tracking-wider block mb-1">Public Display Name</label>
                 <Input
                   placeholder="e.g. Sri Ramakrishna Kutumbam"
                   value={formData.display_name}
                   onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
-                  className="bg-[#1A0004] border-gold/30 text-ivory text-xs"
+                  className="bg-white border-[#D6A532]/40 text-[#3A0A0A] placeholder:text-[#8A8A8A] font-bold text-xs"
                 />
               </div>
             </div>
@@ -298,6 +326,19 @@ export default function AdminAnnadanamPage() {
           </form>
         </div>
       )}
+
+      {/* Confirm Delete Modal */}
+      <ConfirmModal
+        isOpen={!!deletingItem}
+        onClose={() => setDeletingItem(null)}
+        onConfirm={confirmDelete}
+        title="Remove Annadanam Record"
+        message={`Are you sure you want to remove the Annadanam record for "${deletingItem?.sponsor_name}"?`}
+        confirmText="Yes, Remove"
+        cancelText="Cancel"
+        type="danger"
+        loading={deletingLoading}
+      />
     </div>
   );
 }

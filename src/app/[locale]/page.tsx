@@ -1,6 +1,5 @@
 import { HeroSection } from '@/components/home/HeroSection';
 import { AboutPreview } from '@/components/home/AboutPreview';
-import { MainVideoSection } from '@/components/home/MainVideoSection';
 import { QuickSevaActions, TodayAtSrikari, ParticipationSection } from '@/components/home/QuickSevaActions';
 import { HomeSchedulePreview } from '@/components/home/HomeSchedulePreview';
 import { HomeSevasPreview } from '@/components/home/HomeSevasPreview';
@@ -15,9 +14,6 @@ export default function HomePage() {
 
       {/* 2. ABOUT SRIKARI TEMPLE — PREVIEW */}
       <AboutPreview />
-
-      {/* ★ 2.5 MAIN VIDEO SECTION — SRIKARI TEMPLE OVERVIEW (16:9 LANDSCAPE) ★ */}
-      <MainVideoSection />
 
       {/* 3. KEY INFORMATION & SEVAS */}
       <QuickSevaActions />

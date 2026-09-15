@@ -1,4 +1,4 @@
-import { query } from '@/lib/db';
+import { connectToDatabase } from '@/lib/mongodb';
 
 export interface DevoteeRecord {
   id: string;
@@ -22,80 +22,71 @@ export interface DevoteeRecord {
 
 export const devoteeServerService = {
   async getDevotees(search?: string): Promise<DevoteeRecord[]> {
-    let sql = `SELECT * FROM public.devotees`;
-    const params: any[] = [];
+    const { db } = await connectToDatabase();
+    const filter: any = {};
 
     if (search) {
-      sql += ` WHERE (full_name ILIKE $1 OR phone_number ILIKE $1 OR email ILIKE $1 OR gotram ILIKE $1 OR city ILIKE $1)`;
-      params.push(`%${search}%`);
+      const q = new RegExp(search, 'i');
+      filter.$or = [
+        { full_name: q },
+        { phone_number: q },
+        { email: q },
+        { gotram: q },
+        { city: q }
+      ];
     }
 
-    sql += ` ORDER BY total_bookings DESC, total_donated DESC, created_at DESC;`;
+    const docs = await db.collection('devotees')
+      .find(filter)
+      .sort({ total_bookings: -1, total_donated: -1, created_at: -1 })
+      .toArray();
 
-    const res = await query<DevoteeRecord>(sql, params);
-    return res.rows;
+    return docs.map((doc: any) => ({
+      ...doc,
+      id: doc.id || doc._id.toString()
+    }));
   },
 
   async getDevoteeById(id: string): Promise<{ devotee: DevoteeRecord | null; bookings: any[]; donations: any[] }> {
-    const devoteeRes = await query<DevoteeRecord>(`
-      SELECT * FROM public.devotees
-      WHERE id::text = $1 OR phone_number = $1
-      LIMIT 1;
-    `, [id]);
+    const { db } = await connectToDatabase();
+    const devotee = await db.collection('devotees').findOne({
+      $or: [{ id }, { phone_number: id }]
+    });
 
-    const devotee = devoteeRes.rows[0] || null;
     if (!devotee) return { devotee: null, bookings: [], donations: [] };
 
-    const bookingsRes = await query(`
-      SELECT * FROM public.bookings
-      WHERE phone_number = $1
-      ORDER BY created_at DESC;
-    `, [devotee.phone_number]);
+    const phone = devotee.phone_number;
+    const bookings = await db.collection('bookings')
+      .find({ phone_number: phone })
+      .sort({ created_at: -1 })
+      .toArray();
 
-    const donationsRes = await query(`
-      SELECT * FROM public.donations
-      WHERE mobile = $1
-      ORDER BY created_at DESC;
-    `, [devotee.phone_number]);
+    const donations = await db.collection('donations')
+      .find({ $or: [{ mobile: phone }, { phone_number: phone }] })
+      .sort({ created_at: -1 })
+      .toArray();
 
     return {
-      devotee,
-      bookings: bookingsRes.rows,
-      donations: donationsRes.rows
+      devotee: {
+        ...devotee,
+        id: devotee.id || devotee._id.toString()
+      } as any,
+      bookings,
+      donations
     };
   },
 
   async updateDevotee(id: string, updates: Partial<DevoteeRecord>): Promise<DevoteeRecord | null> {
-    const fields: string[] = [];
-    const values: any[] = [];
-    let idx = 1;
-
-    const allowed: (keyof DevoteeRecord)[] = [
-      'full_name', 'email', 'gotram', 'nakshatram', 'rasi', 'dob',
-      'address', 'city', 'country', 'notes'
-    ];
-
-    for (const k of allowed) {
-      if (updates[k] !== undefined) {
-        fields.push(`${String(k)} = $${idx}`);
-        values.push(updates[k]);
-        idx++;
-      }
-    }
-
-    if (fields.length === 0) return null;
-
-    fields.push(`updated_at = NOW()`);
-    values.push(id);
-
-    const sql = `
-      UPDATE public.devotees
-      SET ${fields.join(', ')}
-      WHERE id::text = $${idx}
-      RETURNING *;
-    `;
-
-    const res = await query<DevoteeRecord>(sql, values);
-    return res.rows[0] || null;
+    const { db } = await connectToDatabase();
+    const res = await db.collection('devotees').findOneAndUpdate(
+      { $or: [{ id }, { phone_number: id }] },
+      { $set: { ...updates, updated_at: new Date().toISOString() } },
+      { returnDocument: 'after' }
+    );
+    if (!res || !res.value) return null;
+    return {
+      ...res.value,
+      id: res.value.id || res.value._id.toString()
+    } as any;
   }
 };

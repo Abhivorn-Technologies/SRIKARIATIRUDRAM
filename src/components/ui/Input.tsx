@@ -24,10 +24,10 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           type={type}
           ref={ref}
           className={cn(
-            'w-full bg-white border border-[#D6A532]/45 rounded-lg px-3.5 py-2.5 text-sm text-[#3A0A0A] placeholder:text-[#8A8A8A] placeholder:opacity-100 font-sans',
-            'focus:outline-none focus:border-[#D6A532] focus:ring-1 focus:ring-[#D6A532] transition-colors duration-150',
-            'disabled:opacity-90 disabled:bg-[#F3EFE6] disabled:text-[#3A0A0A] disabled:border-[#D6A532]/30 disabled:cursor-not-allowed',
-            error && 'border-red-400 focus:border-red-400 focus:ring-red-400',
+            'w-full bg-white text-black border border-gold rounded-lg px-3.5 py-2.5 text-sm font-bold placeholder:text-zinc-500 font-sans',
+            'focus:outline-none focus:border-maroon focus:ring-1 focus:ring-maroon transition-colors duration-150',
+            'disabled:opacity-90 disabled:bg-zinc-200 disabled:text-zinc-600 disabled:cursor-not-allowed',
+            error && 'border-red-500 focus:border-red-500 focus:ring-red-500',
             className
           )}
           {...props}
@@ -63,10 +63,10 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
           id={inputId}
           ref={ref}
           className={cn(
-            'w-full bg-white border border-[#D6A532]/45 rounded-lg px-3.5 py-2.5 text-sm text-[#3A0A0A] placeholder:text-[#8A8A8A] placeholder:opacity-100 font-sans',
-            'focus:outline-none focus:border-[#D6A532] focus:ring-1 focus:ring-[#D6A532] transition-colors duration-150',
-            'disabled:opacity-90 disabled:bg-[#F3EFE6] disabled:text-[#3A0A0A] min-h-[100px] resize-y',
-            error && 'border-red-400 focus:border-red-400 focus:ring-red-400',
+            'w-full bg-white text-black border border-gold rounded-lg px-3.5 py-2.5 text-sm font-bold placeholder:text-zinc-500 font-sans',
+            'focus:outline-none focus:border-maroon focus:ring-1 focus:ring-maroon transition-colors duration-150',
+            'disabled:opacity-90 disabled:bg-zinc-200 disabled:text-zinc-600 min-h-[100px] resize-y',
+            error && 'border-red-500 focus:border-red-500 focus:ring-red-500',
             className
           )}
           {...props}
