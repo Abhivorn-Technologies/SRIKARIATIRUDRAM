@@ -6,6 +6,8 @@ import { Link } from '@/i18n/routing';
 import { formatCurrency } from '@/lib/utils';
 import { FileText, Download } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 export default async function AccountReceiptsPage() {
   const bookings = await bookingService.getDevoteeBookings();
 

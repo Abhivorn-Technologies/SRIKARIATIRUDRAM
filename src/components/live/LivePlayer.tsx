@@ -15,8 +15,10 @@ export function LiveStreamViewer() {
   const t = useTranslations('live');
 
   const [liveData, setLiveData] = useState<any>(null);
-  const [archives, setArchives] = useState<any[]>(defaultArchives);
+  const [archives, setArchives] = useState<any[]>([]);
   const [selectedArchive, setSelectedArchive] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [userClickedPlay, setUserClickedPlay] = useState(false);
   const [chatMessage, setChatMessage] = useState('');
   const [messages, setMessages] = useState([
     { user: 'Srinivas R.', text: 'ఓం నమః శివాయ! హర హర మహాదేవ!', time: '10:42 AM' },
@@ -32,12 +34,13 @@ export function LiveStreamViewer() {
           setLiveData(json.data);
         }
       })
-      .catch(e => console.warn('Failed to fetch live status:', e));
+      .catch(e => console.warn('Failed to fetch live status:', e))
+      .finally(() => setLoading(false));
 
     fetch('/api/live/archives')
       .then(res => res.json())
       .then(json => {
-        if (json.success && json.data && json.data.length > 0) {
+        if (json.success && json.data) {
           setArchives(json.data);
         }
       })
@@ -51,23 +54,34 @@ export function LiveStreamViewer() {
     setChatMessage('');
   };
 
-  const isLive = liveData?.is_live ?? true;
-  const liveUrl = liveData?.live_url || 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
-  const getEmbedUrl = (url: string) => {
-    if (!url) return '';
-    if (url.includes('youtube.com/watch?v=')) {
-      const id = url.split('v=')[1]?.split('&')[0];
-      return `https://www.youtube-nocookie.com/embed/${id}`;
+  const isLive = Boolean(liveData?.is_live && liveData?.live_url);
+  const liveUrl = liveData?.live_url || '';
+
+  const extractYouTubeId = (input: string) => {
+    if (!input) return '';
+    let str = input.trim();
+    if (str.includes('v=')) {
+      str = str.split('v=')[1]?.split('&')[0] || str;
+    } else if (str.includes('youtu.be/')) {
+      str = str.split('youtu.be/')[1]?.split('?')[0] || str;
+    } else if (str.includes('youtube.com/live/')) {
+      str = str.split('live/')[1]?.split('?')[0] || str;
+    } else if (str.includes('youtube.com/embed/')) {
+      str = str.split('embed/')[1]?.split('?')[0] || str;
     }
-    if (url.includes('youtu.be/')) {
-      const id = url.split('youtu.be/')[1]?.split('?')[0];
-      return `https://www.youtube-nocookie.com/embed/${id}`;
-    }
-    if (!url.startsWith('http')) {
-      return `https://www.youtube-nocookie.com/embed/${url}`;
-    }
-    return url;
+    // Simple validation for placeholder string vs real YouTube ID/URL
+    if (str.startsWith('live_day') || str === 'live_stream_placeholder') return '';
+    return str;
   };
+  
+  const getEmbedUrl = (url: string) => {
+    const id = extractYouTubeId(url);
+    if (!id) return '';
+    return `https://www.youtube.com/embed/${id}`;
+  };
+
+  const mainEmbedUrl = getEmbedUrl(liveUrl);
+  const shouldPlayLive = (isLive || userClickedPlay) && Boolean(mainEmbedUrl);
 
   return (
     <div className="space-y-10 max-w-6xl mx-auto">
@@ -76,9 +90,9 @@ export function LiveStreamViewer() {
         {/* Video Player Box */}
         <div className="lg:col-span-8 space-y-4">
           <div className="relative aspect-video rounded-2xl overflow-hidden border-2 border-gold/50 bg-black shadow-gold-lg flex items-center justify-center group">
-            {isLive ? (
+            {shouldPlayLive ? (
               <iframe
-                src={`${getEmbedUrl(liveUrl)}?autoplay=1&mute=0`}
+                src={`${mainEmbedUrl}?autoplay=1&rel=0`}
                 title={liveData?.title || 'Srikari Ati Rudram Live Telecast'}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
@@ -86,14 +100,17 @@ export function LiveStreamViewer() {
               />
             ) : (
               /* Live Overlay Header */
-              <div className="absolute inset-0 bg-gradient-to-t from-burgundy-deep/90 via-black/40 to-black/80 flex flex-col justify-between p-6">
+              <div
+                onClick={() => setUserClickedPlay(true)}
+                className="absolute inset-0 bg-gradient-to-t from-burgundy-deep/90 via-black/40 to-black/80 flex flex-col justify-between p-6 cursor-pointer"
+              >
                 <div className="flex items-center justify-between">
-                  <Badge variant="live" size="md">
-                    {t('liveNow')}
+                  <Badge variant={isLive ? "live" : "outline"} size="md" className={!isLive ? "border-gold/40 text-gold" : ""}>
+                    {isLive ? t('liveNow') : 'STANDBY / RECORDED'}
                   </Badge>
                   <div className="flex items-center gap-1.5 text-xs text-ivory/80 bg-black/60 px-3 py-1 rounded-full border border-white/20">
                     <Users className="w-3.5 h-3.5 text-red-400" />
-                    <span>{liveData?.viewers_count || '3,482'} Watching</span>
+                    <span>{liveData?.viewers_count || '14,200'} Devotees</span>
                   </div>
                 </div>
 
@@ -104,6 +121,7 @@ export function LiveStreamViewer() {
                   <h3 className="font-cinzel text-lg md:text-xl font-bold text-gold-light">
                     {liveData?.title || t('currentRitual')}
                   </h3>
+                  <p className="text-xs text-ivory/70">Click to Play Broadcast Stream</p>
                 </div>
 
                 <div className="flex items-center justify-between text-xs text-ivory/80">
@@ -208,14 +226,24 @@ export function LiveStreamViewer() {
       >
         {selectedArchive && (
           <div className="space-y-4">
-            <div className="aspect-video rounded-xl overflow-hidden bg-black border border-gold/40 shadow-2xl">
-              <iframe
-                src={`${getEmbedUrl(selectedArchive.youtube_id || selectedArchive.url)}?autoplay=1`}
-                title={selectedArchive.title}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                className="w-full h-full border-0"
-              />
+            <div className="aspect-video rounded-xl overflow-hidden bg-black border border-gold/40 shadow-2xl flex items-center justify-center">
+              {getEmbedUrl(selectedArchive.youtube_id || selectedArchive.url) ? (
+                <iframe
+                  src={`${getEmbedUrl(selectedArchive.youtube_id || selectedArchive.url)}?autoplay=1&rel=0`}
+                  title={selectedArchive.title}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="w-full h-full border-0"
+                />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center space-y-2">
+                  <Play className="w-10 h-10 text-gold/50" />
+                  <p className="text-sm font-bold text-gold-light">YouTube Video Link Required</p>
+                  <p className="text-xs text-ivory/70 max-w-sm">
+                    Please paste a valid YouTube broadcast link or video ID for Day {selectedArchive.day} in the Admin Panel.
+                  </p>
+                </div>
+              )}
             </div>
             <div className="space-y-1 text-center">
               <Badge variant="gold" size="sm" className="mb-1">

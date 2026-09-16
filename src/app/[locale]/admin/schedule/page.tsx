@@ -21,7 +21,8 @@ import {
   RefreshCw,
   AlertCircle,
   Database,
-  Upload
+  Upload,
+  Plus
 } from 'lucide-react';
 
 
@@ -32,11 +33,23 @@ export default function AdminSchedulePage() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [editingItem, setEditingItem] = useState<any | null>(null);
+  const [isAddingNew, setIsAddingNew] = useState(false);
+  const [newItemData, setNewItemData] = useState<any>({
+    day_number: 29,
+    date: '2026-12-23',
+    date_display: '23 December 2026',
+    nakshatra: '',
+    day_type: 'REGULAR',
+    title: '',
+    morning_programme: '06:30 AM Suprabhatam & Rudrabhishekam',
+    special_programme: '',
+    evening_programme: '06:00 PM Deeparadhana & Harathi',
+    status: 'SCHEDULED'
+  });
   const [isSaving, setIsSaving] = useState(false);
   const [dbCount, setDbCount] = useState<number | null>(null);
   const [isSeeding, setIsSeeding] = useState(false);
   const [seedResult, setSeedResult] = useState<{ success: boolean; message: string } | null>(null);
-
 
   const fetchSchedules = async () => {
     try {
@@ -50,7 +63,12 @@ export default function AdminSchedulePage() {
       const res = await fetch('/api/admin/schedule');
       const json = await res.json();
       if (json.success) {
-        setSchedules(json.data || []);
+        const data = json.data || [];
+        setSchedules(data);
+        if (data.length > 0) {
+          const maxDay = Math.max(...data.map((d: any) => d.day_number || 0));
+          setNewItemData((prev: any) => ({ ...prev, day_number: maxDay + 1 }));
+        }
       } else {
         setError(json.error || 'Failed to load schedules');
       }
@@ -58,6 +76,29 @@ export default function AdminSchedulePage() {
       setError(err.message || 'Error connecting to server');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCreateNew = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setIsSaving(true);
+      const res = await fetch('/api/admin/schedule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newItemData)
+      });
+      const json = await res.json();
+      if (json.success) {
+        setIsAddingNew(false);
+        await fetchSchedules();
+      } else {
+        alert(json.error || 'Failed to create schedule card');
+      }
+    } catch (err: any) {
+      alert(err.message || 'Error creating schedule card');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -187,9 +228,19 @@ export default function AdminSchedulePage() {
             </Button>
           )}
 
+          {/* Add New Schedule Card button */}
+          <Button
+            size="sm"
+            onClick={() => setIsAddingNew(true)}
+            className="bg-gold text-maroon font-bold hover:bg-gold-light text-xs"
+          >
+            <Plus className="w-3.5 h-3.5 mr-1.5" />
+            Add Schedule Card
+          </Button>
+
           {/* Manage Day Sevas — always visible */}
           <Link href="/admin/schedule/sevas">
-            <Button size="sm" className="bg-gold text-maroon font-bold hover:bg-gold-light text-xs">
+            <Button size="sm" variant="outline" className="border-gold/40 text-gold hover:bg-gold/10 text-xs font-bold">
               <Flame className="w-3.5 h-3.5 mr-1.5" />
               Manage Day Sevas
             </Button>
@@ -444,7 +495,124 @@ export default function AdminSchedulePage() {
                 Cancel
               </Button>
               <Button type="submit" disabled={isSaving} className="bg-gold text-maroon font-bold text-xs hover:bg-gold-light">
-                {isSaving ? 'Saving...' : 'Save to Supabase Database'}
+                {isSaving ? 'Saving...' : 'Save to MongoDB Database'}
+              </Button>
+            </div>
+          </form>
+        </div>
+      )}
+      {isAddingNew && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <form onSubmit={handleCreateNew} className="w-full max-w-xl bg-[#240006] border border-gold/40 rounded-2xl p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-gold/20 pb-3">
+              <div>
+                <h3 className="font-cinzel text-lg font-bold text-gold">
+                  Create New Schedule Card
+                </h3>
+                <p className="text-xs text-ivory/60">Add a custom program card directly to MongoDB</p>
+              </div>
+              <button type="button" onClick={() => setIsAddingNew(false)} className="text-ivory/60 hover:text-ivory">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-ivory/70 block mb-1">Day Number *</label>
+                  <Input
+                    type="number"
+                    value={newItemData.day_number || ''}
+                    onChange={(e) => setNewItemData({ ...newItemData, day_number: Number(e.target.value) })}
+                    className="bg-[#1A0004] border-gold/30 text-ivory text-xs"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="text-ivory/70 block mb-1">Display Date *</label>
+                  <Input
+                    value={newItemData.date_display || ''}
+                    onChange={(e) => setNewItemData({ ...newItemData, date_display: e.target.value, date: e.target.value })}
+                    placeholder="e.g. 23 December 2026"
+                    className="bg-[#1A0004] border-gold/30 text-ivory text-xs"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-ivory/70 block mb-1">Nakshatra Name *</label>
+                  <Input
+                    value={newItemData.nakshatra || ''}
+                    onChange={(e) => setNewItemData({ ...newItemData, nakshatra: e.target.value })}
+                    placeholder="e.g. Rohini Nakshatram"
+                    className="bg-[#1A0004] border-gold/30 text-ivory text-xs"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="text-ivory/70 block mb-1">Day Classification *</label>
+                  <select
+                    value={newItemData.day_type || 'REGULAR'}
+                    onChange={(e) => setNewItemData({ ...newItemData, day_type: e.target.value })}
+                    className="w-full bg-[#1A0004] border border-gold/30 text-ivory rounded-lg p-2 text-xs"
+                  >
+                    <option value="REGULAR">REGULAR (Nakshatra Hawan & Shanthi)</option>
+                    <option value="CHANDI">CHANDI (Chandi Homam Day)</option>
+                    <option value="SARPA_SUKTA">SARPA_SUKTA (Sarpa Sukta Homam Day)</option>
+                    <option value="ASLESHA_BALI">ASLESHA_BALI (Aslesha Bali Pooja Day)</option>
+                    <option value="SUBRAMANYESWARA_KALYANAM">SUBRAMANYESWARA_KALYANAM (Krithika Day)</option>
+                    <option value="POORNAHUTI">POORNAHUTI (Grand Finale Day)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-ivory/70 block mb-1">Programme Main Title *</label>
+                <Input
+                  value={newItemData.title || ''}
+                  onChange={(e) => setNewItemData({ ...newItemData, title: e.target.value })}
+                  placeholder="e.g. Special Maha Yagnam Programme"
+                  className="bg-[#1A0004] border-gold/30 text-ivory text-xs"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="text-ivory/70 block mb-1">Morning Rituals</label>
+                <Input
+                  value={newItemData.morning_programme || ''}
+                  onChange={(e) => setNewItemData({ ...newItemData, morning_programme: e.target.value })}
+                  className="bg-[#1A0004] border-gold/30 text-ivory text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="text-ivory/70 block mb-1">Special Homam / Ritual</label>
+                <Input
+                  value={newItemData.special_programme || ''}
+                  onChange={(e) => setNewItemData({ ...newItemData, special_programme: e.target.value })}
+                  className="bg-[#1A0004] border-gold/30 text-ivory text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="text-ivory/70 block mb-1">Evening Rituals</label>
+                <Input
+                  value={newItemData.evening_programme || ''}
+                  onChange={(e) => setNewItemData({ ...newItemData, evening_programme: e.target.value })}
+                  className="bg-[#1A0004] border-gold/30 text-ivory text-xs"
+                />
+              </div>
+            </div>
+
+            <div className="pt-3 flex justify-end gap-2 border-t border-gold/20">
+              <Button type="button" variant="outline" onClick={() => setIsAddingNew(false)} className="border-gold/30 text-gold text-xs">
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSaving} className="bg-gold text-maroon font-bold text-xs hover:bg-gold-light">
+                {isSaving ? 'Creating...' : 'Create Card in MongoDB'}
               </Button>
             </div>
           </form>

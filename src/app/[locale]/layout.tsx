@@ -8,10 +8,13 @@ import { locales } from '@/i18n/config';
 import { notFound } from 'next/navigation';
 import '../globals.css';
 
+import { BackgroundAudioPlayer } from '@/components/layout/BackgroundAudioPlayer';
+
 export async function generateMetadata({ params: { locale } }: { params: { locale: string } }) {
   const t = await getTranslations({ locale, namespace: 'home' });
 
   return {
+    metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
     title: `${t('title')} | Srikari Ati Rudram`,
     description: `${t('dates')} - ${t('location')}`,
     keywords: ['Ati Rudram', 'Srikari', 'Mahayagnam', 'Rudrabhishekam', 'Nakshatra Shanthi', 'Vedic Yajna', 'Annadanam'],
@@ -64,6 +67,7 @@ export default async function LocaleLayout({
           <Footer />
           <MobileBottomNav />
           <WhatsAppButton />
+          <BackgroundAudioPlayer />
         </NextIntlClientProvider>
       </body>
     </html>

@@ -1,6 +1,7 @@
 import { AnnadanamSection } from '@/components/annadanam/AnnadanamCalendar';
 
 export const metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
   title: 'అన్నదానం మహాదానం | Sponsor Annadanam | Srikari Ati Rudram',
   description: 'Sponsor consecrated Annadanam during the 28-day Srikari Ati Rudra Mahayagnam (25 Nov – 22 Dec 2026).',
 };

@@ -243,15 +243,23 @@ export default function AdminLivePage() {
   // Helper to get embed URL
   const getEmbedUrl = (url: string) => {
     if (!url) return '';
-    if (url.includes('youtube.com/watch?v=')) {
-      const videoId = url.split('v=')[1]?.split('&')[0];
+    const trimmed = url.trim();
+    if (trimmed.includes('youtube.com/watch?v=')) {
+      const videoId = trimmed.split('v=')[1]?.split('&')[0];
       return `https://www.youtube-nocookie.com/embed/${videoId}`;
     }
-    if (url.includes('youtu.be/')) {
-      const videoId = url.split('youtu.be/')[1]?.split('?')[0];
+    if (trimmed.includes('youtube.com/live/')) {
+      const videoId = trimmed.split('live/')[1]?.split('?')[0];
       return `https://www.youtube-nocookie.com/embed/${videoId}`;
     }
-    return url;
+    if (trimmed.includes('youtu.be/')) {
+      const videoId = trimmed.split('youtu.be/')[1]?.split('?')[0];
+      return `https://www.youtube-nocookie.com/embed/${videoId}`;
+    }
+    if (!trimmed.startsWith('http')) {
+      return `https://www.youtube-nocookie.com/embed/${trimmed}`;
+    }
+    return trimmed;
   };
 
   return (

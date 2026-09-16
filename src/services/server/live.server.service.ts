@@ -33,7 +33,7 @@ export const liveServerService = {
     if (!doc) {
       return {
         id: '00000000-0000-0000-0000-000000000001',
-        live_url: 'https://www.youtube.com/watch?v=live_stream_placeholder',
+        live_url: '',
         title: 'Sri Ati Rudra Mahayagnam 2026 — Live Telecast',
         description: 'Watch continuous live streaming of holy homams and rituals.',
         is_live: false,
@@ -52,9 +52,12 @@ export const liveServerService = {
   async updateLiveConfig(updates: Partial<LiveStreamConfig>): Promise<LiveStreamConfig> {
     const { db } = await connectToDatabase();
     const current = await this.getLiveConfig();
+    const { _id, ...currentClean } = current as any;
+    const { _id: updateId, ...updatesClean } = updates as any;
+
     const newConfig = {
-      ...current,
-      ...updates,
+      ...currentClean,
+      ...updatesClean,
       updated_at: new Date().toISOString()
     };
 
@@ -105,9 +108,10 @@ export const liveServerService = {
 
   async updateArchive(id: string, updates: Partial<LiveArchiveRecord>): Promise<LiveArchiveRecord | null> {
     const { db } = await connectToDatabase();
+    const { _id, ...cleanUpdates } = updates as any;
     const res = await db.collection('live_archives').findOneAndUpdate(
       { $or: [{ id }, { _id: id as any }] },
-      { $set: { ...updates, updated_at: new Date().toISOString() } },
+      { $set: { ...cleanUpdates, updated_at: new Date().toISOString() } },
       { returnDocument: 'after' }
     );
     const doc = (res as any)?.value || res;

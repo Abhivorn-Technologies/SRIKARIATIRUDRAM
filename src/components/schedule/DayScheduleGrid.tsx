@@ -19,10 +19,13 @@ import {
   Phone,
   MessageCircle,
   Navigation,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 type FilterType = 'all' | 'available' | 'few_slots' | 'fully_booked';
+const CARDS_PER_PAGE = 8;
 
 export function DayScheduleGrid({ days }: { days: ScheduleDay[] }) {
   const t = useTranslations('schedule');
@@ -32,6 +35,7 @@ export function DayScheduleGrid({ days }: { days: ScheduleDay[] }) {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
+  const [currentPage, setCurrentPage] = useState(1);
   const [showAddressCopied, setShowAddressCopied] = useState(false);
 
   const filterButtons: { id: FilterType; label: string; count: number }[] = [
@@ -40,6 +44,16 @@ export function DayScheduleGrid({ days }: { days: ScheduleDay[] }) {
     { id: 'few_slots', label: t('filterFewSlots'), count: days.filter((d) => d.status === 'few_slots').length },
     { id: 'fully_booked', label: t('filterFullyBooked'), count: days.filter((d) => d.status === 'fully_booked').length },
   ];
+
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  };
+
+  const handleFilterChange = (filter: FilterType) => {
+    setActiveFilter(filter);
+    setCurrentPage(1);
+  };
 
   const filteredDays = useMemo(() => {
     return days.filter((d) => {
@@ -81,14 +95,23 @@ export function DayScheduleGrid({ days }: { days: ScheduleDay[] }) {
     });
   }, [days, activeFilter, searchTerm]);
 
-  // Group days into rows of 4 for the 7 rows x 4 columns desktop layout
+  // Total pages calculation (10 cards per page)
+  const totalPages = Math.ceil(filteredDays.length / CARDS_PER_PAGE) || 1;
+
+  // Slice cards for current page (10 cards per page)
+  const paginatedDays = useMemo(() => {
+    const startIndex = (currentPage - 1) * CARDS_PER_PAGE;
+    return filteredDays.slice(startIndex, startIndex + CARDS_PER_PAGE);
+  }, [filteredDays, currentPage]);
+
+  // Group paginated days into rows of 4
   const dayRows = useMemo(() => {
     const rows: ScheduleDay[][] = [];
-    for (let i = 0; i < filteredDays.length; i += 4) {
-      rows.push(filteredDays.slice(i, i + 4));
+    for (let i = 0; i < paginatedDays.length; i += 4) {
+      rows.push(paginatedDays.slice(i, i + 4));
     }
     return rows;
-  }, [filteredDays]);
+  }, [paginatedDays]);
 
   const handleCopyAddress = () => {
     const fullAddress = `${t('venueName')}, ${t('venueAddress')}, ${t('venueLandmark')}`;
@@ -137,13 +160,13 @@ export function DayScheduleGrid({ days }: { days: ScheduleDay[] }) {
           <Input
             placeholder={t('searchPlaceholder')}
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             className="pl-10 pr-4 py-2 text-xs sm:text-sm bg-burgundy-dark/80 border-gold/40 text-ivory placeholder:text-ivory/40 focus:border-gold focus:ring-1 focus:ring-gold"
           />
           <Search className="w-4 h-4 text-gold absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           {searchTerm && (
             <button
-              onClick={() => setSearchTerm('')}
+              onClick={() => handleSearchChange('')}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gold/70 hover:text-gold"
             >
               ✕
@@ -158,7 +181,7 @@ export function DayScheduleGrid({ days }: { days: ScheduleDay[] }) {
             return (
               <button
                 key={btn.id}
-                onClick={() => setActiveFilter(btn.id)}
+                onClick={() => handleFilterChange(btn.id)}
                 className={`px-3.5 py-2 rounded-xl text-xs font-cinzel font-bold uppercase tracking-wider transition-all duration-200 flex items-center gap-1.5 border ${
                   isActive
                     ? 'bg-gradient-to-r from-gold via-gold-light to-gold text-burgundy-deep border-gold shadow-gold-sm font-black'
@@ -183,13 +206,14 @@ export function DayScheduleGrid({ days }: { days: ScheduleDay[] }) {
       <div className="flex items-center justify-between px-2 text-xs text-ivory/60 font-sans">
         <span className="flex items-center gap-1.5">
           <CalendarDays className="w-3.5 h-3.5 text-gold-light" />
-          Showing <strong className="text-gold-light">{filteredDays.length}</strong> of {days.length} Days
+          Showing Cards <strong className="text-gold-light">{(currentPage - 1) * CARDS_PER_PAGE + 1}–{Math.min(currentPage * CARDS_PER_PAGE, filteredDays.length)}</strong> of {filteredDays.length} (Page {currentPage} of {totalPages})
         </span>
         {(searchTerm || activeFilter !== 'all') && (
           <button
             onClick={() => {
               setSearchTerm('');
               setActiveFilter('all');
+              setCurrentPage(1);
             }}
             className="text-gold hover:underline font-semibold"
           >
@@ -198,18 +222,17 @@ export function DayScheduleGrid({ days }: { days: ScheduleDay[] }) {
         )}
       </div>
 
-      {/* 13. Responsive 7 Rows × 4 Columns Grid with Row-by-Row Slide-up Animation */}
+      {/* Responsive Grid of Cards for Current Page */}
       <div className="space-y-4 sm:space-y-5">
         {dayRows.map((row, rowIndex) => (
           <motion.div
-            key={`row-${rowIndex}-${row[0]?.dayNumber || 0}`}
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-40px" }}
+            key={`row-${currentPage}-${rowIndex}-${row[0]?.dayNumber || 0}`}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{
-              duration: 0.6,
+              duration: 0.4,
               ease: [0.16, 1, 0.3, 1],
-              delay: (rowIndex % 7) * 0.12,
+              delay: rowIndex * 0.1,
             }}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 items-stretch"
           >
@@ -222,21 +245,57 @@ export function DayScheduleGrid({ days }: { days: ScheduleDay[] }) {
         ))}
       </div>
 
-      {/* Empty State */}
-      {filteredDays.length === 0 && (
-        <div className="text-center py-16 px-4 rounded-2xl bg-burgundy-deep/40 border border-gold/20 space-y-3">
-          <p className="text-base text-gold-lighter font-cinzel font-bold">
-            {t('noResults')}
-          </p>
-          <button
-            onClick={() => {
-              setSearchTerm('');
-              setActiveFilter('all');
-            }}
-            className="text-xs text-gold underline hover:text-gold-lighter font-sans"
-          >
-            Show All 28 Days
-          </button>
+      {/* 8 Cards Per Page Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-burgundy-deep/90 border border-gold/30 shadow-xl backdrop-blur-md">
+          <span className="text-xs text-ivory/70 font-sans">
+            Page <strong className="text-gold font-bold">{currentPage}</strong> of <strong className="text-gold font-bold">{totalPages}</strong> (8 Cards per page)
+          </span>
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={currentPage === 1}
+              onClick={() => {
+                setCurrentPage((prev) => Math.max(prev - 1, 1));
+                window.scrollTo({ top: 400, behavior: 'smooth' });
+              }}
+              className="border-gold/30 text-gold hover:bg-gold/10 text-xs px-3"
+            >
+              <ChevronLeft className="w-3.5 h-3.5 mr-1" /> Prev
+            </Button>
+
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+              <button
+                key={pageNum}
+                onClick={() => {
+                  setCurrentPage(pageNum);
+                  window.scrollTo({ top: 400, behavior: 'smooth' });
+                }}
+                className={`w-8 h-8 rounded-lg text-xs font-bold transition-all font-cinzel ${
+                  currentPage === pageNum
+                    ? 'bg-gold text-burgundy-deep shadow-gold-sm font-black'
+                    : 'bg-burgundy/60 text-ivory/80 border border-gold/20 hover:border-gold/50 hover:text-gold-lighter'
+                }`}
+              >
+                {pageNum}
+              </button>
+            ))}
+
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={currentPage === totalPages}
+              onClick={() => {
+                setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+                window.scrollTo({ top: 400, behavior: 'smooth' });
+              }}
+              className="border-gold/30 text-gold hover:bg-gold/10 text-xs px-3"
+            >
+              Next <ChevronRight className="w-3.5 h-3.5 ml-1" />
+            </Button>
+          </div>
         </div>
       )}
 

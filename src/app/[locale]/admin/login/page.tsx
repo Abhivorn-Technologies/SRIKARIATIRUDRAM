@@ -7,49 +7,50 @@ import { adminAuth } from '@/lib/adminAuth';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Lock, Mail, Eye, EyeOff, ShieldCheck, ArrowLeft, Sparkles, KeyRound } from 'lucide-react';
+import { Lock, Mail, Eye, EyeOff, ShieldCheck, ArrowLeft, Sparkles } from 'lucide-react';
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('admin@srikariatirudram.com');
-  const [password, setPassword] = useState('admin123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (!email.trim() || !password.trim()) {
+      setError('Please enter both email and password.');
+      return;
+    }
+
     setIsLoading(true);
 
-    setTimeout(() => {
-      if (!email.trim() || !password.trim()) {
-        setError('Please enter both email and password.');
-        setIsLoading(false);
-        return;
-      }
-
-      // Valid demo authentication for the single Admin
-      if (email.toLowerCase() === 'admin@srikariatirudram.com' && password === 'admin123') {
-        adminAuth.login({
-          id: 'admin_1',
-          name: 'Administrator',
-          email: 'admin@srikariatirudram.com',
-        });
-        router.push('/admin');
-      } else if (password.length >= 6) {
-        // Accept other admin emails with min 6 char password
-        adminAuth.login({
-          id: 'admin_single',
-          name: 'Administrator',
+    try {
+      const res = await fetch('/api/admin/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           email: email.trim(),
-        });
+          password: password.trim(),
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.success && data.user) {
+        adminAuth.login(data.user);
         router.push('/admin');
       } else {
-        setError('Invalid credentials. Use demo: admin@srikariatirudram.com / admin123');
-        setIsLoading(false);
+        setError(data.error || 'Invalid admin credentials.');
       }
-    }, 600);
+    } catch (err: any) {
+      setError('Server error during login. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -149,15 +150,6 @@ export default function AdminLoginPage() {
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
-              </div>
-            </div>
-
-            {/* Quick Demo Credentials Box */}
-            <div className="p-3 rounded-xl bg-primary/40 border border-gold/20 flex items-start gap-2.5 text-xs text-ivory/80">
-              <KeyRound className="w-4 h-4 text-gold shrink-0 mt-0.5" />
-              <div className="space-y-0.5 text-[11px]">
-                <p className="font-bold text-gold-light">Single Admin Access:</p>
-                <p className="font-mono text-ivory/90">admin@srikariatirudram.com / admin123</p>
               </div>
             </div>
 
