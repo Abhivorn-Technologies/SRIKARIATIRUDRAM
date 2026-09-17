@@ -10,13 +10,16 @@ import { Card } from '@/components/ui/Card';
 import { Select } from '@/components/ui/Select';
 import { GOTRAMS_LIST, RASIS } from '@/lib/constants';
 import { formatCurrency } from '@/lib/utils';
-import { User, ArrowLeft, ArrowRight, Lock, Calendar, Star } from 'lucide-react';
+import { User, ArrowLeft, ArrowRight, Lock, Calendar, Star, Sparkles } from 'lucide-react';
+
+import { useDevoteeAuth } from '@/context/DevoteeAuthContext';
 
 export default function SankalpamDetailsPage() {
   const router = useRouter();
   const locale = useLocale();
   const isTe = locale === 'te';
   const isHi = locale === 'hi';
+  const { session, isLoading } = useDevoteeAuth();
 
   const [draft, setDraft] = useState(() => bookingService.getActiveDraft());
   const [customGotram, setCustomGotram] = useState('');
@@ -24,17 +27,41 @@ export default function SankalpamDetailsPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
+    if (!isLoading && !session?.phone) {
+      const currentPath = typeof window !== 'undefined' ? window.location.pathname + window.location.search : `/${locale}/book-seva/details`;
+      router.push(`/${locale}/account/login?mode=signup&redirect=${encodeURIComponent(currentPath)}`);
+      return;
+    }
+
     const current = bookingService.getActiveDraft();
     if (!current.selectedDate || !current.sevaName) {
       router.push(`/${locale}/book-seva/date`);
       return;
     }
+
+    // Auto-fill phone and name from logged in session
+    if (session?.phone && !current.mobile) {
+      current.mobile = session.phone;
+    }
+    if (session?.fullName && !current.devoteeName) {
+      current.devoteeName = session.fullName;
+    }
+    if (session?.gotram && !current.gotram) {
+      current.gotram = session.gotram;
+    }
+
+    const isKalyanam = (current.sevaId || current.sevaSlug || current.sevaName || '').toLowerCase().includes('subraman');
+    if (isKalyanam) {
+      current.janmaNakshatra = 'Krittika';
+      current.nakshatra = 'Krittika';
+    }
+
     setDraft(current);
     if (current.gotram && !GOTRAMS_LIST.some((g) => g.id === current.gotram)) {
       setIsOtherGotram(true);
       setCustomGotram(current.gotram);
     }
-  }, [locale, router]);
+  }, [locale, router, session, isLoading]);
 
   const validate = (): boolean => {
     const err: Record<string, string> = {};
@@ -235,7 +262,7 @@ export default function SankalpamDetailsPage() {
                     </div>
                     <span className="text-[10px] uppercase font-sans font-bold px-2 py-0.5 rounded bg-[#5A0714] text-[#E8C76A] border border-[#D6A532]/30 flex items-center gap-1">
                       <Lock className="w-3 h-3 text-[#F2C14E]" />
-                      <span>{isTe ? 'ఎంచుకున్నది' : 'Selected'}</span>
+                      <span>{isTe ? 'ఎంచుకున్నది' : isHi ? 'चयनित' : 'Selected'}</span>
                     </span>
                   </div>
                 </div>
@@ -314,19 +341,47 @@ export default function SankalpamDetailsPage() {
                 />
               </div>
 
-              {/* 8. Address for Prasadam Delivery */}
-              <div className="space-y-1.5">
-                <label className="block text-xs font-bold uppercase tracking-wider text-[#F2C14E] font-sans">
-                  {isTe ? 'చిరునామా (ప్రసాదం పంపడానికి)' : isHi ? 'डाक पता (प्रसाद वितरण हेतु)' : 'Postal Address for Prasadam Delivery'}
-                </label>
-                <textarea
-                  rows={2}
-                  value={draft.address || ''}
-                  onChange={(e) => setDraft({ ...draft, address: e.target.value })}
-                  placeholder="Door No, Street, City, State, Pincode"
-                  className="w-full rounded-xl bg-[#1F0205] border border-[#D6A532]/40 text-[#FAF4E6] placeholder:text-[#FAF4E6]/40 text-sm p-3 focus:outline-none focus:border-[#F2C14E] focus:ring-1 focus:ring-[#F2C14E] font-sans transition-all"
-                />
-              </div>
+              {/* 8. Address for Prasadam Delivery (Conditional for >= ₹5,000 Sevas) */}
+              {(Number(draft.amount || 0) >= 5000) ? (
+                <div className="space-y-1.5 p-3.5 rounded-xl bg-[#1D0206] border border-emerald-500/40">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-[#F2C14E] font-sans flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                      {isTe ? 'చిరునామా (ప్రసాదం పంపడానికి)' : isHi ? 'डाक पता (प्रसाद वितरण हेतु)' : 'Postal Address for Prasadam Delivery'}
+                    </label>
+                    <span className="text-[10px] font-bold text-emerald-300 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-500/30">
+                      📦 {isTe ? 'ఉచిత స్పీడ్ పోస్ట్ ప్రసాదం లభించును (₹5,000+)' : 'Complimentary Speed Post Delivery Included (₹5,000+)'}
+                    </span>
+                  </div>
+                  <textarea
+                    rows={2}
+                    value={draft.address || ''}
+                    onChange={(e) => setDraft({ ...draft, address: e.target.value })}
+                    placeholder="Door No, Street, City, State, Pincode"
+                    className="w-full rounded-xl bg-[#1F0205] border border-[#D6A532]/40 text-[#FAF4E6] placeholder:text-[#FAF4E6]/40 text-sm p-3 focus:outline-none focus:border-[#F2C14E] focus:ring-1 focus:ring-[#F2C14E] font-sans transition-all"
+                  />
+                </div>
+              ) : (
+                <div className="p-4 rounded-xl bg-[#170104] border border-amber-500/30 space-y-1.5">
+                  <div className="flex items-center gap-2 text-amber-300 font-bold text-xs uppercase tracking-wider">
+                    <Lock className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span>
+                      {isTe
+                        ? 'పోస్టల్ ప్రసాదం డెలివరీ (₹5,000 పైబడిన సేవలకు మాత్రమే)'
+                        : isHi
+                        ? 'डाक द्वारा प्रसाद (केवल ₹5,000+ सेवाओं हेतु)'
+                        : 'Postal Prasadam Delivery (For Sevas ₹5,000 & above)'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#FFF8E8]/75 leading-relaxed font-sans">
+                    {isTe
+                      ? 'రూ. 5,000 కంటే తక్కువ విరాళాలు/సేవలకు పవిత్ర ప్రసాదాన్ని యజ్ఞశాల కౌంటర్ వద్ద నేరుగా స్వీకరించవచ్చు. రూ. 5,000 మరియు ఆ పైబడిన సేవలకు ఉచిత స్పీడ్ పోస్ట్ ద్వారా ఇంటికి పంపబడును.'
+                      : isHi
+                      ? '₹5,000 से कम की सेवा हेतु प्रसाद महायज्ञशाला काउंटर पर प्राप्त किया जा सकता है। ₹5,000 व अधिक की सेवा हेतु स्पीड पोस्ट द्वारा आपके पते पर भेजा जाएगा।'
+                      : 'Speed Post delivery of sacred Prasadam is complimentary for Seva contributions of ₹5,000 or above. For contributions under ₹5,000, sacred Prasadam can be collected in-person at the Yagnashala counter.'}
+                  </p>
+                </div>
+              )}
 
               {/* 9. DEVOTEE PARTICIPATION */}
               <div className="space-y-3 pt-3 border-t border-[#D6A532]/25">

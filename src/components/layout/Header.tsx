@@ -49,8 +49,8 @@ export function Header() {
           : 'bg-gradient-to-b from-burgundy-deep/95 via-primary/85 to-burgundy-deep/90 border-b border-gold/20 shadow-gold-sm/40 py-2.5 lg:py-3'
       }`}
     >
-      <div className="w-full max-w-[1720px] mx-auto px-3 sm:px-4 md:px-5 lg:px-4 xl:px-6 2xl:px-8">
-        <div className="flex items-center justify-between gap-1.5 lg:gap-2 xl:gap-3 2xl:gap-5 min-h-[50px]">
+      <div className="w-full max-w-[1720px] mx-auto px-2 sm:px-3 lg:px-3 xl:px-5 2xl:px-8">
+        <div className="flex items-center justify-between gap-1 lg:gap-1.5 xl:gap-2.5 min-h-[46px] sm:min-h-[50px]">
           
           {/* 1. BRAND / LOGO (Left) */}
           <Link
@@ -64,13 +64,13 @@ export function Header() {
               width={200}
               height={55}
               priority
-              className="h-9 sm:h-10 md:h-11 lg:h-11 xl:h-12 2xl:h-13 w-auto object-contain transition-transform duration-200 group-hover:scale-105"
+              className="h-7 sm:h-9 md:h-10 lg:h-9 xl:h-11 2xl:h-12 w-auto max-w-[120px] sm:max-w-none object-contain transition-transform duration-200 group-hover:scale-105"
             />
           </Link>
 
           {/* 2. DESKTOP NAVIGATION ITEMS (Single Horizontal Line, No Wrap) */}
           <nav
-            className="hidden lg:flex items-center justify-center gap-0.5 xl:gap-1 2xl:gap-1.5 text-[10.5px] xl:text-[11.5px] 2xl:text-[13px] flex-nowrap"
+            className="hidden lg:flex items-center justify-center gap-0.5 xl:gap-1 text-[10px] xl:text-[11px] 2xl:text-[12.5px] flex-nowrap shrink"
             aria-label="Main Navigation"
           >
             {mainNavigation.map((item) => {
@@ -79,7 +79,7 @@ export function Header() {
                 <Link
                   key={item.key}
                   href={item.href}
-                  className={`px-1.5 xl:px-2 2xl:px-2.5 py-1.5 rounded-md uppercase font-semibold tracking-wide transition-all duration-200 flex items-center gap-1 whitespace-nowrap shrink-0 ${
+                  className={`px-1 xl:px-1.5 2xl:px-2.5 py-1 rounded-md uppercase font-semibold tracking-tight xl:tracking-wide transition-all duration-200 flex items-center gap-1 whitespace-nowrap shrink-0 ${
                     isActive
                       ? 'bg-primary text-gold-light border border-gold/50 shadow-gold-sm font-bold'
                       : 'text-ivory/85 hover:text-gold-light hover:bg-white/5 border border-transparent'
@@ -96,7 +96,7 @@ export function Header() {
           </nav>
 
           {/* 3. RIGHT ACTION ITEMS (Language Switcher, Book Seva CTA, Devotee Account) */}
-          <div className="flex items-center gap-1.5 xl:gap-2.5 shrink-0">
+          <div className="flex items-center gap-1 sm:gap-1.5 xl:gap-2 shrink-0">
             {/* Language Translator */}
             <div className="hidden sm:block shrink-0">
               <LanguageSwitcher />
@@ -118,12 +118,12 @@ export function Header() {
               }}
               className="shrink-0"
             >
-              <Link href="/book-seva" className="block shrink-0">
+              <Link href="/schedule" className="block shrink-0">
                 <Button
                   variant="gold"
                   size="sm"
-                  leftIcon={<Flame className="w-3.5 h-3.5 shrink-0" />}
-                  className="font-bold text-[11px] xl:text-xs 2xl:text-[13px] uppercase tracking-wider whitespace-nowrap px-3 xl:px-3.5 py-1.5 shadow-gold-md shrink-0 flex items-center"
+                  leftIcon={<Flame className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />}
+                  className="font-bold text-[10px] sm:text-xs xl:text-xs 2xl:text-[13px] uppercase tracking-wider whitespace-nowrap px-2 sm:px-2.5 xl:px-3 py-1 sm:py-1.5 shadow-gold-md shrink-0 flex items-center"
                   style={{ whiteSpace: 'nowrap' }}
                 >
                   <span className="whitespace-nowrap font-bold" style={{ whiteSpace: 'nowrap' }}>
@@ -136,7 +136,7 @@ export function Header() {
             {/* Devotee / Account Icon */}
             <Link
               href="/account"
-              className={`p-1.5 xl:p-2 rounded-full border transition-all duration-200 shrink-0 flex items-center justify-center ${
+              className={`p-1 sm:p-1.5 xl:p-2 rounded-full border transition-all duration-200 shrink-0 flex items-center justify-center ${
                 isNavActive('/account')
                   ? 'border-gold bg-primary text-gold-light shadow-gold-sm'
                   : 'border-gold/30 hover:border-gold text-gold-light hover:bg-white/10'
@@ -150,10 +150,10 @@ export function Header() {
             {/* Mobile Menu Toggle Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-1.5 text-ivory hover:text-gold-light rounded-lg border border-gold/30 bg-burgundy-deep transition-colors ml-0.5 shrink-0"
+              className="lg:hidden p-1 sm:p-1.5 text-ivory hover:text-gold-light rounded-lg border border-gold/30 bg-burgundy-deep transition-colors shrink-0"
               aria-label="Toggle navigation menu"
             >
-              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              {mobileMenuOpen ? <X className="w-4 h-4 sm:w-5 sm:h-5" /> : <Menu className="w-4 h-4 sm:w-5 sm:h-5" />}
             </button>
           </div>
         </div>
@@ -189,7 +189,7 @@ export function Header() {
                   whileTap={{ y: -2, scale: 0.98 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <Link href="/book-seva" className="w-full block">
+                  <Link href="/schedule" className="w-full block">
                     <Button variant="gold" size="sm" className="w-full text-xs font-bold uppercase whitespace-nowrap">
                       <Flame className="w-3.5 h-3.5 mr-1 shrink-0" />
                       <span className="whitespace-nowrap">{t('bookSeva')}</span>

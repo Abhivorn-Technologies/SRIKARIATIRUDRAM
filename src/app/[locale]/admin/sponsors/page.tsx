@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { useToast } from '@/components/ui/Toast';
+import { Pagination } from '@/components/ui/Pagination';
 import { Trophy, Plus, Search, Edit2, Trash2, RefreshCw, X, Check, Phone, User, DollarSign } from 'lucide-react';
 
 interface Sponsor {
@@ -29,6 +30,10 @@ export default function AdminSponsorsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Modal State
   const [showModal, setShowModal] = useState<boolean>(false);
@@ -182,6 +187,16 @@ export default function AdminSponsorsPage() {
       (s.phone || '').includes(searchQuery)
   );
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  const totalPages = Math.ceil(filteredSponsors.length / itemsPerPage) || 1;
+  const paginatedSponsors = filteredSponsors.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   const totalCorpus = sponsors.reduce((acc, s) => acc + Number(s.amount || 0), 0);
   const activeCount = sponsors.filter((s) => s.active).length;
 
@@ -274,7 +289,7 @@ export default function AdminSponsorsPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {filteredSponsors.map((sp) => (
+          {paginatedSponsors.map((sp) => (
             <Card
               key={sp.id}
               className="p-5 bg-burgundy-deep/90 border-gold/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
@@ -338,6 +353,15 @@ export default function AdminSponsorsPage() {
               </div>
             </Card>
           ))}
+
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={filteredSponsors.length}
+            itemsPerPage={itemsPerPage}
+            onPageChange={setCurrentPage}
+            onItemsPerPageChange={setItemsPerPage}
+          />
         </div>
       )}
 

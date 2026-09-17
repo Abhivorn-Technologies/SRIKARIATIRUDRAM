@@ -1,10 +1,10 @@
 export const siteConfig = {
   name: "Srikari Ati Rudram",
   nameTe: "శ్రీకరీ అతి రుద్రం",
-  officialDescription: "Lokakalyanahita • A Divine Initiative by Srikari Seva Samiti",
-  officialDescriptionTe: "లోకకళ్యాణహిత • శ్రీకరీ సేవా సమితి వారి దివ్య సంకల్పం",
-  eventTitle: "LOKAKALYANAHITA NAKSHATRA SHANTHI SAHITA SRIKARI ATI RUDRA MAHAYAGNAM",
-  eventTitleTe: "లోకకళ్యాణహిత నక్షత్ర శాంతి సహిత శ్రీకరీ అతి రుద్ర మహాయజ్ఞం",
+  officialDescription: "FOR LOKAKALYANAHITA • A Divine Initiative by Srikari Seva Samiti",
+  officialDescriptionTe: "లోకకళ్యాణహితం • శ్రీకరీ సేవా సమితి వారి దివ్య సంకల్పం",
+  eventTitle: "FOR LOKAKALYANAHITA NAKSHATRA SHANTHI SAHITA SRIKARI ATI RUDRA MAHAYAGNAM",
+  eventTitleTe: "లోకకళ్యాణహితం నక్షత్ర శాంతి సహిత శ్రీకరీ అతి రుద్ర మహాయజ్ఞం",
   coreStatement: "28 DAYS • 27 NAKSHATRAS • ROHINI TO ROHINI",
   coreStatementTe: "28 రోజులు • 27 నక్షత్రాలు • రోహిణి నుండి రోహిణి వరకు",
   datesText: "25 November 2026 – 22 December 2026",
@@ -22,12 +22,13 @@ export const siteConfig = {
     associateTe: "శ్రీకరీ స్పిరిచువల్ NC (USA)"
   },
   venue: {
-    title: "Sri Hampi Virupaksha Sanchalitha Srikari Devi Alayam",
-    titleTe: "శ్రీ హంపి విరూపాక్ష సంచాలిత శ్రీకరీ దేవి ఆలయం",
+    title: "Srikari Peetam",
+    titleTe: "శ్రీకరీ పీఠం",
     address: "Nandanavanam Layout, Behind MLRIT College, Basuragadi, Hyderabad, Telangana, India",
     addressTe: "నందనవనం లేఅవుట్, MLRIT కాలేజీ వెనుక, బాసురగడి, హైదరాబాద్, తెలంగాణ, భారతదేశం",
     landmark: "Behind MLRIT College",
-    landmarkTe: "MLRIT కాలేజీ వెనుక"
+    landmarkTe: "MLRIT కాలేజీ వెనుక",
+    mapUrl: "https://maps.app.goo.gl/JzekkVB3tJuigngh7?g_st=iw"
   },
   contact: {
     primary: "9490462652",

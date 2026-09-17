@@ -42,6 +42,7 @@ export interface BookingListOptions {
   date?: string;
   nakshatra?: string;
   seva_id?: string;
+  type?: '28_DAY' | 'SPECIAL' | string;
   payment_status?: string;
   booking_status?: string;
   attendance?: string;
@@ -123,6 +124,14 @@ export const bookingServerService = {
 
     await db.collection('bookings').insertOne(newBooking as any);
 
+    // Increment booked_count in seva_availability if present
+    if (cleanDate && seva.id) {
+      await db.collection('seva_availability').updateOne(
+        { date: cleanDate, seva_id: seva.id },
+        { $inc: { booked_count: 1 } }
+      );
+    }
+
     // Update or insert Devotee record
     await db.collection('devotees').updateOne(
       { phone_number: data.phone_number },
@@ -162,14 +171,19 @@ export const bookingServerService = {
       { returnDocument: 'after' }
     );
 
-    if (!result || !result.value) {
-      // Find directly if value not returned
-      const doc = await db.collection('bookings').findOne({ booking_id: bookingId });
-      if (doc) return doc as any;
+    const bookingDoc = result?.value || await db.collection('bookings').findOne({ booking_id: bookingId });
+    if (!bookingDoc) {
       throw new Error(`Booking "${bookingId}" not found.`);
     }
 
-    return result.value as any;
+    if (bookingDoc.selected_date && bookingDoc.seva_id) {
+      await db.collection('seva_availability').updateOne(
+        { date: bookingDoc.selected_date, seva_id: bookingDoc.seva_id },
+        { $inc: { booked_count: 1 } }
+      );
+    }
+
+    return bookingDoc as any;
   },
 
   async getBookings(options: BookingListOptions = {}): Promise<{
@@ -193,6 +207,12 @@ export const bookingServerService = {
     if (options.payment_status) filter.payment_status = options.payment_status;
     if (options.booking_status) filter.booking_status = options.booking_status;
     if (options.attendance) filter.attendance = options.attendance;
+
+    if (options.type === 'SPECIAL') {
+      filter.seva_id = { $nin: ['nakshatra-hawan-seva', 'sampoorna-nakshatra-shanthi', 'ati-rudram-donation'] };
+    } else if (options.type === '28_DAY') {
+      filter.seva_id = { $in: ['nakshatra-hawan-seva', 'sampoorna-nakshatra-shanthi', 'ati-rudram-donation'] };
+    }
 
     if (options.search) {
       const q = new RegExp(options.search, 'i');

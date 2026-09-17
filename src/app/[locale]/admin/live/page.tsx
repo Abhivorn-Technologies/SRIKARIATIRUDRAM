@@ -159,14 +159,16 @@ export default function AdminLivePage() {
 
   const extractYouTubeId = (input: string) => {
     if (!input) return '';
-    const trimmed = input.trim();
-    if (trimmed.includes('v=')) {
-      return trimmed.split('v=')[1]?.split('&')[0] || trimmed;
+    const str = input.trim();
+    if (str.startsWith('live_day') || str === 'live_stream_placeholder') return '';
+    const match = str.match(/(?:v=|\/v\/|embed\/|youtu\.be\/|live\/|shorts\/)([a-zA-Z0-9_-]{11})/);
+    if (match && match[1]) {
+      return match[1];
     }
-    if (trimmed.includes('youtu.be/')) {
-      return trimmed.split('youtu.be/')[1]?.split('?')[0] || trimmed;
+    if (/^[a-zA-Z0-9_-]{11}$/.test(str)) {
+      return str;
     }
-    return trimmed;
+    return '';
   };
 
   const handleSaveArchive = async (e: React.FormEvent) => {
@@ -242,24 +244,9 @@ export default function AdminLivePage() {
 
   // Helper to get embed URL
   const getEmbedUrl = (url: string) => {
-    if (!url) return '';
-    const trimmed = url.trim();
-    if (trimmed.includes('youtube.com/watch?v=')) {
-      const videoId = trimmed.split('v=')[1]?.split('&')[0];
-      return `https://www.youtube-nocookie.com/embed/${videoId}`;
-    }
-    if (trimmed.includes('youtube.com/live/')) {
-      const videoId = trimmed.split('live/')[1]?.split('?')[0];
-      return `https://www.youtube-nocookie.com/embed/${videoId}`;
-    }
-    if (trimmed.includes('youtu.be/')) {
-      const videoId = trimmed.split('youtu.be/')[1]?.split('?')[0];
-      return `https://www.youtube-nocookie.com/embed/${videoId}`;
-    }
-    if (!trimmed.startsWith('http')) {
-      return `https://www.youtube-nocookie.com/embed/${trimmed}`;
-    }
-    return trimmed;
+    const id = extractYouTubeId(url);
+    if (!id) return '';
+    return `https://www.youtube-nocookie.com/embed/${id}`;
   };
 
   return (

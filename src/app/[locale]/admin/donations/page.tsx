@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
+import { Pagination } from '@/components/ui/Pagination';
 import { Coins, Download, Search, FileText, CheckCircle2, RefreshCw, PlusCircle, Trash2, X, AlertCircle } from 'lucide-react';
 
 export default function AdminDonationsPage() {
@@ -14,6 +15,10 @@ export default function AdminDonationsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const [formData, setFormData] = useState({
     donor_name: '',
@@ -97,6 +102,16 @@ export default function AdminDonationsPage() {
     (d.receipt_number || d.donation_id || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
     (d.purpose || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
     (d.pan || '').toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  const totalPages = Math.ceil(filteredDonations.length / itemsPerPage) || 1;
+  const paginatedDonations = filteredDonations.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
   );
 
   const totalRaised = donations.reduce((acc, d) => acc + Number(d.amount || 0), 0);
@@ -191,8 +206,8 @@ export default function AdminDonationsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gold/10">
-              {filteredDonations.length > 0 ? (
-                filteredDonations.map((d) => (
+              {paginatedDonations.length > 0 ? (
+                paginatedDonations.map((d) => (
                   <tr key={d.donation_id || d.id} className="hover:bg-white/5 transition-colors">
                     <td className="p-3.5">
                       <div className="font-bold text-ivory">{d.donor_name}</div>
@@ -233,6 +248,15 @@ export default function AdminDonationsPage() {
             </tbody>
           </table>
         </div>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={filteredDonations.length}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+          onItemsPerPageChange={setItemsPerPage}
+          className="rounded-t-none border-t border-gold/15"
+        />
       </Card>
 
       {/* Add New Donation Modal */}

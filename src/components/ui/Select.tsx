@@ -72,7 +72,9 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
         React.Children.forEach(children, (child) => {
           if (React.isValidElement(child) && child.type === 'option') {
             const val = child.props.value !== undefined ? String(child.props.value) : '';
-            const text = child.props.children ? String(child.props.children) : val;
+            const text = Array.isArray(child.props.children)
+              ? child.props.children.join('')
+              : String(child.props.children || val);
             opts.push({
               value: val,
               label: text,
@@ -138,14 +140,7 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
     // Viewport collision detection
     useEffect(() => {
       if (isOpen && triggerRef.current) {
-        const rect = triggerRef.current.getBoundingClientRect();
-        const spaceBelow = window.innerHeight - rect.bottom;
-        const spaceAbove = rect.top;
-        if (spaceBelow < 260 && spaceAbove > spaceBelow) {
-          setOpenUpward(true);
-        } else {
-          setOpenUpward(false);
-        }
+        setOpenUpward(false);
 
         if (isSearchVisible) {
           setTimeout(() => {

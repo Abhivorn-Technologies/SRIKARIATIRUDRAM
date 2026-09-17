@@ -7,6 +7,7 @@ export interface SevaItem {
   title_te?: string;
   title_hi?: string;
   amount: number;
+  price?: number;
   short_desc?: string;
   short_desc_te?: string;
   short_desc_hi?: string;
@@ -47,7 +48,15 @@ export const sevaServerService = {
       .sort({ sort_order: 1, amount: 1 })
       .toArray();
 
-    return docs as any;
+    return docs.map(d => {
+      const amt = Number(d.amount ?? d.price ?? 0);
+      return {
+        ...d,
+        id: d.id || d.slug || d._id.toString(),
+        amount: amt,
+        price: amt
+      };
+    }) as any;
   },
 
   async getSevaByIdOrSlug(idOrSlug: string): Promise<SevaItem | null> {
@@ -55,13 +64,21 @@ export const sevaServerService = {
     const doc = await db.collection('sevas').findOne({
       $or: [{ id: idOrSlug }, { slug: idOrSlug }]
     });
-    return doc as any;
+    if (!doc) return null;
+    const amt = Number(doc.amount ?? doc.price ?? 0);
+    return {
+      ...doc,
+      id: doc.id || doc.slug || doc._id.toString(),
+      amount: amt,
+      price: amt
+    } as any;
   },
 
   async createSeva(data: Partial<SevaItem>): Promise<SevaItem> {
     const { db } = await connectToDatabase();
     const id = data.id || data.slug || `seva-${Date.now()}`;
     const slug = data.slug || id;
+    const numAmount = Number(data.amount ?? data.price ?? 216);
 
     const newSeva: SevaItem = {
       id,
@@ -69,7 +86,8 @@ export const sevaServerService = {
       title: data.title || 'Untitled Seva',
       title_te: data.title_te,
       title_hi: data.title_hi,
-      amount: Number(data.amount || 216),
+      amount: numAmount,
+      price: numAmount,
       short_desc: data.short_desc,
       short_desc_te: data.short_desc_te,
       short_desc_hi: data.short_desc_hi,
@@ -96,16 +114,27 @@ export const sevaServerService = {
 
   async updateSeva(id: string, updates: Partial<SevaItem>): Promise<SevaItem | null> {
     const { db } = await connectToDatabase();
+    const payload: Record<string, any> = { ...updates, updated_at: new Date() };
+
+    if (updates.amount !== undefined || updates.price !== undefined) {
+      const numAmt = Number(updates.amount ?? updates.price ?? 0);
+      payload.amount = numAmt;
+      payload.price = numAmt;
+    }
+
     const res = await db.collection('sevas').findOneAndUpdate(
       { $or: [{ id }, { slug: id }] },
-      { $set: { ...updates, updated_at: new Date() } },
+      { $set: payload },
       { returnDocument: 'after' }
     );
     const doc = (res as any)?.value || res;
     if (!doc) return null;
+    const amt = Number(doc.amount ?? doc.price ?? 0);
     return {
       ...doc,
-      id: doc.id || doc._id.toString()
+      id: doc.id || doc._id.toString(),
+      amount: amt,
+      price: amt
     } as any;
   },
 

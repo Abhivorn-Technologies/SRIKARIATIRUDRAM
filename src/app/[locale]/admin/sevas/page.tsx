@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
+import { Pagination } from '@/components/ui/Pagination';
 import {
   Flame,
   Plus,
@@ -30,6 +31,7 @@ export default function AdminSevasPage() {
   const [filterType, setFilterType] = useState('all');
   const [editingSeva, setEditingSeva] = useState<any | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [deleteConfirmSeva, setDeleteConfirmSeva] = useState<any | null>(null);
 
   const fetchSevas = async () => {
     try {
@@ -74,10 +76,10 @@ export default function AdminSevasPage() {
         setSevas(prev => prev.map(s => s.id === editingSeva.id ? json.data : s));
         setEditingSeva(null);
       } else {
-        alert(json.error || 'Failed to update Seva');
+        setError(json.error || 'Failed to update Seva');
       }
     } catch (err: any) {
-      alert(err.message || 'Error saving Seva');
+      setError(err.message || 'Error saving Seva');
     } finally {
       setIsSaving(false);
     }
@@ -95,15 +97,17 @@ export default function AdminSevasPage() {
       if (json.success) {
         setSevas((prev) => prev.map((s) => (s.id === seva.id ? { ...s, active: newActiveState } : s)));
       } else {
-        alert(json.error || 'Failed to update visibility status');
+        setError(json.error || 'Failed to update visibility status');
       }
     } catch (err: any) {
-      alert(err.message || 'Error updating visibility');
+      setError(err.message || 'Error updating visibility');
     }
   };
 
-  const handleDeleteSeva = async (seva: any) => {
-    if (!confirm(`Are you sure you want to permanently delete "${seva.title}"?`)) return;
+  const handleConfirmDelete = async () => {
+    if (!deleteConfirmSeva) return;
+    const seva = deleteConfirmSeva;
+    setDeleteConfirmSeva(null);
     try {
       const res = await fetch(`/api/admin/sevas/${seva.id}`, {
         method: 'DELETE',
@@ -113,10 +117,10 @@ export default function AdminSevasPage() {
         setSevas((prev) => prev.filter((s) => s.id !== seva.id));
         if (editingSeva?.id === seva.id) setEditingSeva(null);
       } else {
-        alert(json.error || 'Failed to delete Seva');
+        setError(json.error || 'Failed to delete Seva');
       }
     } catch (err: any) {
-      alert(err.message || 'Error deleting Seva');
+      setError(err.message || 'Error deleting Seva');
     }
   };
 
@@ -158,14 +162,18 @@ export default function AdminSevasPage() {
           short_desc_te: '',
         });
       } else {
-        alert(json.error || 'Failed to create Seva');
+        setError(json.error || 'Failed to create Seva');
       }
     } catch (err: any) {
-      alert(err.message || 'Error creating Seva');
+      setError(err.message || 'Error creating Seva');
     } finally {
       setIsSaving(false);
     }
   };
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(15);
 
   const filteredSevas = sevas.filter((s) => {
     const matchesSearch =
@@ -174,6 +182,16 @@ export default function AdminSevasPage() {
     if (filterType === 'all') return matchesSearch;
     return matchesSearch && (s.category || '').toLowerCase() === filterType.toLowerCase();
   });
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, filterType]);
+
+  const totalPages = Math.ceil(filteredSevas.length / itemsPerPage) || 1;
+  const paginatedSevas = filteredSevas.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   return (
     <div className="space-y-6">
@@ -274,7 +292,7 @@ export default function AdminSevasPage() {
 
       {/* Sevas Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredSevas.map((seva) => {
+        {paginatedSevas.map((seva) => {
           const isActive = seva.active !== false;
 
           return (
@@ -329,7 +347,7 @@ export default function AdminSevasPage() {
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => handleDeleteSeva(seva)}
+                      onClick={() => setDeleteConfirmSeva(seva)}
                       className="h-7 w-7 p-0 text-red-400 hover:bg-red-950/40"
                       title="Delete Seva"
                     >
@@ -368,21 +386,34 @@ export default function AdminSevasPage() {
         })}
       </div>
 
+      {/* Pagination Controls */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={filteredSevas.length}
+        itemsPerPage={itemsPerPage}
+        itemsPerPageOptions={[15, 30, 50]}
+        onPageChange={setCurrentPage}
+        onItemsPerPageChange={setItemsPerPage}
+      />
+
       {/* Add New Special Seva Modal */}
       {isCreatingNew && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <form onSubmit={handleCreateSevaSubmit} className="w-full max-w-lg bg-[#240006] border border-gold/40 rounded-2xl p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-gold/20 pb-3">
+          <form onSubmit={handleCreateSevaSubmit} className="w-full max-w-lg max-h-[90vh] bg-[#240006] border border-gold/40 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+            {/* Modal Header */}
+            <div className="p-5 border-b border-gold/20 flex items-center justify-between shrink-0 bg-[#240006]">
               <div>
                 <h3 className="font-cinzel text-lg font-bold text-gold">Add New Special Seva</h3>
                 <p className="text-xs text-ivory/60">Create a new offering visible to devotees</p>
               </div>
-              <button type="button" onClick={() => setIsCreatingNew(false)} className="text-ivory/60 hover:text-ivory">
+              <button type="button" onClick={() => setIsCreatingNew(false)} className="text-ivory/60 hover:text-ivory p-1 rounded-lg hover:bg-gold/10 transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="space-y-3 text-xs">
+            {/* Modal Body - Scrollable */}
+            <div className="p-5 space-y-3 text-xs overflow-y-auto flex-1 custom-scrollbar">
               <div>
                 <label className="text-ivory/70 block mb-1">Seva Title (English) *</label>
                 <Input
@@ -459,7 +490,7 @@ export default function AdminSevasPage() {
                   value={newSevaData.short_desc}
                   onChange={(e) => setNewSevaData({ ...newSevaData, short_desc: e.target.value })}
                   placeholder="Auspicious homam performed with special Vedic sankalpam..."
-                  className="w-full bg-[#1A0004] border border-gold/30 text-ivory rounded-lg p-2 text-xs h-16"
+                  className="w-full bg-[#1A0004] border border-gold/30 text-ivory rounded-lg p-2 text-xs h-16 focus:ring-1 focus:ring-gold outline-none"
                 />
               </div>
 
@@ -469,16 +500,17 @@ export default function AdminSevasPage() {
                   value={newSevaData.short_desc_te}
                   onChange={(e) => setNewSevaData({ ...newSevaData, short_desc_te: e.target.value })}
                   placeholder="ప్రత్యేక వేద సంకల్పంతో నిర్వహించబడే పవిత్ర హోమము..."
-                  className="w-full bg-[#1A0004] border border-gold/30 text-ivory rounded-lg p-2 text-xs h-16"
+                  className="w-full bg-[#1A0004] border border-gold/30 text-ivory rounded-lg p-2 text-xs h-16 focus:ring-1 focus:ring-gold outline-none"
                 />
               </div>
             </div>
 
-            <div className="pt-3 flex justify-end gap-2 border-t border-gold/20">
-              <Button type="button" variant="outline" onClick={() => setIsCreatingNew(false)} className="border-gold/30 text-gold text-xs">
+            {/* Modal Footer - Sticky at bottom */}
+            <div className="p-4 bg-[#1A0004] border-t border-gold/20 flex items-center justify-end gap-3 shrink-0">
+              <Button type="button" variant="outline" onClick={() => setIsCreatingNew(false)} className="border-gold/30 text-gold text-xs px-5 py-2">
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSaving} className="bg-gold text-maroon font-bold text-xs hover:bg-gold-light">
+              <Button type="submit" disabled={isSaving} className="bg-gold text-maroon font-bold text-xs hover:bg-gold-light px-5 py-2">
                 {isSaving ? 'Creating...' : 'Save & Publish to Website'}
               </Button>
             </div>
@@ -489,18 +521,17 @@ export default function AdminSevasPage() {
       {/* Edit Seva Modal */}
       {editingSeva && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <form onSubmit={handleSaveSeva} className="w-full max-w-lg bg-[#240006] border border-gold/40 rounded-2xl p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-gold/20 pb-3">
-              <div>
-                <h3 className="font-cinzel text-lg font-bold text-gold">Edit Seva Configuration</h3>
-                <p className="text-xs text-ivory/60">{editingSeva.title}</p>
-              </div>
-              <button type="button" onClick={() => setEditingSeva(null)} className="text-ivory/60 hover:text-ivory">
+          <form onSubmit={handleSaveSeva} className="w-full max-w-lg max-h-[90vh] bg-[#240006] border border-gold/40 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+            {/* Modal Header */}
+            <div className="p-5 border-b border-gold/20 flex items-center justify-between shrink-0 bg-[#240006]">
+              <h3 className="font-cinzel text-lg font-bold text-gold">Edit Seva & Quota</h3>
+              <button type="button" onClick={() => setEditingSeva(null)} className="text-ivory/60 hover:text-ivory p-1 rounded-lg hover:bg-gold/10 transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="space-y-3 text-xs">
+            {/* Modal Body - Scrollable */}
+            <div className="p-5 space-y-3 text-xs overflow-y-auto flex-1 custom-scrollbar">
               <div>
                 <label className="text-ivory/70 block mb-1">Seva Title (English) *</label>
                 <Input
@@ -577,7 +608,7 @@ export default function AdminSevasPage() {
                 <textarea
                   value={editingSeva.short_desc || ''}
                   onChange={(e) => setEditingSeva({ ...editingSeva, short_desc: e.target.value })}
-                  className="w-full bg-[#1A0004] border border-gold/30 text-ivory rounded-lg p-2 text-xs h-16"
+                  className="w-full bg-[#1A0004] border border-gold/30 text-ivory rounded-lg p-2 text-xs h-16 focus:ring-1 focus:ring-gold outline-none"
                 />
               </div>
 
@@ -586,32 +617,71 @@ export default function AdminSevasPage() {
                 <textarea
                   value={editingSeva.short_desc_te || ''}
                   onChange={(e) => setEditingSeva({ ...editingSeva, short_desc_te: e.target.value })}
-                  className="w-full bg-[#1A0004] border border-gold/30 text-ivory rounded-lg p-2 text-xs h-16"
+                  className="w-full bg-[#1A0004] border border-gold/30 text-ivory rounded-lg p-2 text-xs h-16 focus:ring-1 focus:ring-gold outline-none"
                 />
               </div>
             </div>
 
-            <div className="pt-3 flex items-center justify-between border-t border-gold/20">
+            {/* Modal Footer - Sticky at bottom */}
+            <div className="p-4 bg-[#1A0004] border-t border-gold/20 flex items-center justify-between shrink-0">
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => handleDeleteSeva(editingSeva)}
-                className="border-red-500/50 text-red-400 hover:bg-red-950/50 text-xs"
+                onClick={() => {
+                  const target = editingSeva;
+                  setEditingSeva(null);
+                  setDeleteConfirmSeva(target);
+                }}
+                className="border-red-500/50 text-red-400 hover:bg-red-950/50 text-xs px-3 py-2"
               >
                 <Trash2 className="w-3.5 h-3.5 mr-1" />
                 Delete Seva
               </Button>
 
               <div className="flex items-center gap-2">
-                <Button type="button" variant="outline" onClick={() => setEditingSeva(null)} className="border-gold/30 text-gold text-xs">
+                <Button type="button" variant="outline" onClick={() => setEditingSeva(null)} className="border-gold/30 text-gold text-xs px-4 py-2">
                   Cancel
                 </Button>
-                <Button type="submit" disabled={isSaving} className="bg-gold text-maroon font-bold text-xs hover:bg-gold-light">
+                <Button type="submit" disabled={isSaving} className="bg-gold text-maroon font-bold text-xs hover:bg-gold-light px-4 py-2">
                   {isSaving ? 'Saving...' : 'Save Pricing & Quota to Database'}
                 </Button>
               </div>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* Custom Integrated Delete Confirmation Modal */}
+      {deleteConfirmSeva && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-[#240006] border border-red-500/50 rounded-2xl p-6 shadow-2xl space-y-4 text-center">
+            <div className="w-12 h-12 rounded-full bg-red-950/80 border border-red-500/50 mx-auto flex items-center justify-center text-red-400">
+              <Trash2 className="w-6 h-6" />
+            </div>
+            <h3 className="font-cinzel text-lg font-bold text-ivory">
+              Confirm Permanent Delete
+            </h3>
+            <p className="text-xs text-ivory/70 font-sans">
+              Are you sure you want to permanently delete <strong className="text-gold-light">"{deleteConfirmSeva.title}"</strong> from the website database?
+            </p>
+            <div className="pt-2 flex items-center justify-center gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setDeleteConfirmSeva(null)}
+                className="border-gold/30 text-gold text-xs px-5 py-2"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={handleConfirmDelete}
+                className="bg-red-600 hover:bg-red-500 text-white font-bold text-xs px-5 py-2 shadow-md"
+              >
+                Delete Seva
+              </Button>
+            </div>
+          </div>
         </div>
       )}
     </div>

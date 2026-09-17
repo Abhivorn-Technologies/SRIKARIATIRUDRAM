@@ -121,7 +121,7 @@ export function DayScheduleGrid({ days }: { days: ScheduleDay[] }) {
   };
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-10 pb-28">
       {/* 3. Section Intro Header */}
       <div className="text-center space-y-4 max-w-4xl mx-auto px-4">
         <h2 className={`text-2xl sm:text-3xl md:text-4xl font-bold text-gold-lighter ${

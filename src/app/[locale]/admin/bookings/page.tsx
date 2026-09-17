@@ -25,6 +25,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { Link } from '@/i18n/routing';
+import { Pagination } from '@/components/ui/Pagination';
 
 export default function AdminBookingsPage() {
   const [bookings, setBookings] = useState<any[]>([]);
@@ -60,13 +61,14 @@ export default function AdminBookingsPage() {
     attending_personally: 'yes'
   });
 
-  const fetchBookings = async (page = 1) => {
+  const fetchBookings = async (page = pagination.page, limit = pagination.limit) => {
     try {
       setLoading(true);
       setError(null);
       const params = new URLSearchParams();
       params.set('page', String(page));
-      params.set('limit', '20');
+      params.set('limit', String(limit));
+      params.set('type', '28_DAY');
       if (searchQuery) params.set('search', searchQuery);
       if (paymentFilter) params.set('payment_status', paymentFilter);
       if (attendanceFilter) params.set('attendance', attendanceFilter);
@@ -155,11 +157,11 @@ export default function AdminBookingsPage() {
           <div className="flex items-center gap-2 mb-1">
             <ClipboardList className="w-5 h-5 text-gold" />
             <h1 className="font-cinzel text-2xl font-bold text-ivory">
-              Devotee Seva Bookings
+              28-Day Festival Seva Bookings
             </h1>
           </div>
           <p className="text-xs text-ivory/70">
-            Real-time database ledger of all registered devotees, gotrams, and sankalpams
+            Dedicated ledger of registered devotee tickets, Nakshatra Hawans, gotrams, and sankalpams for the 28-day festival
           </p>
         </div>
 
@@ -372,33 +374,15 @@ export default function AdminBookingsPage() {
         </div>
 
         {/* Pagination Footer */}
-        {pagination.totalPages > 1 && (
-          <div className="p-4 border-t border-gold/15 flex items-center justify-between text-xs text-ivory/70">
-            <div>
-              Page {pagination.page} of {pagination.totalPages}
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={pagination.page <= 1}
-                onClick={() => fetchBookings(pagination.page - 1)}
-                className="border-gold/30 text-gold h-7 text-xs"
-              >
-                Previous
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={pagination.page >= pagination.totalPages}
-                onClick={() => fetchBookings(pagination.page + 1)}
-                className="border-gold/30 text-gold h-7 text-xs"
-              >
-                Next
-              </Button>
-            </div>
-          </div>
-        )}
+        <Pagination
+          currentPage={pagination.page}
+          totalPages={pagination.totalPages}
+          totalItems={pagination.total}
+          itemsPerPage={pagination.limit}
+          onPageChange={(page) => fetchBookings(page, pagination.limit)}
+          onItemsPerPageChange={(limit) => fetchBookings(1, limit)}
+          className="rounded-t-none border-t border-gold/15"
+        />
       </Card>
 
       {/* Booking Details Modal */}

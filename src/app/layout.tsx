@@ -19,5 +19,15 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return children;
+  return (
+    <html suppressHydrationWarning className="scroll-smooth">
+      <head>
+        <link rel="icon" href="/assets/icons/FAVICON.svg" type="image/svg+xml" />
+        <link rel="apple-touch-icon" href="/assets/icons/FAVICON.svg" />
+      </head>
+      <body suppressHydrationWarning className="bg-burgundy-deep text-ivory min-h-screen flex flex-col selection:bg-gold selection:text-burgundy-deep">
+        {children}
+      </body>
+    </html>
+  );
 }

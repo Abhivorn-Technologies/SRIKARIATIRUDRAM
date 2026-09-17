@@ -5,6 +5,9 @@ import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/routing';
 import { ChevronRight } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function generateMetadata({
   params: { locale },
 }: {

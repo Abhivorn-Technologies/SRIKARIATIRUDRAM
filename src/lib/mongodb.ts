@@ -1,9 +1,12 @@
 import { MongoClient, Db } from 'mongodb';
 import dns from 'dns';
 
-// Set public DNS servers to prevent Windows querySrv ECONNREFUSED issues with MongoDB Atlas SRV records
+// Set public DNS servers and IPv4 first to prevent Windows querySrv ECONNREFUSED issues with MongoDB Atlas SRV records
 try {
   dns.setServers(['8.8.8.8', '1.1.1.1']);
+  if (typeof dns.setDefaultResultOrder === 'function') {
+    dns.setDefaultResultOrder('ipv4first');
+  }
 } catch (e) {
   // Ignore in environments where setServers is restricted (e.g. Serverless/Edge)
 }

@@ -30,6 +30,14 @@ export const annadanamServerService = {
     return docs as any;
   },
 
+  async getOneDayStats(): Promise<{ totalCapacity: number; bookedCount: number; availableSlots: number }> {
+    const sponsors = await this.getAllAnnadanam();
+    const bookedCount = sponsors.filter(sp => sp.status !== 'CANCELLED' && Number(sp.amount) >= 25116).length;
+    const totalCapacity = 11;
+    const availableSlots = Math.max(0, totalCapacity - bookedCount);
+    return { totalCapacity, bookedCount, availableSlots };
+  },
+
   async getCalendarDays(): Promise<AnnadanamDay[]> {
     const sponsors = await this.getAllAnnadanam();
 

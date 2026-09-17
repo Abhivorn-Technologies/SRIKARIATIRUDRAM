@@ -20,11 +20,26 @@ export function LiveStreamViewer() {
   const [loading, setLoading] = useState(true);
   const [userClickedPlay, setUserClickedPlay] = useState(false);
   const [chatMessage, setChatMessage] = useState('');
-  const [messages, setMessages] = useState([
+  const [userName, setUserName] = useState('');
+  const [messages, setMessages] = useState<any[]>([
     { user: 'Srinivas R.', text: 'ఓం నమః శివాయ! హర హర మహాదేవ!', time: '10:42 AM' },
     { user: 'Lakshmi P.', text: 'Har Har Mahadev from California 🙏', time: '10:43 AM' },
     { user: 'Ramesh Sharma', text: 'Bolo Sambho Mahadeva!', time: '10:45 AM' },
   ]);
+
+  const chatContainerRef = React.useRef<HTMLDivElement>(null);
+
+  const fetchChats = async () => {
+    try {
+      const res = await fetch('/api/live/chat', { cache: 'no-store' });
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+        setMessages(json.data);
+      }
+    } catch (err) {
+      console.warn('Failed to fetch live chats:', err);
+    }
+  };
 
   useEffect(() => {
     fetch('/api/live')
@@ -45,13 +60,44 @@ export function LiveStreamViewer() {
         }
       })
       .catch(e => console.warn('Failed to fetch live archives:', e));
+
+    fetchChats();
+    const interval = setInterval(fetchChats, 3000);
+    return () => clearInterval(interval);
   }, []);
 
-  const handleSendChat = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  const handleSendChat = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!chatMessage.trim()) return;
-    setMessages([...messages, { user: 'You', text: chatMessage, time: 'Just now' }]);
+
+    const msgText = chatMessage.trim();
+    const senderName = userName.trim() || 'Devotee';
     setChatMessage('');
+
+    // Optimistic UI insert
+    const tempMsg = {
+      user: senderName,
+      text: msgText,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+    setMessages((prev) => [...prev, tempMsg]);
+
+    try {
+      await fetch('/api/live/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user: senderName, text: msgText })
+      });
+      fetchChats();
+    } catch (err) {
+      console.error('Failed to post chat message:', err);
+    }
   };
 
   const isLive = Boolean(liveData?.is_live && liveData?.live_url);
@@ -59,19 +105,16 @@ export function LiveStreamViewer() {
 
   const extractYouTubeId = (input: string) => {
     if (!input) return '';
-    let str = input.trim();
-    if (str.includes('v=')) {
-      str = str.split('v=')[1]?.split('&')[0] || str;
-    } else if (str.includes('youtu.be/')) {
-      str = str.split('youtu.be/')[1]?.split('?')[0] || str;
-    } else if (str.includes('youtube.com/live/')) {
-      str = str.split('live/')[1]?.split('?')[0] || str;
-    } else if (str.includes('youtube.com/embed/')) {
-      str = str.split('embed/')[1]?.split('?')[0] || str;
-    }
-    // Simple validation for placeholder string vs real YouTube ID/URL
+    const str = input.trim();
     if (str.startsWith('live_day') || str === 'live_stream_placeholder') return '';
-    return str;
+    const match = str.match(/(?:v=|\/v\/|embed\/|youtu\.be\/|live\/|shorts\/)([a-zA-Z0-9_-]{11})/);
+    if (match && match[1]) {
+      return match[1];
+    }
+    if (/^[a-zA-Z0-9_-]{11}$/.test(str)) {
+      return str;
+    }
+    return '';
   };
   
   const getEmbedUrl = (url: string) => {
@@ -149,36 +192,52 @@ export function LiveStreamViewer() {
           <Card variant="sacred" className="h-[460px] flex flex-col justify-between p-4 border-gold/30">
             <div className="border-b border-gold/20 pb-3 flex items-center justify-between">
               <span className="font-cinzel text-sm font-bold text-gold-light flex items-center gap-1.5">
-                <MessageSquare className="w-4 h-4" /> Live Devotee Prayers
+                <MessageSquare className="w-4 h-4 text-gold" /> Live Devotee Prayers
               </span>
-              <span className="text-[10px] text-ivory/60">Real-time</span>
+              <span className="text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                Live Chat
+              </span>
             </div>
 
             {/* Chat message list */}
-            <div className="flex-1 overflow-y-auto space-y-3 py-3 pr-1 text-xs font-sans scrollbar-none">
+            <div
+              ref={chatContainerRef}
+              className="flex-1 overflow-y-auto space-y-2.5 py-3 pr-1 text-xs font-sans scrollbar-thin scrollbar-thumb-gold/30"
+            >
               {messages.map((m, idx) => (
-                <div key={idx} className="p-2.5 rounded-lg bg-burgundy-deep/70 border border-gold/15 space-y-0.5">
+                <div key={idx} className="p-2.5 rounded-lg bg-burgundy-deep/70 border border-gold/15 space-y-0.5 shadow-sm">
                   <div className="flex justify-between items-center">
                     <span className="font-bold text-gold-lighter">{m.user}</span>
                     <span className="text-[10px] text-ivory/40">{m.time}</span>
                   </div>
-                  <p className="text-ivory/90">{m.text}</p>
+                  <p className="text-ivory/90 leading-relaxed">{m.text}</p>
                 </div>
               ))}
             </div>
 
             {/* Input Bar */}
-            <form onSubmit={handleSendChat} className="pt-2 border-t border-gold/20 flex gap-2">
+            <form onSubmit={handleSendChat} className="pt-2 border-t border-gold/20 space-y-2">
               <input
                 type="text"
-                placeholder={t('chatPlaceholder')}
-                value={chatMessage}
-                onChange={(e) => setChatMessage(e.target.value)}
-                className="flex-1 bg-burgundy-deep border border-gold/30 rounded-lg px-3 py-2 text-xs text-ivory placeholder:text-ivory/40 focus:outline-none focus:border-gold"
+                placeholder="Your Name (Optional)"
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+                className="w-full bg-burgundy-deep/80 border border-gold/20 rounded-lg px-2.5 py-1 text-[11px] text-ivory/90 placeholder:text-ivory/40 focus:outline-none focus:border-gold/60"
               />
-              <Button type="submit" variant="gold" size="sm" className="px-3">
-                <Send className="w-3.5 h-3.5" />
-              </Button>
+
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder={t('chatPlaceholder') || 'Send a prayer / message...'}
+                  value={chatMessage}
+                  onChange={(e) => setChatMessage(e.target.value)}
+                  className="flex-1 bg-burgundy-deep border border-gold/30 rounded-lg px-3 py-2 text-xs text-ivory placeholder:text-ivory/40 focus:outline-none focus:border-gold"
+                />
+                <Button type="submit" variant="gold" size="sm" className="px-3 shrink-0">
+                  <Send className="w-3.5 h-3.5" />
+                </Button>
+              </div>
             </form>
           </Card>
         </div>

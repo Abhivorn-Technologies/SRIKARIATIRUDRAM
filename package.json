@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
+    "@organization-wide-standards/input-validations": "github:Organization-wide-Standards/Input-Validations",
     "@supabase/supabase-js": "^2.116.0",
     "canvas-confetti": "^1.9.3",
     "cloudinary": "^2.11.0",

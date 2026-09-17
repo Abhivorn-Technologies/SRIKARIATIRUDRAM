@@ -1,6 +1,7 @@
 import React from 'react';
 import { getTranslations } from 'next-intl/server';
 import { AboutHero } from '@/components/about/AboutHero';
+import { PeetadhipathiBlessingsSection } from '@/components/about/PeetadhipathiBlessingsSection';
 import { SrikariTempleSection } from '@/components/about/SrikariTempleSection';
 import { AboutIntro } from '@/components/about/AboutIntro';
 import { SriRudramSection } from '@/components/about/SriRudramSection';
@@ -58,7 +59,10 @@ export default function AboutPage() {
       {/* 1. HERO SECTION */}
       <AboutHero />
 
-      {/* 2. ABOUT SRIKARI TEMPLE & ADVISORY BOARD */}
+      {/* 2. PEETADHIPATHI BLESSINGS & GUIDANCE */}
+      <PeetadhipathiBlessingsSection />
+
+      {/* 3. ABOUT SRIKARI TEMPLE & ADVISORY BOARD */}
       <SrikariTempleSection />
 
       {/* 3. INTRODUCTION TO SRIKARI ATI RUDRAM */}

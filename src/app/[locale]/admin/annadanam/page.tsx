@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { useToast } from '@/components/ui/Toast';
+import { Pagination } from '@/components/ui/Pagination';
 import { Utensils, PlusCircle, RefreshCw, Trash2, X, AlertCircle } from 'lucide-react';
 
 export default function AdminAnnadanamPage() {
@@ -18,6 +19,10 @@ export default function AdminAnnadanamPage() {
   const [deletingItem, setDeletingItem] = useState<any | null>(null);
   const [deletingLoading, setDeletingLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const [formData, setFormData] = useState({
     sponsor_name: '',
@@ -95,6 +100,12 @@ export default function AdminAnnadanamPage() {
     }
   };
 
+  const totalPages = Math.ceil(sponsors.length / itemsPerPage) || 1;
+  const paginatedSponsors = sponsors.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   const totalRaised = sponsors.reduce((acc, s) => acc + Number(s.amount || 0), 0);
 
   return (
@@ -143,19 +154,42 @@ export default function AdminAnnadanamPage() {
         </div>
       )}
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* Stats Cards & Slot Analytics */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="p-5 bg-[#240006]/90 border-gold/20">
           <span className="text-xs text-gold/70 font-cinzel uppercase">Total Sponsors</span>
           <h3 className="text-2xl font-bold font-cinzel text-ivory mt-1">{sponsors.length} Sponsors</h3>
         </Card>
+
         <Card className="p-5 bg-[#240006]/90 border-gold/20">
           <span className="text-xs text-gold/70 font-cinzel uppercase">Total Annadanam Funds</span>
           <h3 className="text-2xl font-bold font-cinzel text-gold mt-1">₹{totalRaised.toLocaleString('en-IN')}</h3>
         </Card>
+
+        <Card className="p-5 bg-[#240006]/90 border-gold/30 ring-1 ring-gold/20">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-gold-lighter font-cinzel font-bold uppercase">1-Day Sponsor (₹25,116)</span>
+            <Badge variant="gold" size="sm">11 Cap</Badge>
+          </div>
+          {(() => {
+            const oneDayBooked = sponsors.filter(s => s.status !== 'CANCELLED' && Number(s.amount) >= 25116).length;
+            const oneDayRem = Math.max(0, 11 - oneDayBooked);
+            return (
+              <div className="mt-1">
+                <h3 className="text-xl font-bold font-cinzel text-emerald-400">
+                  {oneDayBooked} / 11 Booked
+                </h3>
+                <p className="text-[11px] text-ivory/70 font-sans mt-0.5">
+                  {oneDayRem > 0 ? `${oneDayRem} slots available for devotees` : 'FULLY BOOKED (0 slots)'}
+                </p>
+              </div>
+            );
+          })()}
+        </Card>
+
         <Card className="p-5 bg-[#240006]/90 border-gold/20">
-          <span className="text-xs text-gold/70 font-cinzel uppercase">Daily Target Capacity</span>
-          <h3 className="text-2xl font-bold font-cinzel text-emerald-400 mt-1">1,000+ Meals/Day</h3>
+          <span className="text-xs text-gold/70 font-cinzel uppercase">Daily Service Capacity</span>
+          <h3 className="text-2xl font-bold font-cinzel text-gold-lighter mt-1">1,000+ Meals/Day</h3>
         </Card>
       </div>
 
@@ -176,8 +210,8 @@ export default function AdminAnnadanamPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gold/10">
-              {sponsors.length > 0 ? (
-                sponsors.map((s) => (
+              {paginatedSponsors.length > 0 ? (
+                paginatedSponsors.map((s) => (
                   <tr key={s.id} className="hover:bg-gold/5 transition-colors">
                     <td className="py-3 px-4 font-medium text-ivory">
                       {s.date ? (() => {
@@ -234,6 +268,15 @@ export default function AdminAnnadanamPage() {
             </tbody>
           </table>
         </div>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={sponsors.length}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+          onItemsPerPageChange={setItemsPerPage}
+          className="rounded-t-none border-t border-gold/15"
+        />
       </Card>
 
       {/* Add Modal */}

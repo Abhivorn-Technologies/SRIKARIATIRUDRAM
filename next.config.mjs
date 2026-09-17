@@ -24,6 +24,7 @@ const nextConfig = {
       }
     ],
   },
+  transpilePackages: ['@organization-wide-standards/input-validations'],
 };
 
 export default withNextIntl(nextConfig);

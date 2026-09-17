@@ -68,7 +68,40 @@ export const scheduleServerService = {
       }
     }
 
-    return docs as any;
+    // Enrich docs with assigned_sevas and real-time ticket availability
+    const availabilities = await db.collection('seva_availability').find({}).toArray();
+    const allSevas = await db.collection('sevas').find({ active: { $ne: false } }).toArray();
+    const sevasMap = new Map(allSevas.map(s => [s.id || s._id?.toString(), s]));
+
+    const enriched = docs.map(sc => {
+      const dayAvails = availabilities.filter(sa => sa.date === sc.date || (sa.day_number !== undefined && sa.day_number === sc.day_number));
+      const assigned_sevas = dayAvails.map(sa => {
+        const s = sevasMap.get(sa.seva_id);
+        const capacity = sa.capacity || 50;
+        const booked = sa.booked_count || 0;
+        const available = Math.max(0, capacity - booked);
+        const status = sa.status || (available === 0 ? 'FULLY_BOOKED' : available <= 5 ? 'FEW_SLOTS_LEFT' : 'AVAILABLE');
+        return {
+          availability_id: sa.id || sa._id?.toString(),
+          seva_id: sa.seva_id,
+          slug: s?.slug || sa.seva_id,
+          title: s?.title || sa.seva_id,
+          title_te: s?.title_te,
+          amount: s?.amount || 0,
+          category: s?.category || 'General',
+          capacity,
+          booked_count: booked,
+          available_slots: available,
+          status
+        };
+      });
+      return {
+        ...sc,
+        assigned_sevas
+      };
+    });
+
+    return enriched as any;
   },
 
   async getScheduleById(id: string): Promise<ScheduleItem | null> {
@@ -129,7 +162,8 @@ export const scheduleServerService = {
       { $set: { ...cleanUpdates, updated_at: new Date() } },
       { returnDocument: 'after' }
     );
-    return res as any;
+    const updatedDoc = (res && typeof res === 'object' && 'value' in res && res.value) ? res.value : res;
+    return updatedDoc as any;
   },
 
   async deleteSchedule(id: string): Promise<boolean> {

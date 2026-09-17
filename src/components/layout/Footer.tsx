@@ -127,10 +127,16 @@ export function Footer() {
               Venue & Contact
             </h4>
             <div className="space-y-2.5 text-xs text-ivory/80 font-sans">
-              <div className="flex items-start gap-2.5">
-                <MapPin className="w-4 h-4 text-gold-light shrink-0 mt-0.5" />
-                <span className="leading-snug">{siteConfig.venue.title}</span>
-              </div>
+              <a
+                href={siteConfig.venue.mapUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Open Location in Google Maps"
+                className="flex items-start gap-2.5 hover:text-gold transition-colors group cursor-pointer"
+              >
+                <MapPin className="w-4 h-4 text-gold-light shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
+                <span className="leading-snug group-hover:underline">{siteConfig.venue.title}</span>
+              </a>
               <div className="flex items-center gap-2.5">
                 <Phone className="w-4 h-4 text-gold-light shrink-0" />
                 <a href={`tel:${siteConfig.contact.primary}`} className="hover:text-gold transition-colors">

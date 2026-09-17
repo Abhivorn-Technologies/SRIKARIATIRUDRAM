@@ -1,12 +1,31 @@
-import { bookingService } from '@/services/booking.service';
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useDevoteeAuth } from '@/context/DevoteeAuthContext';
 import { DevoteeBookingCard } from '@/components/account/DashboardStats';
 import { AccountSidebar } from '@/components/account/AccountSidebar';
 import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
 import { Link } from '@/i18n/routing';
-import { Flame } from 'lucide-react';
+import { Flame, RefreshCw, Calendar } from 'lucide-react';
 
-export default async function AccountBookingsPage() {
-  const bookings = await bookingService.getDevoteeBookings();
+export default function AccountBookingsPage() {
+  const { session } = useDevoteeAuth();
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch(`/api/devotee/dashboard?phone=${encodeURIComponent(session?.phone || '')}`)
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.success && json.data?.bookings) {
+          setBookings(json.data.bookings);
+        }
+      })
+      .catch((err) => console.error('Failed to load bookings from MongoDB:', err))
+      .finally(() => setLoading(false));
+  }, [session?.phone]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
@@ -19,10 +38,10 @@ export default async function AccountBookingsPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gold/20 pb-4">
             <div>
               <h1 className="font-cinzel text-2xl md:text-3xl font-bold text-gold-lighter">
-                My Seva Bookings
+                My Seva Bookings ({bookings.length})
               </h1>
               <p className="text-xs sm:text-sm text-ivory/70 font-sans">
-                Review your active and completed Yajna seva records
+                Live MongoDB records matching mobile number {session?.phone || 'all registered'}
               </p>
             </div>
 
@@ -33,11 +52,31 @@ export default async function AccountBookingsPage() {
             </Link>
           </div>
 
-          <div className="space-y-4">
-            {bookings.map((booking) => (
-              <DevoteeBookingCard key={booking.bookingId} booking={booking} />
-            ))}
-          </div>
+          {loading ? (
+            <div className="p-12 text-center space-y-2">
+              <RefreshCw className="w-6 h-6 text-gold animate-spin mx-auto" />
+              <p className="text-xs text-gold-light">Loading Seva Bookings from MongoDB...</p>
+            </div>
+          ) : bookings.length > 0 ? (
+            <div className="space-y-4">
+              {bookings.map((booking) => (
+                <DevoteeBookingCard key={booking.bookingId} booking={booking} />
+              ))}
+            </div>
+          ) : (
+            <Card className="p-10 text-center space-y-3 bg-[#1A0004] border-gold/20">
+              <Calendar className="w-12 h-12 text-gold/40 mx-auto" />
+              <h3 className="font-cinzel text-lg font-bold text-gold-light">No Bookings Found</h3>
+              <p className="text-xs text-ivory/70 max-w-sm mx-auto">
+                No active Seva bookings found for phone number {session?.phone || 'your account'}.
+              </p>
+              <Link href="/book-seva">
+                <Button variant="gold" size="sm" className="font-bold text-xs">
+                  Book Your Seva Now
+                </Button>
+              </Link>
+            </Card>
+          )}
         </div>
       </div>
     </div>
