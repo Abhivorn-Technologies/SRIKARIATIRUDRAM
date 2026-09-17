@@ -224,17 +224,19 @@ export function EventCountdown({ targetDate }: { targetDate: string }) {
 
   useEffect(() => {
     const calculateTime = () => {
-      const difference = +new Date(targetDate) - +new Date();
-      if (difference > 0) {
-        setTimeLeft({
-          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-          minutes: Math.floor((difference / 1000 / 60) % 60),
-          seconds: Math.floor((difference / 1000) % 60),
-        });
-      } else {
-        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+      let difference = +new Date(targetDate) - +new Date();
+      if (difference <= 0) {
+        // When countdown completes, automatically restart from 365 days cycle
+        const YEAR_MS = 365 * 24 * 60 * 60 * 1000;
+        const elapsed = Math.abs(difference) % YEAR_MS;
+        difference = YEAR_MS - elapsed;
       }
+      setTimeLeft({
+        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+        minutes: Math.floor((difference / 1000 / 60) % 60),
+        seconds: Math.floor((difference / 1000) % 60),
+      });
     };
 
     calculateTime();
