@@ -151,9 +151,11 @@ export default function SpecialSevaDevoteeDetailsPage() {
     e.preventDefault();
     if (validate()) {
       const effectiveGotram = isOtherGotram ? customGotram.trim() : draft.gotram.trim();
+      const cleanAddress = Number(draft.amount || 0) >= 5000 ? (draft.address || '').trim() : '';
       specialSevaBookingService.saveActiveDraft({
         ...draft,
         gotram: effectiveGotram,
+        address: cleanAddress,
         devoteeParticipation: draft.devoteeParticipation || 'attending',
       });
       router.push(`/${locale}/special-seva-booking/payment`);
@@ -564,7 +566,9 @@ export default function SpecialSevaDevoteeDetailsPage() {
                           {isTe ? 'కాదు, నేను హాజరు కాలేను' : isHi ? 'नहीं, मैं उपस्थित नहीं हो पाऊँगा' : 'NO, I WILL NOT ATTEND'}
                         </span>
                         <span className="text-[10px] text-[#E8C76A]/75 font-sans block mt-0.5">
-                          {isTe ? 'సంకల్పం మీ పేరుతో ఉచ్ఛరిస్తారు & ప్రసాదం పోస్ట్ ద్వారా' : 'Priest Sankalpam & Prasadam dispatched via courier'}
+                          {Number(draft.amount || 0) >= 5000
+                            ? (isTe ? 'సంకల్పం మీ పేరుతో ఉచ్ఛరిస్తారు & ప్రసాదం పోస్ట్ ద్వారా' : 'Priest Sankalpam & Prasadam dispatched via courier')
+                            : (isTe ? 'సంకల్పం మీ పేరుతో ఉచ్ఛరిస్తారు (ప్రసాదం కౌంటర్ వద్ద లభించును)' : 'Priest Sankalpam in your name (Prasadam collectable at counter)')}
                         </span>
                       </div>
                     </div>

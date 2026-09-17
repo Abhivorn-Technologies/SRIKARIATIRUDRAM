@@ -48,6 +48,98 @@ export const sevasList: Seva[] = [
     featured: false
   },
   {
+    id: "valli-devasena-subramanyeswara-kalyanam",
+    slug: "valli-devasena-subramanyeswara-kalyanam",
+    name: "Valli–Devasena Subramanyeswara Kalyanam",
+    title: "Valli–Devasena Subramanyeswara Kalyanam",
+    titleTe: "శ్రీ వల్లీ–దేవసేన సుబ్రహ్మణ్యేశ్వర కళ్యాణం",
+    titleHi: "श्री वल्ली–देवसेना सुब्रह्मण्येश्वर कल्याणम्",
+    price: 1116,
+    amount: 1116,
+    shortDesc: "Participate in the sacred Sri Valli–Devasena Sametha Subramanyeswara Swamy Kalyanam.",
+    shortDescTe: "శ్రీ వల్లీ–దేవసేన సమేత సుబ్రహ్మణ్యేశ్వర స్వామి దివ్య కళ్యాణోత్సవంలో పాల్గొనండి.",
+    shortDescHi: "श्री वल्ली–देवसेना समेत सुब्रह्मण्येश्वर स्वामी दिव्य कल्याणोत्सव में भाग लें।",
+    fullDesc: "Celebrated on Krittika Nakshatra (19 Dec 2026, Day 25). Devotees participating receive the boundless grace of Lord Kartikeya for marital harmony, courageous wisdom, removal of Kuja/Mars doshas, and children welfare.",
+    fullDescTe: "19 డిసెంబర్ 2026 (25వ రోజు) కృత్తిక నక్షత్రం రోజున నిర్వహించే అత్యంత పవిత్ర కళ్యాణ క్రతువు. కుజ దోష నివారణ మరియు సంతాన సౌభాగ్యం చేకూరును.",
+    fullDescHi: "19 दिसम्बर 2026 कृत्तिका नक्षत्र पर श्री वल्ली-देवसेना समेत सुब्रह्मण्येश्वर स्वामी कल्याणोत्सव।",
+    category: "kalyanam",
+    icon: "🌺",
+    duration: "3 Hours",
+    durationTe: "3 గంటలు",
+    durationHi: "3 घंटे",
+    time: "10:00 AM – 01:00 PM (19 Dec 2026)",
+    timeTe: "ఉదయం 10:00 నుండి 01:00 వరకు (19 డిసెంబర్ 2026)",
+    timeHi: "प्रातः 10:00 से 01:00 (19 दिसम्बर 2026)",
+    image: "/assets/images/sevas/mrityunjaya.svg",
+    prasadam: ["Kalyana Akshatas", "Subramanya Raksha Thread", "Kumkum", "Vibhuti"],
+    prasadamTe: ["కళ్యాణ అక్షతలు", "సుబ్రహ్మణ్య రక్షా సూత్రం", "కుంకుమ", "విభూతి"],
+    prasadamHi: ["कल्याण अक्षत", "सुब्रह्मण्य रक्षा सूत्र", "कुमकुम", "भस्म"],
+    benefits: [
+      "Removes Kuja Dosha (Manglik) and removes obstacles in marriage",
+      "Bestows victory in righteous endeavors, valour, and children's welfare",
+      "Dedicated Date: 19 Dec 2026 (Krittika Nakshatram, Day 25)"
+    ],
+    benefitsTe: [
+      "వివాహ ఆటంకాలు, కుజ దోష నివారణ",
+      "సంతాన అభివృద్ధి & ధైర్య విజయం",
+      "విశేష దినం: 19 డిసెంబర్ 2026 (కృత్తిక నక్షత్రం, 25వ రోజు)"
+    ],
+    benefitsHi: [
+      "मांगलिक / कुज दोष निवारण एवं विवाह बाधा शांति",
+      "संतान सुख, साहस एवं धर्म कार्यों में विजय",
+      "विशेष तिथि: 19 दिसम्बर 2026 (कृत्तिका नक्षत्र)"
+    ],
+    availability: "available",
+    availableSlots: 50,
+    featured: true
+  },
+  {
+    id: "parvathi-parameswara-kalyanam",
+    slug: "parvathi-parameswara-kalyanam",
+    name: "Parvathi–Parameswara Maha Shanti Kalyanam",
+    title: "Parvathi–Parameswara Maha Shanti Kalyanam",
+    titleTe: "శ్రీ పార్వతీ–పరమేశ్వర మహా శాంతి కళ్యాణం",
+    titleHi: "श्री पार्वती–परमेश्वर महा शांति कल्याणम्",
+    price: 1116,
+    amount: 1116,
+    shortDesc: "Participate in the sacred Sri Parvathi–Parameswara Maha Shanti Kalyanam.",
+    shortDescTe: "శ్రీ పార్వతీ–పరమేశ్వర మహా శాంతి దివ్య కళ్యాణోత్సవంలో పాల్గొనండి.",
+    shortDescHi: "श्री पार्वती–परमेश्वर महा शांति कल्याणोत्सव में भाग लें।",
+    fullDesc: "The pinnacle concluding seva performed on Concluding Rohini Day (22 Dec 2026) along with Maha Purnahuti and Ashirvachanam. Bestows lasting family peace, longevity, universal auspiciousness and the pinnacle blessings of the 28-day Mahayagnam.",
+    fullDescTe: "22 డిసెంబర్ 2026 ముగింపు రోహిణి రోజున మహా పూర్ణాహుతి మరియు వేద పండితుల ఆశీర్వచనములతో నిర్వహించే సర్వోన్నత దివ్య కళ్యాణం.",
+    fullDescHi: "22 दिसम्बर 2026 समापन रोहिणी दिवस पर महा पूर्णाहुति सहित दिव्य कल्याणोत्सव।",
+    category: "kalyanam",
+    icon: "🕉️",
+    duration: "4 Hours",
+    durationTe: "4 గంటలు",
+    durationHi: "4 घंटे",
+    time: "09:00 AM – 01:30 PM (22 Dec 2026)",
+    timeTe: "ఉదయం 09:00 నుండి 01:30 వరకు (22 డిసెంబర్ 2026)",
+    timeHi: "प्रातः 09:00 से 01:30 (22 दिसम्बर 2026)",
+    image: "/assets/images/sevas/rudrabhishekam.svg",
+    prasadam: ["Maha Purnahuti Bhasma", "Kalyana Raksha", "Silver Shiva Coin", "Sacred Kumkum & Akshatas"],
+    prasadamTe: ["మహా పూర్ణాహుతి భస్మం", "కళ్యాణ రక్ష", "వెండి శివ నాణెం", "పవిత్ర కుంకుమ & అక్షతలు"],
+    prasadamHi: ["महा पूर्णाहुति भस्म", "कल्याण रक्षा", "रजत शिव सिक्का", "कुमकुम एवं अक्षत"],
+    benefits: [
+      "Pinnacle blessings of the entire 28-Day Ati Rudra Mahayagnam",
+      "Lifelong marital bliss, family harmony, health and universal peace",
+      "Dedicated Date: 22 Dec 2026 (Concluding Rohini Day)"
+    ],
+    benefitsTe: [
+      "28 రోజుల సంపూర్ణ మహాయజ్ఞ పుణ్యఫలం",
+      "అన్యోన్య దాంపత్యం, కుటుంబ శాంతి మరియు సకల కార్యసిద్ధి",
+      "విశేష దినం: 22 డిసెంబర్ 2026 (ముగింపు రోహిణి దినం)"
+    ],
+    benefitsHi: [
+      "28 दिवसीय सम्पूर्ण महायज्ञ का सर्वोच्च पुण्यफल",
+      "सुखद दांपत्य, पारिवारिक समरसता एवं सर्वमंगल",
+      "विशेष तिथि: 22 दिसम्बर 2026 (समापन रोहिणी दिवस)"
+    ],
+    availability: "available",
+    availableSlots: 50,
+    featured: true
+  },
+  {
     id: "ekadasa-rudra-abhishekam",
     slug: "ekadasa-rudra-abhishekam",
     name: "Ekadasa Rudra Abhishekam",
@@ -179,7 +271,7 @@ export const sevasList: Seva[] = [
     benefitsHi: [
       "चंडी होम सहित नक्षत्र शांति अनुष्ठान",
       "समस्त बाधाओं एवं नकारात्मक प्रभावों का शमन",
-      "विशेष तिथियाँ: 27 नवं (आर्द्रा), 6 दिसं (स्वाति), 15 दिसं (शतभिषा)"
+      "विशेष तिथियाँ: 27 नवं (आर्द्रा), 6 दिसं (शतभिषा)"
     ],
     availability: "available",
     availableSlots: 25,
@@ -275,98 +367,6 @@ export const sevasList: Seva[] = [
     ],
     availability: "few_slots",
     availableSlots: 15,
-    featured: true
-  },
-  {
-    id: "valli-devasena-subramanyeswara-kalyanam",
-    slug: "valli-devasena-subramanyeswara-kalyanam",
-    name: "Valli–Devasena Subramanyeswara Kalyanam",
-    title: "Valli–Devasena Subramanyeswara Kalyanam",
-    titleTe: "శ్రీ వల్లీ–దేవసేన సుబ్రహ్మణ్యేశ్వర కళ్యాణం",
-    titleHi: "श्री वल्ली–देवसेना सुब्रह्मण्येश्वर कल्याणम्",
-    price: 1116,
-    amount: 1116,
-    shortDesc: "Participate in the sacred Sri Valli–Devasena Sametha Subramanyeswara Swamy Kalyanam.",
-    shortDescTe: "శ్రీ వల్లీ–దేవసేన సమేత సుబ్రహ్మణ్యేశ్వర స్వామి దివ్య కళ్యాణోత్సవంలో పాల్గొనండి.",
-    shortDescHi: "श्री वल्ली–देवसेना समेत सुब्रह्मण्येश्वर स्वामी दिव्य कल्याणोत्सव में भाग लें।",
-    fullDesc: "Celebrated on Krittika Nakshatra (19 Dec 2026, Day 25). Devotees participating receive the boundless grace of Lord Kartikeya for marital harmony, courageous wisdom, removal of Kuja/Mars doshas, and children welfare.",
-    fullDescTe: "19 డిసెంబర్ 2026 (25వ రోజు) కృత్తిక నక్షత్రం రోజున నిర్వహించే అత్యంత పవిత్ర కళ్యాణ క్రతువు. కుజ దోష నివారణ మరియు సంతాన సౌభాగ్యం చేకూరును.",
-    fullDescHi: "19 दिसम्बर 2026 कृत्तिका नक्षत्र पर श्री वल्ली-देवसेना समेत सुब्रह्मण्येश्वर स्वामी कल्याणोत्सव।",
-    category: "kalyanam",
-    icon: "🌺",
-    duration: "3 Hours",
-    durationTe: "3 గంటలు",
-    durationHi: "3 घंटे",
-    time: "10:00 AM – 01:00 PM (19 Dec 2026)",
-    timeTe: "ఉదయం 10:00 నుండి 01:00 వరకు (19 డిసెంబర్ 2026)",
-    timeHi: "प्रातः 10:00 से 01:00 (19 दिसम्बर 2026)",
-    image: "/assets/images/sevas/mrityunjaya.svg",
-    prasadam: ["Kalyana Akshatas", "Subramanya Raksha Thread", "Kumkum", "Vibhuti"],
-    prasadamTe: ["కళ్యాణ అక్షతలు", "సుబ్రహ్మణ్య రక్షా సూత్రం", "కుంకుమ", "విభూతి"],
-    prasadamHi: ["कल्याण अक्षत", "सुब्रह्मण्य रक्षा सूत्र", "कुमकुम", "भस्म"],
-    benefits: [
-      "Removes Kuja Dosha (Manglik) and removes obstacles in marriage",
-      "Bestows victory in righteous endeavors, valour, and children's welfare",
-      "Dedicated Date: 19 Dec 2026 (Krittika Nakshatram, Day 25)"
-    ],
-    benefitsTe: [
-      "వివాహ ఆటంకాలు, కుజ దోష నివారణ",
-      "సంతాన అభివృద్ధి & ధైర్య విజయం",
-      "విశేష దినం: 19 డిసెంబర్ 2026 (కృత్తిక నక్షత్రం, 25వ రోజు)"
-    ],
-    benefitsHi: [
-      "मांगलिक / कुज दोष निवारण एवं विवाह बाधा शांति",
-      "संतान सुख, साहस एवं धर्म कार्यों में विजय",
-      "विशेष तिथि: 19 दिसम्बर 2026 (कृत्तिका नक्षत्र)"
-    ],
-    availability: "available",
-    availableSlots: 50,
-    featured: true
-  },
-  {
-    id: "parvathi-parameswara-kalyanam",
-    slug: "parvathi-parameswara-kalyanam",
-    name: "Parvathi–Parameswara Maha Shanti Kalyanam",
-    title: "Parvathi–Parameswara Maha Shanti Kalyanam",
-    titleTe: "శ్రీ పార్వతీ–పరమేశ్వర మహా శాంతి కళ్యాణం",
-    titleHi: "श्री पार्वती–परमेश्वर महा शांति कल्याणम्",
-    price: 1116,
-    amount: 1116,
-    shortDesc: "Participate in the sacred Sri Parvathi–Parameswara Maha Shanti Kalyanam.",
-    shortDescTe: "శ్రీ పార్వతీ–పరమేశ్వర మహా శాంతి దివ్య కళ్యాణోత్సవంలో పాల్గొనండి.",
-    shortDescHi: "श्री पार्वती–परमेश्वर महा शांति कल्याणोत्सव में भाग लें।",
-    fullDesc: "The pinnacle concluding seva performed on Concluding Rohini Day (22 Dec 2026) along with Maha Purnahuti and Ashirvachanam. Bestows lasting family peace, longevity, universal auspiciousness and the pinnacle blessings of the 28-day Mahayagnam.",
-    fullDescTe: "22 డిసెంబర్ 2026 ముగింపు రోహిణి రోజున మహా పూర్ణాహుతి మరియు వేద పండితుల ఆశీర్వచనములతో నిర్వహించే సర్వోన్నత దివ్య కళ్యాణం.",
-    fullDescHi: "22 दिसम्बर 2026 समापन रोहिणी दिवस पर महा पूर्णाहुति सहित दिव्य कल्याणोत्सव।",
-    category: "kalyanam",
-    icon: "🕉️",
-    duration: "4 Hours",
-    durationTe: "4 గంటలు",
-    durationHi: "4 घंटे",
-    time: "09:00 AM – 01:30 PM (22 Dec 2026)",
-    timeTe: "ఉదయం 09:00 నుండి 01:30 వరకు (22 డిసెంబర్ 2026)",
-    timeHi: "प्रातः 09:00 से 01:30 (22 दिसम्बर 2026)",
-    image: "/assets/images/sevas/rudrabhishekam.svg",
-    prasadam: ["Maha Purnahuti Bhasma", "Kalyana Raksha", "Silver Shiva Coin", "Sacred Kumkum & Akshatas"],
-    prasadamTe: ["మహా పూర్ణాహుతి భస్మం", "కళ్యాణ రక్ష", "వెండి శివ నాణెం", "పవిత్ర కుంకుమ & అక్షతలు"],
-    prasadamHi: ["महा पूर्णाहुति भस्म", "कल्याण रक्षा", "रजत शिव सिक्का", "कुमकुम एवं अक्षत"],
-    benefits: [
-      "Pinnacle blessings of the entire 28-Day Ati Rudra Mahayagnam",
-      "Lifelong marital bliss, family harmony, health and universal peace",
-      "Dedicated Date: 22 Dec 2026 (Concluding Rohini Day)"
-    ],
-    benefitsTe: [
-      "28 రోజుల సంపూర్ణ మహాయజ్ఞ పుణ్యఫలం",
-      "అన్యోన్య దాంపత్యం, కుటుంబ శాంతి మరియు సకల కార్యసిద్ధి",
-      "విశేష దినం: 22 డిసెంబర్ 2026 (ముగింపు రోహిణి దినం)"
-    ],
-    benefitsHi: [
-      "28 दिवसीय सम्पूर्ण महायज्ञ का सर्वोच्च पुण्यफल",
-      "सुखद दांपत्य, पारिवारिक समरसता एवं सर्वमंगल",
-      "विशेष तिथि: 22 दिसम्बर 2026 (समापन रोहिणी दिवस)"
-    ],
-    availability: "available",
-    availableSlots: 50,
     featured: true
   },
   {

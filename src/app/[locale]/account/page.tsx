@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Link } from '@/i18n/routing';
 import { Flame, Calendar, ArrowRight, RefreshCw, Smartphone } from 'lucide-react';
+import { bookingService } from '@/services/booking.service';
 
 export default function DevoteeDashboardPage() {
   const { session, login } = useDevoteeAuth();
@@ -20,12 +21,33 @@ export default function DevoteeDashboardPage() {
     setLoading(true);
     fetch(`/api/devotee/dashboard?phone=${encodeURIComponent(phone)}`)
       .then((r) => r.json())
-      .then((json) => {
+      .then(async (json) => {
         if (json.success && json.data) {
-          setData(json.data);
+          const resData = json.data;
+          if (!resData.bookings || resData.bookings.length === 0) {
+            const local = await bookingService.getDevoteeBookings();
+            if (local && local.length > 0) {
+              resData.bookings = local;
+              resData.stats.totalBookings = Math.max(resData.stats.totalBookings, local.length);
+              resData.stats.upcomingSevas = Math.max(resData.stats.upcomingSevas, local.length);
+            }
+          }
+          setData(resData);
         }
       })
-      .catch((err) => console.error('Failed to load devotee dashboard from MongoDB:', err))
+      .catch(async (err) => {
+        console.error('Failed to load devotee dashboard from MongoDB:', err);
+        const local = await bookingService.getDevoteeBookings();
+        if (local && local.length > 0) {
+          setData({
+            profile: { fullName: session?.fullName || 'Sacred Devotee', phone: session?.phone },
+            stats: { totalBookings: local.length, upcomingSevas: local.length, donationsCount: 0, annadanamDays: 0, totalContributed: 216 },
+            bookings: local,
+            donations: [],
+            annadanam: []
+          });
+        }
+      })
       .finally(() => setLoading(false));
   };
 

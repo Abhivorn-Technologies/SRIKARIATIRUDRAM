@@ -143,7 +143,9 @@ export default function PaymentPage() {
                 <span>
                   {draft.devoteeParticipation === 'attending'
                     ? (isTe ? 'అవును, నేను స్వయంగా పాల్గొంటాను' : isHi ? 'हाँ, मैं उपस्थित रहूँगा' : 'Yes, I will attend in person')
-                    : (isTe ? 'కాదు, నేను హాజరు కాలేను' : isHi ? 'नहीं, मैं उपस्थित नहीं हो पाऊँगा' : 'No, I will not attend (Courier Prasadam)')}
+                    : (Number(draft.amount || 0) >= 5000
+                        ? (isTe ? 'కాదు, నేను హాజరు కాలేను (ప్రసాదం పోస్ట్ ద్వారా)' : isHi ? 'नहीं, मैं उपस्थित नहीं हो पाऊँगा (डाक द्वारा प्रसाद)' : 'No, I will not attend (Courier Prasadam)')
+                        : (isTe ? 'కాదు, నేను హాజరు కాలేను (సంకల్పం మీ పేరుతో)' : isHi ? 'नहीं, मैं उपस्थित नहीं हो पाऊँगा (आपके नाम से संकल्प)' : 'No, I will not attend (Sankalpam in your name)'))}
                 </span>
               </span>
             </div>

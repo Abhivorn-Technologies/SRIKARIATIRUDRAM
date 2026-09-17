@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useRouter, Link } from '@/i18n/routing';
 import { useSearchParams } from 'next/navigation';
 import { useDevoteeAuth } from '@/context/DevoteeAuthContext';
-import { validatePhone, validatePassword } from '@organization-wide-standards/input-validations';
+import { validatePhone, validatePassword } from '@/lib/input-validations';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Smartphone, Lock, ShieldCheck, KeyRound, UserCheck, Eye, EyeOff, CheckCircle2, AlertCircle, LogIn, UserPlus } from 'lucide-react';
@@ -280,7 +280,7 @@ export default function DevoteeLoginPage() {
                   onClick={() => switchMode('signup')}
                   className="text-xs text-gold-light hover:text-gold font-semibold transition-colors"
                 >
-                  Don't have an account? <span className="underline">Sign Up here</span>
+                  Don&apos;t have an account? <span className="underline">Sign Up here</span>
                 </button>
               </div>
             </form>

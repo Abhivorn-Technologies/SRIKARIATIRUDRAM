@@ -113,11 +113,6 @@ export function Footer() {
                   {t('sponsors')}
                 </Link>
               </li>
-              <li>
-                <Link href="/account" className="text-ivory/80 hover:text-gold-light transition-colors">
-                  {t('account')}
-                </Link>
-              </li>
             </ul>
           </div>
 
@@ -174,10 +169,8 @@ export function Footer() {
         <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-ivory/60">
           <p>© 2026 Srikari Seva Samiti. All Rights Reserved.</p>
           <div className="flex items-center gap-6">
-            <Link href="/about" className="hover:text-gold-light">Significance</Link>
             <Link href="/schedule" className="hover:text-gold-light">Schedule</Link>
             <Link href="/contact" className="hover:text-gold-light">Contact</Link>
-            <Link href="/account" className="hover:text-gold-light">Devotee Portal</Link>
           </div>
         </div>
       </div>

@@ -77,7 +77,9 @@ function mapDbScheduleToDay(item: ScheduleItem, staticFallback?: ScheduleDay): S
     isSpecial: item.day_type !== 'REGULAR',
     isConfirmed: true,
     highlightTag: fallback?.highlightTag || null,
-    assigned_sevas: (item as any).assigned_sevas || []
+    assigned_sevas: ((item as any).assigned_sevas || []).filter(
+      (s: any) => s && s.status !== 'HIDDEN' && (s.amount > 0 || s.price > 0)
+    )
   } as any;
 }
 

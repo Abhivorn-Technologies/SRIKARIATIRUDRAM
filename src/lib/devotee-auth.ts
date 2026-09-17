@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { validatePhone, validatePassword } from '@organization-wide-standards/input-validations';
+import { validatePhone, validatePassword } from '@/lib/input-validations';
 
 export function hashPassword(password: string, salt?: string): { hash: string; salt: string } {
   const selectedSalt = salt || crypto.randomBytes(16).toString('hex');

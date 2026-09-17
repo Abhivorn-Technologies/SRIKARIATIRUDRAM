@@ -375,11 +375,14 @@ export default function AdminTodayProgrammePage() {
               onChange={(e) => setActiveDayNumber(Number(e.target.value))}
               className="px-3 py-2 text-xs rounded-lg bg-burgundy-dark border border-gold/50 text-gold-lighter font-cinzel outline-none focus:border-gold shadow-md font-bold"
             >
-              {scheduleList.map((d) => (
-                <option key={d.dayNumber} value={d.dayNumber}>
-                  Day {String(d.dayNumber).padStart(2, "0")} — {d.nakshatra} ({d.date})
-                </option>
-              ))}
+              {(schedules.length > 0 ? schedules : scheduleList).map((d: any) => {
+                const dayNum = d.day_number || d.dayNumber;
+                return (
+                  <option key={dayNum} value={dayNum}>
+                    Day {String(dayNum).padStart(2, "0")} — {d.nakshatra} ({d.date})
+                  </option>
+                );
+              })}
             </select>
           </div>
 

@@ -71,30 +71,115 @@ export const scheduleServerService = {
     // Enrich docs with assigned_sevas and real-time ticket availability
     const availabilities = await db.collection('seva_availability').find({}).toArray();
     const allSevas = await db.collection('sevas').find({ active: { $ne: false } }).toArray();
-    const sevasMap = new Map(allSevas.map(s => [s.id || s._id?.toString(), s]));
+    const sevasMap = new Map<string, any>();
+    allSevas.forEach(s => {
+      sevasMap.set(s.id, s);
+      if (s.slug) sevasMap.set(s.slug, s);
+    });
+
+    const everydaySevaIds = ['ati-rudram-donation', 'ekadasa-rudra-abhishekam', 'nakshatra-shanthi'];
 
     const enriched = docs.map(sc => {
       const dayAvails = availabilities.filter(sa => sa.date === sc.date || (sa.day_number !== undefined && sa.day_number === sc.day_number));
-      const assigned_sevas = dayAvails.map(sa => {
-        const s = sevasMap.get(sa.seva_id);
+      const list: any[] = [];
+      const seenSevaKeys = new Set<string>();
+
+      dayAvails.forEach(sa => {
+        const s = sevasMap.get(sa.seva_id) || sevasMap.get(sa.slug);
+        const key = (s?.slug || s?.id || sa.seva_id || '').toLowerCase();
+        if (key) seenSevaKeys.add(key);
+
+        if (!s || s.active === false || sa.status === 'HIDDEN') return;
+        const amt = s.amount || s.price || sa.amount || 0;
+        if (amt <= 0) return;
+
         const capacity = sa.capacity || 50;
         const booked = sa.booked_count || 0;
         const available = Math.max(0, capacity - booked);
         const status = sa.status || (available === 0 ? 'FULLY_BOOKED' : available <= 5 ? 'FEW_SLOTS_LEFT' : 'AVAILABLE');
-        return {
+
+        list.push({
           availability_id: sa.id || sa._id?.toString(),
-          seva_id: sa.seva_id,
-          slug: s?.slug || sa.seva_id,
-          title: s?.title || sa.seva_id,
-          title_te: s?.title_te,
-          amount: s?.amount || 0,
-          category: s?.category || 'General',
+          seva_id: s.id || sa.seva_id,
+          slug: s.slug || sa.seva_id,
+          title: s.title || sa.seva_id,
+          title_te: s.title_te || s.titleTe || s.title,
+          amount: amt,
+          category: s.category || 'General',
           capacity,
           booked_count: booked,
           available_slots: available,
           status
-        };
+        });
       });
+
+      // Add active everyday sevas if not already explicitly assigned or hidden
+      everydaySevaIds.forEach(id => {
+        const s = sevasMap.get(id);
+        if (s && s.active !== false) {
+          const key = (s.slug || s.id || id).toLowerCase();
+          if (!seenSevaKeys.has(key)) {
+            seenSevaKeys.add(key);
+            const amt = s.amount || s.price || 0;
+            if (amt > 0) {
+              list.push({
+                availability_id: `everyday-${sc.day_number}-${s.id}`,
+                seva_id: s.id,
+                slug: s.slug || s.id,
+                title: s.title || s.name,
+                title_te: s.title_te || s.titleTe || s.title,
+                amount: amt,
+                category: s.category || 'General',
+                capacity: s.availableSlots || 50,
+                booked_count: 0,
+                available_slots: s.availableSlots || 50,
+                status: 'AVAILABLE'
+              });
+            }
+          }
+        }
+      });
+
+      // Add special day seva if specified or applicable
+      let specialSlug: string | null = sc.special_seva_id || sc.special_seva_slug || null;
+      if (!specialSlug) {
+        if ([2, 11, 20].includes(sc.day_number)) specialSlug = 'sarpa-suktam-homam';
+        else if ([3, 12, 21].includes(sc.day_number)) specialSlug = 'chandi-homam';
+        else if (sc.day_number === 6) specialSlug = 'ashlesha-bali';
+        else if (sc.day_number === 25) specialSlug = 'valli-devasena-subramanyeswara-kalyanam';
+        else if (sc.day_number === 28) specialSlug = 'parvathi-parameswara-kalyanam';
+      }
+
+      if (specialSlug) {
+        const s = sevasMap.get(specialSlug);
+        if (s && s.active !== false) {
+          const key = (s.slug || s.id || specialSlug).toLowerCase();
+          if (!seenSevaKeys.has(key)) {
+            seenSevaKeys.add(key);
+            const amt = s.amount || s.price || 0;
+            if (amt > 0) {
+              list.push({
+                availability_id: `special-${sc.day_number}-${s.id}`,
+                seva_id: s.id,
+                slug: s.slug || s.id,
+                title: s.title || s.name,
+                title_te: s.title_te || s.titleTe || s.title,
+                amount: amt,
+                category: s.category || 'General',
+                capacity: s.availableSlots || 50,
+                booked_count: 0,
+                available_slots: s.availableSlots || 50,
+                status: 'AVAILABLE'
+              });
+            }
+          }
+        }
+      }
+
+      const assigned_sevas = list
+        .filter(item => item && item.status !== 'HIDDEN' && item.amount > 0)
+        .sort((a, b) => a.amount - b.amount);
+
       return {
         ...sc,
         assigned_sevas

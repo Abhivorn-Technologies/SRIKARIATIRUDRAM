@@ -662,7 +662,7 @@ export default function AdminSevasPage() {
               Confirm Permanent Delete
             </h3>
             <p className="text-xs text-ivory/70 font-sans">
-              Are you sure you want to permanently delete <strong className="text-gold-light">"{deleteConfirmSeva.title}"</strong> from the website database?
+              Are you sure you want to permanently delete <strong className="text-gold-light">&quot;{deleteConfirmSeva.title}&quot;</strong> from the website database?
             </p>
             <div className="pt-2 flex items-center justify-center gap-3">
               <Button

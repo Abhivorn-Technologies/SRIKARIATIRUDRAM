@@ -98,7 +98,7 @@ export default function SelectNakshatraAndSevaPage() {
           const dayMatch = json.data.find((d: any) => d.day_number === selectedDayNumber);
           if (dayMatch && dayMatch.assigned_sevas && dayMatch.assigned_sevas.length > 0) {
             const formatted: ApplicableSevaOption[] = dayMatch.assigned_sevas
-              .filter((sa: any) => sa.status !== 'HIDDEN')
+              .filter((sa: any) => sa && sa.status !== 'HIDDEN' && (sa.amount > 0 || sa.price > 0))
               .map((sa: any) => ({
                 id: sa.seva_id,
                 slug: sa.slug || sa.seva_id,
@@ -126,34 +126,16 @@ export default function SelectNakshatraAndSevaPage() {
   // Auto-resolve Day, Date, Rasi, DayType, Programme Highlights and Available Sevas
   const bookingOptions: NakshatraBookingInfo = useMemo(() => {
     const opts = getNakshatraBookingOptions(selectedDayNumber);
-    if (dbAssignedSevas.length > 0) {
-      const map = new Map<string, ApplicableSevaOption>();
-      
-      // Add DB assigned sevas first as primary source of truth
-      dbAssignedSevas.forEach(s => {
-        const key = (s.slug || s.id).toLowerCase().replace(/-sarpa$/, '');
-        map.set(key, s);
-      });
-
-      // Only add static sevas if not matching any DB assigned seva by key or category
-      opts.availableSevas.forEach(s => {
-        const key = (s.slug || s.id).toLowerCase().replace(/-sarpa$/, '');
-        if (!map.has(key)) {
-          // Prevent adding duplicate visesha/sarpa homams
-          const isViseshaKey = key.includes('visesha') || key.includes('sarpa');
-          const dbHasVisesha = Array.from(map.keys()).some(k => k.includes('visesha') || k.includes('sarpa'));
-          if (!isViseshaKey || !dbHasVisesha) {
-            map.set(key, s);
-          }
-        }
-      });
-
+    if (dbAssignedSevas && dbAssignedSevas.length > 0) {
       return {
         ...opts,
-        availableSevas: Array.from(map.values())
+        availableSevas: [...dbAssignedSevas].sort((a, b) => a.price - b.price)
       };
     }
-    return opts;
+    return {
+      ...opts,
+      availableSevas: [...opts.availableSevas].sort((a, b) => a.price - b.price)
+    };
   }, [selectedDayNumber, dbAssignedSevas]);
 
   // Selected Seva option within available sevas

@@ -1,48 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
-import { sevaServerService } from "@/services/server/seva.server.service";
+import { scheduleServerService } from "@/services/server/schedule.server.service";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const { db } = await connectToDatabase();
-    const schedules = await db.collection('schedules').find({}).sort({ day_number: 1 }).toArray();
-    const availabilities = await db.collection('seva_availability').find({}).toArray();
-    const allSevas = await sevaServerService.getAllSevas();
-    const sevasMap = new Map(allSevas.map(s => [s.id, s]));
-
-    const data = schedules.map(sc => {
-      const dayAvails = availabilities.filter(sa => sa.date === sc.date);
-      const assigned = dayAvails.map(sa => {
-        const s = sevasMap.get(sa.seva_id);
-        return {
-          availability_id: sa.id || sa._id.toString(),
-          seva_id: sa.seva_id,
-          slug: s?.slug || sa.seva_id,
-          title: s?.title || 'Seva',
-          title_te: s?.title_te,
-          short_desc: s?.short_desc,
-          short_desc_te: s?.short_desc_te,
-          amount: s?.amount || 0,
-          category: s?.category || 'General',
-          capacity: sa.capacity || 50,
-          booked_count: sa.booked_count || 0,
-          status: sa.status || 'AVAILABLE',
-          available_slots: Math.max(0, (sa.capacity || 50) - (sa.booked_count || 0))
-        };
-      });
-
-      return {
-        day_number: sc.day_number,
-        date: sc.date,
-        date_display: sc.date_display,
-        nakshatra: sc.nakshatra,
-        day_type: sc.day_type,
-        assigned_sevas: assigned
-      };
-    });
-
+    const data = await scheduleServerService.getAllSchedules();
     return NextResponse.json({ success: true, data });
   } catch (error: any) {
     console.error("GET /api/admin/schedule/sevas ERROR:", error);
@@ -58,6 +22,33 @@ export async function DELETE(req: NextRequest) {
     if (!availability_id) {
       return NextResponse.json({ success: false, error: "availability_id is required" }, { status: 400 });
     }
+
+    // Handle synthetic IDs like everyday-2-ati-rudram-donation or special-2-sarpa-suktam-homam
+    if (availability_id.startsWith('everyday-') || availability_id.startsWith('special-')) {
+      const parts = availability_id.split('-');
+      const dayNum = parseInt(parts[1], 10);
+      const sevaId = parts.slice(2).join('-');
+
+      const schedule = await db.collection('schedules').findOne({ day_number: dayNum });
+      const date = schedule?.date || '';
+
+      await db.collection('seva_availability').updateOne(
+        { $or: [{ id: availability_id }, { date, seva_id: sevaId }] },
+        {
+          $set: {
+            id: availability_id,
+            date,
+            day_number: dayNum,
+            seva_id: sevaId,
+            status: 'HIDDEN',
+            updated_at: new Date().toISOString()
+          }
+        },
+        { upsert: true }
+      );
+      return NextResponse.json({ success: true, message: "Seva hidden from day" });
+    }
+
     await db.collection('seva_availability').deleteOne({
       $or: [{ id: availability_id }, { _id: availability_id as any }]
     });
@@ -71,15 +62,23 @@ export async function POST(req: NextRequest) {
   try {
     const { db } = await connectToDatabase();
     const body = await req.json();
-    const { date, seva_id, capacity, status } = body;
-    if (!date || !seva_id || capacity === undefined) {
-      return NextResponse.json({ success: false, error: "date, seva_id, and capacity are required" }, { status: 400 });
+    const { date, day_number, seva_id, capacity, status } = body;
+    if ((!date && day_number === undefined) || !seva_id || capacity === undefined) {
+      return NextResponse.json({ success: false, error: "date or day_number, seva_id, and capacity are required" }, { status: 400 });
     }
+
+    let targetDate = date;
+    if (!targetDate && day_number !== undefined) {
+      const sc = await db.collection('schedules').findOne({ day_number: parseInt(String(day_number), 10) });
+      targetDate = sc?.date || '';
+    }
+
     const sevaStatus = status || 'AVAILABLE';
-    const availId = `sa_${date}_${seva_id}`;
+    const availId = `sa_${targetDate}_${seva_id}`;
     const newDoc = {
       id: availId,
-      date,
+      date: targetDate,
+      day_number: day_number !== undefined ? parseInt(String(day_number), 10) : undefined,
       seva_id,
       capacity: parseInt(String(capacity), 10),
       booked_count: 0,
@@ -88,7 +87,7 @@ export async function POST(req: NextRequest) {
     };
 
     await db.collection('seva_availability').updateOne(
-      { date, seva_id },
+      { date: targetDate, seva_id },
       { $set: newDoc },
       { upsert: true }
     );
@@ -107,9 +106,36 @@ export async function PATCH(req: NextRequest) {
     if (!availability_id) {
       return NextResponse.json({ success: false, error: "availability_id is required" }, { status: 400 });
     }
+
     const setFields: any = { updated_at: new Date().toISOString() };
     if (status !== undefined) setFields.status = status;
     if (capacity !== undefined) setFields.capacity = parseInt(capacity, 10);
+
+    // Handle synthetic IDs like everyday-2-ati-rudram-donation or special-2-sarpa-suktam-homam
+    if (availability_id.startsWith('everyday-') || availability_id.startsWith('special-')) {
+      const parts = availability_id.split('-');
+      const dayNum = parseInt(parts[1], 10);
+      const sevaId = parts.slice(2).join('-');
+
+      const schedule = await db.collection('schedules').findOne({ day_number: dayNum });
+      const targetDate = schedule?.date || '';
+
+      await db.collection('seva_availability').updateOne(
+        { $or: [{ id: availability_id }, { date: targetDate, seva_id: sevaId }] },
+        {
+          $set: {
+            id: availability_id,
+            date: targetDate,
+            day_number: dayNum,
+            seva_id: sevaId,
+            booked_count: 0,
+            ...setFields
+          }
+        },
+        { upsert: true }
+      );
+      return NextResponse.json({ success: true, message: "Availability updated" });
+    }
 
     const res = await db.collection('seva_availability').findOneAndUpdate(
       { $or: [{ id: availability_id }, { _id: availability_id as any }] },
@@ -120,4 +146,4 @@ export async function PATCH(req: NextRequest) {
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
-}
+}
