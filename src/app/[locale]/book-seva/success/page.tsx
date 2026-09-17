@@ -56,8 +56,8 @@ export default function BookingSuccessPage() {
   const displayId = booking?.bookingId || 'SAR-2026-000123';
   const displayAmount = booking?.amount || booking?.grandTotal || booking?.totalDakshina || 0;
   const displayName = booking?.primaryDevotee.fullName || 'Devotee';
-  const displayGotram = booking?.primaryDevotee.gotram || 'Bharadwaja';
-  const displayNakshatra = booking?.nakshatra || booking?.primaryDevotee.nakshatra || 'Rohini';
+  const displayGotram = booking?.primaryDevotee.gotram || 'Not Provided';
+  const displayNakshatra = booking?.nakshatra || booking?.primaryDevotee.nakshatra || 'Not Provided';
   const displayDayNum = booking?.dayNumber ? `Day ${booking.dayNumber}` : '';
 
   return (

@@ -28,6 +28,7 @@ import {
   ChevronRight,
   ChevronDown,
   ShieldCheck,
+  Sparkles,
   X,
 } from 'lucide-react';
 import { AdminUser, adminAuth } from '@/lib/adminAuth';
@@ -148,7 +149,7 @@ export function AdminSidebar({
           {(() => {
             const isCoreOpsActive =
               pathname.startsWith('/admin/bookings') ||
-              pathname.startsWith('/admin/sevas') ||
+              pathname.startsWith('/admin/special-sevas-bookings') ||
               pathname.startsWith('/admin/donations') ||
               pathname.startsWith('/admin/annadanam') ||
               pathname.startsWith('/admin/enquiries');
@@ -178,7 +179,7 @@ export function AdminSidebar({
 
                 {masterOpsExpanded && !isCollapsed && (
                   <div className="pl-6 pr-1 py-1 space-y-1 border-l-2 border-gold/40 ml-4 my-1 bg-[#1A0004]/60 rounded-r-xl p-1.5">
-                    {/* 1. 28-Days Seva Bookings */}
+                    {/* 1. 28-Day Seva Bookings */}
                     <Link
                       href="/admin/bookings"
                       onClick={onClose}
@@ -196,17 +197,17 @@ export function AdminSidebar({
 
                     {/* 2. Special Sevas Bookings */}
                     <Link
-                      href="/admin/sevas"
+                      href="/admin/special-sevas-bookings"
                       onClick={onClose}
                       className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition-all ${
-                        isExactActive('/admin/sevas')
+                        isExactActive('/admin/special-sevas-bookings')
                           ? 'bg-gold/25 text-gold-lighter font-bold border border-gold/40'
                           : 'text-ivory/80 hover:text-gold hover:bg-white/5'
                       }`}
                     >
                       <div className="flex items-center gap-2">
                         <Flame className="w-3.5 h-3.5 text-amber-400" />
-                        <span>2. Special Sevas Catalog</span>
+                        <span>2. Special Sevas Bookings</span>
                       </div>
                     </Link>
 
@@ -226,7 +227,7 @@ export function AdminSidebar({
                       </div>
                     </Link>
 
-                    {/* 4. Annadanam */}
+                    {/* 4. Annadanam Meals */}
                     <Link
                       href="/admin/annadanam"
                       onClick={onClose}
@@ -263,6 +264,23 @@ export function AdminSidebar({
             );
           })()}
 
+          {/* Standalone Master Catalog Link: Special Sevas Catalog */}
+          <Link
+            href="/admin/sevas"
+            onClick={onClose}
+            className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold tracking-wide transition-all ${
+              isExactActive('/admin/sevas')
+                ? 'bg-gradient-to-r from-gold/20 via-gold/10 to-transparent text-gold-lighter border border-gold/50 font-bold shadow-gold-sm'
+                : 'text-ivory/80 hover:text-gold-light hover:bg-white/5 border border-transparent'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <Sparkles className="w-4 h-4 text-yellow-400" />
+              {!isCollapsed && <span>Special Sevas Catalog</span>}
+            </div>
+            {!isCollapsed && isExactActive('/admin/sevas') && <ChevronRight className="w-3.5 h-3.5 text-gold" />}
+          </Link>
+
           {/* Schedule (Parent + Sub-items) */}
           <div className="space-y-0.5 pt-1">
             <button
@@ -295,18 +313,7 @@ export function AdminSidebar({
                       : 'text-ivory/70 hover:text-gold hover:bg-white/5'
                   }`}
                 >
-                  <span>28-Day Programme</span>
-                </Link>
-                <Link
-                  href="/admin/schedule/sevas"
-                  onClick={onClose}
-                  className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs transition-all ${
-                    isExactActive('/admin/schedule/sevas')
-                      ? 'bg-gold/20 text-gold-lighter font-bold border border-gold/40'
-                      : 'text-ivory/70 hover:text-gold hover:bg-white/5'
-                  }`}
-                >
-                  <span>Day Seva Allocation</span>
+                  <span>28-Day Programme & Seva Desk</span>
                 </Link>
                 <Link
                   href="/admin/schedule/today"

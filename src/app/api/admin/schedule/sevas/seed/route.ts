@@ -87,9 +87,11 @@ export async function POST(req: NextRequest) {
 
       if (dayNum === 28) {
         sevasToAssign.push({ id: POORNAHUTI_SEVA_ID, capacity: DEFAULT_CAPACITY });
+        sevasToAssign.push({ id: "ekadasa-rudra-abhishekam", capacity: DEFAULT_CAPACITY });
       } else {
         sevasToAssign.push({ id: "nakshatra-hawan-seva", capacity: DEFAULT_CAPACITY });
         sevasToAssign.push({ id: "sampoorna-nakshatra-shanthi", capacity: DEFAULT_CAPACITY });
+        sevasToAssign.push({ id: "ekadasa-rudra-abhishekam", capacity: DEFAULT_CAPACITY });
 
         if (
           SPECIAL_DAYS.SARPA_SUKTA.includes(dayNum) ||
@@ -111,6 +113,7 @@ export async function POST(req: NextRequest) {
               $set: {
                 id: availId,
                 date,
+                day_number: dayNum,
                 seva_id: seva.id,
                 capacity: seva.capacity,
                 status: 'AVAILABLE',

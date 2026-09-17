@@ -255,65 +255,13 @@ export const galleryImages: GalleryItem[] = [
   }
 ];
 
-export const galleryVideos: GalleryItem[] = [
-  {
-    id: "vd1",
-    title: "Maha Rudrabhishekam & Veda Ghosha",
-    titleTe: "మహా రుద్రాభిషేకం & వేద ఘోష",
-    type: "video",
-    category: "videos",
-    thumbnailUrl: "",
-    fullUrl: "/assets/gallary/VD1.mp4",
-    dayNumber: 1,
-    description: "Visual recording of Maha Rudrabhishekam rituals and chanting.",
-    descriptionTe: "మహా రుద్రాభిషేక క్రతువు మరియు వేద మంత్రోచ్ఛారణల వీడియో దృశ్యం."
-  },
-  {
-    id: "vd2",
-    title: "Sacred Homa Kundam & Purnahuti",
-    titleTe: "పవిత్ర హోమ కుండం & పూర్ణాహుతి",
-    type: "video",
-    category: "videos",
-    thumbnailUrl: "",
-    fullUrl: "/assets/gallary/VD2.mp4",
-    dayNumber: 2,
-    description: "Sacred fire offerings and Purnahuti in the Yagasala.",
-    descriptionTe: "యాగశాలలో పవిత్ర హోమ క్రతువు మరియు పూర్ణాహుతి సమర్పణ."
-  },
-  {
-    id: "vd3",
-    title: "Deeparadhana & Alankara Seva",
-    titleTe: "దీపారాధన & అలంకార సేవ",
-    type: "video",
-    category: "videos",
-    thumbnailUrl: "",
-    fullUrl: "/assets/gallary/VD3.mp4",
-    dayNumber: 3,
-    description: "Evening Deeparadhana with Vedic Harathi and divine alankaram.",
-    descriptionTe: "సాయంకాల దీపారాధన, విశేష హారతి మరియు దివ్యాలంకరణ."
-  },
-  {
-    id: "vd4",
-    title: "Grand Harathi & Devotee Darshan",
-    titleTe: "మహా మంగళ హారతి & భక్త దర్శనం",
-    type: "video",
-    category: "videos",
-    thumbnailUrl: "",
-    fullUrl: "/assets/gallary/VD4.mp4",
-    dayNumber: 4,
-    description: "Maha Mangala Harathi and devotee blessings at Srikari Kshetram.",
-    descriptionTe: "శ్రీకరీ క్షేత్రంలో మహా మంగళ హారతి మరియు భక్తుల పవిత్ర దర్శనం."
-  }
-];
+export const galleryVideos: GalleryItem[] = [];
 
-// All 9 images first, then 4 videos
-export const galleryItems: GalleryItem[] = [...galleryImages, ...galleryVideos];
+// All images
+export const galleryItems: GalleryItem[] = [...galleryImages];
 
-// Homepage preview: 4 images + 1 video = 5 cards
-export const homePreviewGallery: GalleryItem[] = [
-  ...galleryImages.slice(0, 4),
-  galleryVideos[0]
-];
+// Homepage preview: 5 images = 5 cards
+export const homePreviewGallery: GalleryItem[] = galleryImages.slice(0, 5);
 
 export const sponsorsList: Sponsor[] = [
   {

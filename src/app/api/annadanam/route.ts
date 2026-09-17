@@ -9,10 +9,12 @@ export async function GET(req: NextRequest) {
   try {
     const calendarDays = await annadanamServerService.getCalendarDays();
     const sponsors = await annadanamServerService.getAllAnnadanam();
+    const oneDayStats = await annadanamServerService.getOneDayStats();
 
     return NextResponse.json({
       success: true,
       calendarDays,
+      oneDayStats,
       sponsors: sponsors.map((s) => ({
         id: s.id,
         date: s.date,

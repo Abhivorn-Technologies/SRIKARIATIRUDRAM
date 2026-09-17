@@ -40,7 +40,7 @@ export function HomeGalleryPreview() {
           </Link>
         </div>
 
-        {/* 5 Preview Cards: Exactly 4 Images (g1-g4) + 1 Video (VD1) */}
+        {/* 5 Preview Cards: Sacred Photos (g1-g5) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-5 items-stretch">
           {homePreviewGallery.map((item, index) => {
             const isVideo = item.type === 'video';

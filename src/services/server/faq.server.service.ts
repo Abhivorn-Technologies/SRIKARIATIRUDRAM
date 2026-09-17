@@ -41,20 +41,36 @@ export const faqServerService = {
   },
 
   async getFaqs(onlyPublished: boolean = false): Promise<FAQItem[]> {
-    await this.seedInitialFaqsIfNeeded();
-    const { db } = await connectToDatabase();
-    const filter: any = {};
-    if (onlyPublished) filter.published = { $ne: false };
+    try {
+      await this.seedInitialFaqsIfNeeded();
+      const { db } = await connectToDatabase();
+      const filter: any = {};
+      if (onlyPublished) filter.published = { $ne: false };
 
-    const docs = await db.collection('faqs')
-      .find(filter)
-      .sort({ sort_order: 1, created_at: 1 })
-      .toArray();
+      const docs = await db.collection('faqs')
+        .find(filter)
+        .sort({ sort_order: 1, created_at: 1 })
+        .toArray();
 
-    return docs.map((doc: any) => ({
-      ...doc,
-      id: doc.id || doc._id.toString()
-    }));
+      return docs.map((doc: any) => ({
+        ...doc,
+        id: doc.id || doc._id.toString()
+      }));
+    } catch (err) {
+      console.error('Error fetching FAQs from DB, returning static fallback:', err);
+      return faqList.map((item, i) => ({
+        id: `faq_${i + 1}`,
+        question: item.q,
+        question_te: item.qTe || item.q,
+        question_hi: item.qHi || item.q,
+        answer: item.a,
+        answer_te: item.aTe || item.a,
+        answer_hi: item.aHi || item.a,
+        category: 'General',
+        sort_order: i + 1,
+        published: true,
+      }));
+    }
   },
 
   async createFaq(data: Partial<FAQItem>): Promise<FAQItem> {
@@ -81,9 +97,10 @@ export const faqServerService = {
 
   async updateFaq(id: string, updates: Partial<FAQItem>): Promise<FAQItem | null> {
     const { db } = await connectToDatabase();
+    const { _id, ...cleanUpdates } = updates as any;
     const res = await db.collection('faqs').findOneAndUpdate(
       { $or: [{ id }, { _id: id as any }] },
-      { $set: { ...updates, updated_at: new Date().toISOString() } },
+      { $set: { ...cleanUpdates, updated_at: new Date().toISOString() } },
       { returnDocument: 'after' }
     );
     const doc = (res as any)?.value || res;

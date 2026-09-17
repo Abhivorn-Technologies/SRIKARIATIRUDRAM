@@ -204,33 +204,33 @@ export default async function DayDetailPage({
         </div>
 
         {/* Details Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs font-sans">
-          <div className="p-4 rounded-xl bg-burgundy/80 border border-gold/25 space-y-1.5">
-            <span className={`text-gold uppercase font-bold flex items-center gap-1 ${isTe ? 'font-telugu' : isHi ? 'font-hindi' : 'font-cinzel'}`}>
-              <Star className="w-3.5 h-3.5 fill-gold/30" /> {t('nakshatraShanthi')}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 text-xs font-sans w-full max-w-full">
+          <div className="p-3.5 sm:p-4 rounded-xl bg-burgundy/80 border border-gold/25 space-y-1.5 min-w-0 w-full overflow-hidden">
+            <span className={`text-gold uppercase font-bold flex items-center gap-1 truncate ${isTe ? 'font-telugu' : isHi ? 'font-hindi' : 'font-cinzel'}`}>
+              <Star className="w-3.5 h-3.5 fill-gold/30 shrink-0" /> {t('nakshatraShanthi')}
             </span>
-            <span className={`font-semibold text-ivory text-sm block ${fontClass}`}>
+            <span className={`font-semibold text-ivory text-xs sm:text-sm block break-words ${fontClass}`}>
               {displayNakshatra} ({displayRasi})
             </span>
           </div>
 
-          <div className="p-4 rounded-xl bg-burgundy/80 border border-gold/25 space-y-1.5">
-            <span className={`text-gold uppercase font-bold ${isTe ? 'font-telugu' : isHi ? 'font-hindi' : 'font-cinzel'}`}>{t('deity')}</span>
-            <span className={`font-semibold text-ivory text-sm block ${fontClass}`}>
+          <div className="p-3.5 sm:p-4 rounded-xl bg-burgundy/80 border border-gold/25 space-y-1.5 min-w-0 w-full overflow-hidden">
+            <span className={`text-gold uppercase font-bold block truncate ${isTe ? 'font-telugu' : isHi ? 'font-hindi' : 'font-cinzel'}`}>{t('deity')}</span>
+            <span className={`font-semibold text-ivory text-xs sm:text-sm block break-words ${fontClass}`}>
               {displayDeity}
             </span>
           </div>
 
-          <div className="p-4 rounded-xl bg-burgundy/80 border border-gold/25 space-y-1.5">
-            <span className={`text-gold uppercase font-bold ${isTe ? 'font-telugu' : isHi ? 'font-hindi' : 'font-cinzel'}`}>{t('relevantSeva')}</span>
-            <span className={`font-semibold text-ivory text-sm block truncate ${fontClass}`}>
+          <div className="p-3.5 sm:p-4 rounded-xl bg-burgundy/80 border border-gold/25 space-y-1.5 min-w-0 w-full overflow-hidden">
+            <span className={`text-gold uppercase font-bold block truncate ${isTe ? 'font-telugu' : isHi ? 'font-hindi' : 'font-cinzel'}`}>{t('relevantSeva')}</span>
+            <span className={`font-semibold text-ivory text-xs sm:text-sm block break-words ${fontClass}`}>
               {displaySeva}
             </span>
           </div>
 
-          <div className="p-4 rounded-xl bg-burgundy/80 border border-gold/25 space-y-1.5">
-            <span className={`text-gold uppercase font-bold ${isTe ? 'font-telugu' : isHi ? 'font-hindi' : 'font-cinzel'}`}>{t('sevaAmount')}</span>
-            <span className="font-semibold text-gold-light text-sm block">
+          <div className="p-3.5 sm:p-4 rounded-xl bg-burgundy/80 border border-gold/25 space-y-1.5 min-w-0 w-full overflow-hidden">
+            <span className={`text-gold uppercase font-bold block truncate ${isTe ? 'font-telugu' : isHi ? 'font-hindi' : 'font-cinzel'}`}>{t('sevaAmount')}</span>
+            <span className="font-semibold text-gold-light text-xs sm:text-sm block truncate">
               {dayData.price ? `₹${dayData.price.toLocaleString('en-IN')}` : isTe ? 'సంకల్ప సేవ' : isHi ? 'संकल्प सेवा' : 'Sankalpam Seva'}
             </span>
           </div>

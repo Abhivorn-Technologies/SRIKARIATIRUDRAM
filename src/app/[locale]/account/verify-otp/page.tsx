@@ -9,11 +9,14 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Lock, ArrowLeft } from 'lucide-react';
 
+import { useDevoteeAuth } from '@/context/DevoteeAuthContext';
+
 export default function VerifyOtpPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const phone = searchParams.get('phone') || '+91 98765 43210';
   const t = useTranslations('account');
+  const { login } = useDevoteeAuth();
 
   const [otp, setOtp] = useState('1008');
   const [isLoading, setIsLoading] = useState(false);
@@ -21,10 +24,11 @@ export default function VerifyOtpPage() {
   const handleVerify = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    login(phone);
     setTimeout(() => {
       setIsLoading(false);
       router.push('/account');
-    }, 800);
+    }, 500);
   };
 
   return (

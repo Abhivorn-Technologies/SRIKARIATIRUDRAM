@@ -62,9 +62,9 @@ export default function SpecialSevaSuccessPage() {
   const displayId = booking?.bookingId || 'SAR-2026-000123';
   const displayAmount = booking?.amount || booking?.grandTotal || booking?.totalDakshina || 0;
   const displayName = booking?.primaryDevotee.fullName || 'Devotee';
-  const displayGotram = booking?.primaryDevotee.gotram || 'Bharadwaja';
-  const displayNakshatra = booking?.nakshatra || booking?.primaryDevotee.nakshatra || 'Rohini';
-  const displayRasi = booking?.rasi || booking?.primaryDevotee.rasi || 'Vrishabha';
+  const displayGotram = booking?.primaryDevotee.gotram || 'Not Provided';
+  const displayNakshatra = booking?.nakshatra || booking?.primaryDevotee.nakshatra || 'Not Provided';
+  const displayRasi = booking?.rasi || booking?.primaryDevotee.rasi || '';
   const displayDayNum = booking?.dayNumber ? `DAY ${booking.dayNumber < 10 ? `0${booking.dayNumber}` : booking.dayNumber}` : 'DAY 01';
   const isAttending = booking?.devoteeParticipation === 'attending' || booking?.primaryDevotee.attendingPersonally === 'yes';
 

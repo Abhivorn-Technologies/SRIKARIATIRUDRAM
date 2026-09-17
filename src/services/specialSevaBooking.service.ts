@@ -48,6 +48,55 @@ const defaultSpecialDraft: SpecialSevaBookingDraft = {
   paymentStatus: 'PENDING',
 };
 
+export interface SevaLockConfig {
+  allowedDays: number[];
+  defaultDay: number;
+  lockedNakshatra?: string;
+  isMultiDay?: boolean;
+}
+
+export function getSevaLockInfo(sevaIdOrSlug?: string | null): SevaLockConfig | null {
+  if (!sevaIdOrSlug) return null;
+  const key = sevaIdOrSlug.toLowerCase();
+
+  if (key === 'chandi-homam' || key.includes('chandi')) {
+    return {
+      allowedDays: [3, 12, 21],
+      defaultDay: 3,
+      isMultiDay: true,
+    };
+  }
+  if (key === 'sarpa-sukta-homam' || key.includes('sarpa')) {
+    return {
+      allowedDays: [2, 11, 20],
+      defaultDay: 2,
+      isMultiDay: true,
+    };
+  }
+  if (key === 'aslesha-bali' || key.includes('aslesha') || key.includes('ashlesha')) {
+    return {
+      allowedDays: [6],
+      defaultDay: 6,
+      lockedNakshatra: 'Ashlesha',
+    };
+  }
+  if (key === 'valli-devasena-subramanyeswara-kalyanam' || key.includes('subraman')) {
+    return {
+      allowedDays: [25],
+      defaultDay: 25,
+      lockedNakshatra: 'Krittika',
+    };
+  }
+  if (key === 'parvathi-parameswara-kalyanam' || key.includes('parvathi') || key.includes('parameswara')) {
+    return {
+      allowedDays: [28],
+      defaultDay: 28,
+      lockedNakshatra: 'Rohini',
+    };
+  }
+  return null;
+}
+
 export const specialSevaBookingService = {
   getActiveDraft(): SpecialSevaBookingDraft {
     if (typeof window === 'undefined') return defaultSpecialDraft;
@@ -91,9 +140,12 @@ export const specialSevaBookingService = {
       ? sevasList.find((s) => s.slug === sevaSlugOrId || s.id === sevaSlugOrId) || sevasList[0]
       : sevasList[0];
 
-    const safeDayNum = dayNumber >= 1 && dayNumber <= 28 ? dayNumber : 1;
+    const lock = getSevaLockInfo(seva.id || seva.slug);
+    let safeDayNum = dayNumber >= 1 && dayNumber <= 28 ? dayNumber : 1;
+    if (lock && !lock.allowedDays.includes(safeDayNum)) {
+      safeDayNum = lock.defaultDay;
+    }
     const dayInfo = PROGRAMME_28_DAYS.find((d) => d.dayNumber === safeDayNum) || PROGRAMME_28_DAYS[0];
-
     const existing = this.getActiveDraft();
 
     return this.saveActiveDraft({
@@ -105,13 +157,18 @@ export const specialSevaBookingService = {
       selectedDate: dayInfo.date,
       mahayajnamNakshatra: dayInfo.nameEn,
       nakshatra: dayInfo.nameEn,
-      janmaNakshatra: existing.janmaNakshatra || 'Rohini',
+      janmaNakshatra: lock?.lockedNakshatra || existing.janmaNakshatra || 'Rohini',
       rasi: existing.rasi || 'Mesha (Aries)',
     });
   },
 
   setDay(dayNumber: number): SpecialSevaBookingDraft {
-    const safeDayNum = dayNumber >= 1 && dayNumber <= 28 ? dayNumber : 1;
+    const current = this.getActiveDraft();
+    const lock = getSevaLockInfo(current.sevaId || current.sevaSlug);
+    let safeDayNum = dayNumber >= 1 && dayNumber <= 28 ? dayNumber : 1;
+    if (lock && !lock.allowedDays.includes(safeDayNum)) {
+      safeDayNum = lock.defaultDay;
+    }
     const dayInfo = PROGRAMME_28_DAYS.find((d) => d.dayNumber === safeDayNum) || PROGRAMME_28_DAYS[0];
 
     return this.saveActiveDraft({
@@ -119,6 +176,7 @@ export const specialSevaBookingService = {
       selectedDate: dayInfo.date,
       mahayajnamNakshatra: dayInfo.nameEn,
       nakshatra: dayInfo.nameEn,
+      janmaNakshatra: lock?.lockedNakshatra || current.janmaNakshatra,
     });
   },
 

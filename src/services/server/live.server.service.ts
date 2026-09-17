@@ -1,4 +1,5 @@
 import { connectToDatabase } from '@/lib/mongodb';
+import { ObjectId } from 'mongodb';
 
 export interface LiveStreamConfig {
   id: string;
@@ -51,7 +52,22 @@ export const liveServerService = {
 
   async updateLiveConfig(updates: Partial<LiveStreamConfig>): Promise<LiveStreamConfig> {
     const { db } = await connectToDatabase();
-    const current = await this.getLiveConfig();
+    const doc = await db.collection('live_stream').findOne({}, { sort: { updated_at: -1 } });
+
+    const current = doc ? {
+      ...doc,
+      id: doc.id || doc._id.toString()
+    } : {
+      id: '00000000-0000-0000-0000-000000000001',
+      live_url: '',
+      title: 'Sri Ati Rudra Mahayagnam 2026 — Live Telecast',
+      description: 'Watch continuous live streaming of holy homams and rituals.',
+      is_live: false,
+      platform: 'youtube',
+      channel_name: 'Srikari Ati Rudram Official',
+      viewers_count: 0
+    };
+
     const { _id, ...currentClean } = current as any;
     const { _id: updateId, ...updatesClean } = updates as any;
 
@@ -61,11 +77,15 @@ export const liveServerService = {
       updated_at: new Date().toISOString()
     };
 
-    await db.collection('live_stream').updateOne(
-      { id: current.id },
-      { $set: newConfig },
-      { upsert: true }
-    );
+    if (doc?._id) {
+      await db.collection('live_stream').updateOne(
+        { _id: doc._id },
+        { $set: newConfig },
+        { upsert: true }
+      );
+    } else {
+      await db.collection('live_stream').insertOne(newConfig as any);
+    }
 
     return newConfig;
   },
@@ -109,8 +129,14 @@ export const liveServerService = {
   async updateArchive(id: string, updates: Partial<LiveArchiveRecord>): Promise<LiveArchiveRecord | null> {
     const { db } = await connectToDatabase();
     const { _id, ...cleanUpdates } = updates as any;
+
+    const filter: any[] = [{ id }];
+    if (ObjectId.isValid(id)) {
+      filter.push({ _id: new ObjectId(id) });
+    }
+
     const res = await db.collection('live_archives').findOneAndUpdate(
-      { $or: [{ id }, { _id: id as any }] },
+      { $or: filter },
       { $set: { ...cleanUpdates, updated_at: new Date().toISOString() } },
       { returnDocument: 'after' }
     );
@@ -124,8 +150,14 @@ export const liveServerService = {
 
   async deleteArchive(id: string): Promise<boolean> {
     const { db } = await connectToDatabase();
+
+    const filter: any[] = [{ id }];
+    if (ObjectId.isValid(id)) {
+      filter.push({ _id: new ObjectId(id) });
+    }
+
     const res = await db.collection('live_archives').deleteOne({
-      $or: [{ id }, { _id: id as any }]
+      $or: filter
     });
     return res.deletedCount > 0;
   }

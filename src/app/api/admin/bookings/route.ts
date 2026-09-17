@@ -11,6 +11,7 @@ export async function GET(req: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20', 10);
     const date = searchParams.get('date') || undefined;
     const seva_id = searchParams.get('seva_id') || undefined;
+    const type = searchParams.get('type') || undefined;
     const nakshatra = searchParams.get('nakshatra') || undefined;
     const payment_status = searchParams.get('payment_status') || undefined;
     const booking_status = searchParams.get('booking_status') || undefined;
@@ -23,6 +24,7 @@ export async function GET(req: NextRequest) {
       limit,
       date,
       seva_id,
+      type,
       nakshatra,
       payment_status,
       booking_status,

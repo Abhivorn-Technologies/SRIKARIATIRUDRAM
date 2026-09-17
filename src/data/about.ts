@@ -5,7 +5,7 @@ export const aboutContent = {
     tagline: "A Grand Vedic Resolve for Lokakalyanam",
     taglineTe: "లోకకళ్యాణార్థం ఒక మహోన్నత వేద సంకల్పం",
     subtitle: "LOKAKALYANAHITA NAKSHATRA SHANTHI SAHITA SRIKARI ATI RUDRA MAHAYAGNAM",
-    subtitleTe: "లోకకళ్యాణహిత నక్షత్ర శాంతి సహిత శ్రీకరీ అతి రుద్ర మహాయజ్ఞం",
+    subtitleTe: "లోకకళ్యాణహితం నక్షత్ర శాంతి సహిత శ్రీకరీ అతి రుద్ర మహాయజ్ఞం",
     coreStatement: "28 DAYS • 27 NAKSHATRAS • ROHINI TO ROHINI",
     coreStatementTe: "28 రోజులు • 27 నక్షత్రాలు • రోహిణి నుండి రోహిణి వరకు",
     quote: "“Not just a Yagnam, but a prayer for the world.”",

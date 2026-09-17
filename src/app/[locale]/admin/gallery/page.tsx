@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { useToast } from '@/components/ui/Toast';
+import { Pagination } from '@/components/ui/Pagination';
 import { Image as ImageIcon, Film, Upload, Trash2, Edit3, Plus, RefreshCw, X, AlertCircle } from 'lucide-react';
 
 interface MediaAsset {
@@ -197,9 +198,23 @@ export default function AdminGalleryPage() {
     }
   };
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(9);
+
   const filteredItems = items.filter((item) => {
     return mediaTypeFilter === 'all' || item.media_type === mediaTypeFilter;
   });
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [mediaTypeFilter]);
+
+  const totalPages = Math.ceil(filteredItems.length / itemsPerPage) || 1;
+  const paginatedItems = filteredItems.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const photoCount = items.filter((i) => i.media_type === 'image' || !i.media_type).length;
   const videoCount = items.filter((i) => i.media_type === 'video').length;
@@ -290,8 +305,8 @@ export default function AdminGalleryPage() {
 
       {/* Grid View */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredItems.length > 0 ? (
-          filteredItems.map((item) => (
+        {paginatedItems.length > 0 ? (
+          paginatedItems.map((item) => (
             <Card key={item.id} className="bg-[#240006]/90 border-gold/20 overflow-hidden group hover:border-gold/50 transition-all flex flex-col justify-between">
               <div className="relative aspect-[4/3] w-full bg-black/60 overflow-hidden flex items-center justify-center">
                 {item.media_type === 'video' ? (
@@ -354,20 +369,33 @@ export default function AdminGalleryPage() {
         )}
       </div>
 
+      {/* Pagination Controls */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={filteredItems.length}
+        itemsPerPage={itemsPerPage}
+        itemsPerPageOptions={[6, 9, 15, 30]}
+        onPageChange={setCurrentPage}
+        onItemsPerPageChange={setItemsPerPage}
+      />
+
       {/* Add / Edit Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <form onSubmit={handleSubmit} className="w-full max-w-lg bg-[#240006] border border-gold/40 rounded-2xl p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-gold/20 pb-3">
+          <form onSubmit={handleSubmit} className="w-full max-w-lg max-h-[90vh] bg-[#240006] border border-gold/40 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+            {/* Modal Header */}
+            <div className="p-5 border-b border-gold/20 flex items-center justify-between shrink-0 bg-[#240006]">
               <h3 className="font-cinzel text-lg font-bold text-gold">
                 {editingItem ? 'Edit Gallery Item' : 'Add New Photo or Video'}
               </h3>
-              <button type="button" onClick={() => setIsModalOpen(false)} className="text-ivory/60 hover:text-ivory">
+              <button type="button" onClick={() => setIsModalOpen(false)} className="text-ivory/60 hover:text-ivory p-1 rounded-lg hover:bg-gold/10 transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="space-y-4 text-xs">
+            {/* Modal Body - Scrollable */}
+            <div className="p-5 space-y-4 text-xs overflow-y-auto flex-1 custom-scrollbar">
               {/* 1. Media Type Selector (Photo vs Video) */}
               <div>
                 <label className="text-ivory/90 font-bold block mb-1.5">1. Select Media Type *</label>
@@ -491,7 +519,7 @@ export default function AdminGalleryPage() {
                   placeholder="e.g. Sacred fire invocation and Kalasa Sthapana by Vedic Acharyas."
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full bg-[#1A0004] border border-gold/30 text-ivory rounded-lg p-2 text-xs"
+                  className="w-full bg-[#1A0004] border border-gold/30 text-ivory rounded-lg p-2 text-xs focus:ring-1 focus:ring-gold outline-none"
                 />
               </div>
 
@@ -502,16 +530,17 @@ export default function AdminGalleryPage() {
                   placeholder="e.g. వేద పండితులచే కలశ స్థాపన మరియు పవిత్ర అగ్ని ఆవాహన."
                   value={formData.description_te}
                   onChange={(e) => setFormData({ ...formData, description_te: e.target.value })}
-                  className="w-full bg-[#1A0004] border border-gold/30 text-ivory rounded-lg p-2 text-xs"
+                  className="w-full bg-[#1A0004] border border-gold/30 text-ivory rounded-lg p-2 text-xs focus:ring-1 focus:ring-gold outline-none"
                 />
               </div>
             </div>
 
-            <div className="pt-3 flex justify-end gap-2 border-t border-gold/20">
-              <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)} className="border-gold/30 text-gold text-xs">
+            {/* Modal Footer - Fixed/Sticky at Bottom */}
+            <div className="p-4 bg-[#1A0004] border-t border-gold/20 flex items-center justify-end gap-3 shrink-0">
+              <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)} className="border-gold/30 text-gold hover:bg-gold/10 text-xs px-5 py-2">
                 Cancel
               </Button>
-              <Button type="submit" disabled={uploading} className="bg-gold text-maroon font-bold text-xs hover:bg-gold-light">
+              <Button type="submit" disabled={uploading} className="bg-gold text-maroon font-bold text-xs hover:bg-gold-light px-5 py-2">
                 {uploading ? 'Saving...' : editingItem ? 'Save Changes' : 'Add Item'}
               </Button>
             </div>

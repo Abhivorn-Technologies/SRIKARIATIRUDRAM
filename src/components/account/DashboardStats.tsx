@@ -43,8 +43,13 @@ export function DashboardStatsGrid({ stats }: { stats: DevoteeStats }) {
   );
 }
 
-export function DevoteeBookingCard({ booking }: { booking: ConfirmedBooking }) {
+export function DevoteeBookingCard({ booking }: { booking: any }) {
   const t = useTranslations('account');
+
+  const sevaTitle = booking.sevaName || (booking.sevaSlug ? booking.sevaSlug.replace(/-/g, ' ').toUpperCase() : 'SEVA OFFERING');
+  const dakshinaAmount = Number(booking.amount || booking.grandTotal || 0);
+  const devoteeGotram = booking.primaryDevotee?.gotram || booking.gotram || 'Not Provided';
+  const devoteeNakshatra = booking.primaryDevotee?.nakshatra || booking.nakshatra || 'Not Provided';
 
   return (
     <Card variant="sacred" className="p-5 border-gold/30 space-y-4">
@@ -54,35 +59,35 @@ export function DevoteeBookingCard({ booking }: { booking: ConfirmedBooking }) {
             {booking.bookingId}
           </span>
           <h4 className="font-cinzel text-lg font-bold text-gold-lighter mt-0.5">
-            {booking.sevaSlug.replace(/-/g, ' ').toUpperCase()}
+            {sevaTitle}
           </h4>
         </div>
         <Badge variant="success" size="sm" className="self-start sm:self-center">
-          Confirmed
+          {(booking.status || 'CONFIRMED').toUpperCase()}
         </Badge>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs text-ivory/80 font-sans">
         <div>
           <span className="text-ivory/50 block text-[10px] uppercase">Muhurtham Date</span>
-          <span className="font-semibold text-ivory">{booking.date} (Day {booking.dayNumber || 1})</span>
+          <span className="font-semibold text-ivory">{booking.date || booking.selectedDate} (Day {booking.dayNumber || 1})</span>
         </div>
         <div>
           <span className="text-ivory/50 block text-[10px] uppercase">Gotram / Nakshatra</span>
-          <span className="font-semibold text-ivory">{booking.primaryDevotee.gotram} • {booking.primaryDevotee.nakshatra}</span>
+          <span className="font-semibold text-ivory">{devoteeGotram} • {devoteeNakshatra}</span>
         </div>
         <div>
           <span className="text-ivory/50 block text-[10px] uppercase">Total Dakshina</span>
-          <span className="font-bold text-gold-light">{formatCurrency(booking.grandTotal)}</span>
+          <span className="font-bold text-gold-light">{formatCurrency(dakshinaAmount)}</span>
         </div>
       </div>
 
       <div className="pt-2 flex items-center justify-between border-t border-gold/15 text-xs">
         <Link href={`/book-seva/receipt/${booking.bookingId}`} className="text-gold-light hover:text-gold flex items-center gap-1 font-semibold">
           <Download className="w-3.5 h-3.5" />
-          <span>{t('download')}</span>
+          <span>{t('download')} PDF Receipt</span>
         </Link>
-        <Link href={`/account/bookings/${booking.bookingId}`}>
+        <Link href={`/book-seva/receipt/${booking.bookingId}`}>
           <Button variant="ghost" size="sm" className="text-xs text-ivory hover:text-gold-light">
             {t('viewDetails')} <ArrowRight className="w-3.5 h-3.5 ml-1" />
           </Button>

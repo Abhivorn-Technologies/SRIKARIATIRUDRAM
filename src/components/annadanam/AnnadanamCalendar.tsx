@@ -33,6 +33,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { Link } from '@/i18n/routing';
 
+import { useDevoteeAuth } from '@/context/DevoteeAuthContext';
+
 interface SponsorFormData {
   sponsorName: string;
   mobile: string;
@@ -46,6 +48,7 @@ export function AnnadanamSection() {
   const locale = useLocale();
   const isTe = locale === 'te';
   const isHi = locale === 'hi';
+  const { session } = useDevoteeAuth();
 
   const calendarSectionRef = useRef<HTMLDivElement>(null);
   const participationSectionRef = useRef<HTMLDivElement>(null);
@@ -64,15 +67,25 @@ export function AnnadanamSection() {
   const [flowStep, setFlowStep] = useState<number>(1);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
-  // Dynamic 28-day calendar state
+  // Dynamic 28-day calendar state & One-day sponsorship slots state
   const [calendarDays, setCalendarDays] = useState<AnnadanamDay[]>(annadanamCalendarDays);
+  const [oneDayStats, setOneDayStats] = useState<{
+    totalCapacity: number;
+    bookedCount: number;
+    availableSlots: number;
+  }>({ totalCapacity: 11, bookedCount: 0, availableSlots: 11 });
 
   const fetchLiveCalendar = async () => {
     try {
       const res = await fetch('/api/annadanam', { cache: 'no-store' });
       const json = await res.json();
-      if (json.success && Array.isArray(json.calendarDays)) {
-        setCalendarDays(json.calendarDays);
+      if (json.success) {
+        if (Array.isArray(json.calendarDays)) {
+          setCalendarDays(json.calendarDays);
+        }
+        if (json.oneDayStats) {
+          setOneDayStats(json.oneDayStats);
+        }
       }
     } catch (err) {
       console.error('Failed to fetch dynamic Annadanam calendar:', err);
@@ -143,6 +156,7 @@ export function AnnadanamSection() {
 
   // Amount Selection Handler
   const handleSelectAmount = (amt: number) => {
+    if (amt === 25116 && oneDayStats.availableSlots <= 0) return;
     setIsCustomAmount(false);
     setSelectedAmount(amt);
     setCustomAmountError('');
@@ -220,6 +234,11 @@ export function AnnadanamSection() {
   // Proceed to Review (Step 2)
   const handleProceedToReview = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!session?.phone) {
+      const currentPath = typeof window !== 'undefined' ? window.location.pathname + window.location.search : `/${locale}/annadanam`;
+      window.location.href = `/${locale}/account/login?mode=signup&redirect=${encodeURIComponent(currentPath)}`;
+      return;
+    }
     if (validateForm()) {
       setFlowStep(2);
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -357,9 +376,29 @@ export function AnnadanamSection() {
           
           <div className="flex flex-col lg:flex-row items-center justify-between gap-6 relative z-10">
             <div className="space-y-3 text-center lg:text-left flex-1">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gold/15 border border-gold/40 text-gold-lighter text-xs font-bold font-cinzel uppercase tracking-wider">
-                <Sparkles className="w-3.5 h-3.5 text-gold" />
-                <span>Maha Annadana Seva</span>
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gold/15 border border-gold/40 text-gold-lighter text-xs font-bold font-cinzel uppercase tracking-wider">
+                  <Sparkles className="w-3.5 h-3.5 text-gold" />
+                  <span>Maha Annadana Seva</span>
+                </div>
+
+                {/* Real-time slot availability badge */}
+                {oneDayStats.availableSlots <= 0 ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-950/80 text-rose-300 border border-rose-500/50 text-xs font-extrabold font-sans uppercase tracking-wider">
+                    <span className="w-2 h-2 rounded-full bg-rose-500" />
+                    NOT AVAILABLE / FULLY BOOKED
+                  </span>
+                ) : oneDayStats.availableSlots <= 3 ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-950/90 text-amber-300 border border-amber-500/60 text-xs font-extrabold font-sans uppercase tracking-wider animate-pulse">
+                    <Flame className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                    ONLY {oneDayStats.availableSlots} SLOTS LEFT!
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/80 text-emerald-300 border border-emerald-500/50 text-xs font-extrabold font-sans uppercase tracking-wider">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    🎟️ {oneDayStats.availableSlots} of 11 SLOTS AVAILABLE
+                  </span>
+                )}
               </div>
 
               <h3 className="font-cinzel text-2xl sm:text-3xl lg:text-4xl font-black text-ivory">
@@ -368,8 +407,8 @@ export function AnnadanamSection() {
 
               <p className="text-sm sm:text-base text-ivory/85 font-sans max-w-2xl leading-relaxed">
                 {isTe
-                  ? 'ఒక భక్తుడు మహాయజ్ఞంలో ఒక పూర్తి రోజు అన్నదానాన్ని ₹25,116తో సమర్పించవచ్చు.'
-                  : 'A devotee can sponsor Annadanam for one complete day of the Mahayajnam for ₹25,116.'}
+                  ? 'ఒక భక్తుడు మహాయజ్ఞంలో ఒక పూర్తి రోజు అన్నదానాన్ని ₹25,116తో సమర్పించవచ్చు. (మొత్తం 11 స్లాట్‌లు మాత్రమే ఉన్నాయి).'
+                  : 'A devotee can sponsor Annadanam for one complete day of the Mahayajnam for ₹25,116 (Strictly limited to 11 slots total).'}
               </p>
             </div>
 
@@ -381,20 +420,28 @@ export function AnnadanamSection() {
                 <span className="font-cinzel text-3xl sm:text-4xl lg:text-5xl font-black text-gold drop-shadow-md">
                   ₹25,116
                 </span>
+                <span className="text-[11px] text-ivory/70 font-sans block mt-0.5">
+                  ({oneDayStats.bookedCount} / 11 Slots Booked)
+                </span>
               </div>
 
               <Button
-                variant="gold"
+                variant={oneDayStats.availableSlots <= 0 ? 'secondary' : 'gold'}
                 size="lg"
+                disabled={oneDayStats.availableSlots <= 0}
                 onClick={() => {
-                  setSelectedAmount(25116);
-                  setIsCustomAmount(false);
-                  scrollToCalendar();
+                  if (oneDayStats.availableSlots > 0) {
+                    setSelectedAmount(25116);
+                    setIsCustomAmount(false);
+                    scrollToCalendar();
+                  }
                 }}
                 leftIcon={<Utensils className="w-5 h-5" />}
                 className="font-bold uppercase tracking-wider text-sm sm:text-base px-8 py-4 shadow-gold-md"
               >
-                {isTe ? 'అన్నదానం సమర్పించండి' : 'SPONSOR ANNADANAM'}
+                {oneDayStats.availableSlots <= 0
+                  ? (isTe ? 'అందుబాటులో లేదు / పూర్తి అయింది' : 'FULLY BOOKED / NOT AVAILABLE')
+                  : (isTe ? 'అన్నదానం సమర్పించండి' : 'SPONSOR ANNADANAM')}
               </Button>
             </div>
           </div>
@@ -535,20 +582,34 @@ export function AnnadanamSection() {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             {annadanamAmounts.map((item) => {
               const isSelected = !isCustomAmount && selectedAmount === item.amount;
+              const isOneDayDisabled = item.isOneDay && oneDayStats.availableSlots <= 0;
+
               return (
                 <div
                   key={item.amount}
-                  onClick={() => handleSelectAmount(item.amount)}
-                  className={`p-4 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between text-center relative ${
-                    isSelected
-                      ? 'bg-primary/50 border-gold shadow-gold-md ring-2 ring-gold/40'
-                      : 'bg-burgundy-deep/80 border-gold/25 hover:border-gold/60 hover:bg-burgundy-deep/95'
+                  onClick={() => !isOneDayDisabled && handleSelectAmount(item.amount)}
+                  className={`p-4 rounded-2xl border-2 transition-all flex flex-col justify-between text-center relative ${
+                    isOneDayDisabled
+                      ? 'bg-burgundy-dark/40 border-rose-500/30 opacity-60 cursor-not-allowed select-none'
+                      : isSelected
+                      ? 'bg-primary/50 border-gold shadow-gold-md ring-2 ring-gold/40 cursor-pointer'
+                      : 'bg-burgundy-deep/80 border-gold/25 hover:border-gold/60 hover:bg-burgundy-deep/95 cursor-pointer'
                   }`}
                 >
                   {item.isOneDay && (
-                    <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-amber-400 text-burgundy-deep uppercase font-cinzel absolute -top-2.5 left-1/2 -translate-x-1/2 shadow-sm whitespace-nowrap">
-                      1-Day Sponsor
-                    </span>
+                    oneDayStats.availableSlots <= 0 ? (
+                      <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-rose-600 text-white uppercase font-cinzel absolute -top-2.5 left-1/2 -translate-x-1/2 shadow-sm whitespace-nowrap">
+                        NOT AVAILABLE
+                      </span>
+                    ) : oneDayStats.availableSlots <= 3 ? (
+                      <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-amber-500 text-burgundy-deep uppercase font-cinzel absolute -top-2.5 left-1/2 -translate-x-1/2 shadow-sm whitespace-nowrap animate-pulse">
+                        🔥 ONLY {oneDayStats.availableSlots} LEFT
+                      </span>
+                    ) : (
+                      <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-emerald-500 text-burgundy-deep uppercase font-cinzel absolute -top-2.5 left-1/2 -translate-x-1/2 shadow-sm whitespace-nowrap">
+                        🎟️ {oneDayStats.availableSlots}/11 SLOTS
+                      </span>
+                    )
                   )}
                   <div>
                     <span className="font-cinzel text-xl sm:text-2xl font-black text-gold block">
@@ -562,10 +623,14 @@ export function AnnadanamSection() {
                   <div className="mt-3 pt-2 border-t border-gold/15">
                     <span
                       className={`text-[10.5px] font-bold uppercase ${
-                        isSelected ? 'text-gold-light' : 'text-ivory/50'
+                        isOneDayDisabled
+                          ? 'text-rose-400/80'
+                          : isSelected
+                          ? 'text-gold-light'
+                          : 'text-ivory/50'
                       }`}
                     >
-                      {isSelected ? 'Selected' : 'Select'}
+                      {isOneDayDisabled ? 'Full' : isSelected ? 'Selected' : 'Select'}
                     </span>
                   </div>
                 </div>

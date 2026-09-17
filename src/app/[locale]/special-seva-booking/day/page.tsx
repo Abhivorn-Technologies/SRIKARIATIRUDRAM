@@ -6,7 +6,7 @@ import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { sevasList } from '@/data/sevas';
 import { PROGRAMME_28_DAYS, ProgrammeDayOption } from '@/data/nakshatras';
-import { specialSevaBookingService } from '@/services/specialSevaBooking.service';
+import { specialSevaBookingService, getSevaLockInfo } from '@/services/specialSevaBooking.service';
 import { SpecialSevaStepper } from '@/components/special-seva/SpecialSevaStepper';
 import { Card } from '@/components/ui/Card';
 import { formatCurrency } from '@/lib/utils';
@@ -19,7 +19,10 @@ import {
   Search,
   Sparkles,
   Flame,
+  Lock,
 } from 'lucide-react';
+
+import { useDevoteeAuth } from '@/context/DevoteeAuthContext';
 
 export default function SpecialSevaDaySelectionPage() {
   const router = useRouter();
@@ -27,6 +30,14 @@ export default function SpecialSevaDaySelectionPage() {
   const locale = useLocale();
   const isTe = locale === 'te';
   const isHi = locale === 'hi';
+  const { session, isLoading } = useDevoteeAuth();
+
+  useEffect(() => {
+    if (!isLoading && !session?.phone) {
+      const currentPath = typeof window !== 'undefined' ? window.location.pathname + window.location.search : `/${locale}/special-seva-booking/day`;
+      router.push(`/${locale}/account/login?mode=signup&redirect=${encodeURIComponent(currentPath)}`);
+    }
+  }, [session, isLoading, locale, router]);
 
   const sevaParam = searchParams.get('seva');
   const dayParam = searchParams.get('day');
@@ -116,6 +127,32 @@ export default function SpecialSevaDaySelectionPage() {
     }
   }, [allSevas, sevaParam]);
 
+  const sevaLockInfo = useMemo(() => {
+    return getSevaLockInfo(selectedSeva?.id || selectedSeva?.slug || selectedSeva?.title);
+  }, [selectedSeva]);
+
+  // Lock selectedDayNumber if Seva is locked to specific day(s)
+  useEffect(() => {
+    if (sevaLockInfo) {
+      if (!selectedDayNumber || !sevaLockInfo.allowedDays.includes(selectedDayNumber)) {
+        const targetDay = sevaLockInfo.defaultDay;
+        setSelectedDayNumber(targetDay);
+        const targetDayInfo = PROGRAMME_28_DAYS.find((d) => d.dayNumber === targetDay) || PROGRAMME_28_DAYS[targetDay - 1];
+        specialSevaBookingService.saveActiveDraft({
+          sevaId: selectedSeva.id,
+          sevaSlug: selectedSeva.slug,
+          sevaName: selectedSeva.title,
+          amount: selectedSeva.price || selectedSeva.amount,
+          selectedDay: targetDay,
+          selectedDate: targetDayInfo.date,
+          mahayajnamNakshatra: targetDayInfo.nameEn,
+          nakshatra: targetDayInfo.nameEn,
+          ...(sevaLockInfo.lockedNakshatra ? { janmaNakshatra: sevaLockInfo.lockedNakshatra } : {}),
+        });
+      }
+    }
+  }, [sevaLockInfo, selectedSeva, selectedDayNumber]);
+
   // Selected Day details
   const selectedDayInfo = useMemo(() => {
     if (!selectedDayNumber) return null;
@@ -137,6 +174,10 @@ export default function SpecialSevaDaySelectionPage() {
   }, [searchQuery]);
 
   const handleSelectDay = (dayNum: number) => {
+    if (sevaLockInfo && !sevaLockInfo.allowedDays.includes(dayNum)) {
+      return;
+    }
+
     setSelectedDayNumber(dayNum);
     const day = PROGRAMME_28_DAYS.find((d) => d.dayNumber === dayNum) || PROGRAMME_28_DAYS[0];
 
@@ -149,6 +190,7 @@ export default function SpecialSevaDaySelectionPage() {
       selectedDate: day.date,
       mahayajnamNakshatra: day.nameEn,
       nakshatra: day.nameEn,
+      ...(sevaLockInfo?.lockedNakshatra ? { janmaNakshatra: sevaLockInfo.lockedNakshatra } : {}),
     });
   };
 
@@ -164,6 +206,7 @@ export default function SpecialSevaDaySelectionPage() {
       selectedDate: selectedDayInfo.date,
       mahayajnamNakshatra: selectedDayInfo.nameEn,
       nakshatra: selectedDayInfo.nameEn,
+      ...(sevaLockInfo?.lockedNakshatra ? { janmaNakshatra: sevaLockInfo.lockedNakshatra } : {}),
     });
 
     router.push(`/${locale}/special-seva-booking/details`);
@@ -263,7 +306,46 @@ export default function SpecialSevaDaySelectionPage() {
               </p>
             </div>
 
-            {/* Day Search Bar */}
+          {/* Locked Date Notice for Kalyanam Seva */}
+          {sevaLockInfo && (
+            <div className="rounded-xl bg-gradient-to-r from-[#5A0714] via-[#4A0A14] to-[#3B040B] border-2 border-[#D6A532] p-4 flex items-center gap-3.5 text-[#F2C14E] shadow-[0_0_20px_rgba(214,165,50,0.3)]">
+              <div className="w-10 h-10 rounded-full bg-[#D6A532]/20 border border-[#D6A532] flex items-center justify-center shrink-0">
+                <Lock className="w-5 h-5 text-[#F2C14E]" />
+              </div>
+              <div className="space-y-0.5">
+                <h4 className="font-cinzel text-sm sm:text-base font-bold text-[#FAF4E6] flex items-center gap-2">
+                  <span>
+                    {sevaLockInfo.isMultiDay
+                      ? (isTe
+                          ? `🔒 కేవలం విశేష నక్షత్ర దినములలో మాత్రమే లభ్యం: Days ${sevaLockInfo.allowedDays.join(', ')}`
+                          : isHi
+                          ? `🔒 केवल विशेष नक्षत्र दिवसों पर उपलब्ध: Days ${sevaLockInfo.allowedDays.join(', ')}`
+                          : `🔒 Available Exclusively on Days ${sevaLockInfo.allowedDays.join(', ')}`)
+                      : (isTe
+                          ? `🔒 దినం ${sevaLockInfo.defaultDay} కు లాక్ చేయబడింది (${sevaLockInfo.lockedNakshatra || ''} నక్షత్రం)`
+                          : isHi
+                          ? `🔒 समर्पित तिथि आरक्षित: दिवस ${sevaLockInfo.defaultDay} (${sevaLockInfo.lockedNakshatra || ''} नक्षत्र)`
+                          : `🔒 Dedicated Date Locked: Day ${sevaLockInfo.defaultDay} (${selectedDayInfo?.date} — ${sevaLockInfo.lockedNakshatra} Nakshatram)`)}
+                  </span>
+                </h4>
+                <p className="text-xs text-[#FFF8E8]/85 font-sans leading-relaxed">
+                  {sevaLockInfo.isMultiDay
+                    ? (isTe
+                        ? `${isTe ? (selectedSeva.titleTe || selectedSeva.title) : selectedSeva.title} సేవ పవిత్ర విశేష నక్షత్ర దినములైన Day ${sevaLockInfo.allowedDays.join(', Day ')} లలో మాత్రమే నిర్వహించబడుతుంది. దయచేసి ఒక దినాన్ని ఎంచుకోండి.`
+                        : isHi
+                        ? `${selectedSeva.titleHi || selectedSeva.title} केवल पावन विशेष नक्षत्र दिवसों Day ${sevaLockInfo.allowedDays.join(', Day ')} पर आयोजित की जाती है। कृपया अपना इच्छित दिवस चुनें।`
+                        : `${selectedSeva?.title} is exclusively performed on designated Visesha Nakshatra days: Day ${sevaLockInfo.allowedDays.join(', Day ')}. Please select your preferred day.`)
+                    : (isTe
+                        ? `${selectedSeva.titleTe || selectedSeva.title} పవిత్ర ${sevaLockInfo.lockedNakshatra || ''} నక్షత్ర దినమైన Day ${sevaLockInfo.defaultDay} న మాత్రమే నిర్వహించబడుతుంది.`
+                        : isHi
+                        ? `${selectedSeva.titleHi || selectedSeva.title} केवल पावन ${sevaLockInfo.lockedNakshatra || ''} नक्षत्र दिवस (Day ${sevaLockInfo.defaultDay}) को ही आयोजित होगा।`
+                        : `${selectedSeva?.title} is exclusively consecrated for Day ${sevaLockInfo.defaultDay} (${sevaLockInfo.lockedNakshatra} Nakshatram).`)}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Day Search Bar */}
             <div className="relative w-full sm:w-64 shrink-0">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#D6A532]/60" />
               <input
@@ -280,6 +362,7 @@ export default function SpecialSevaDaySelectionPage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2.5 sm:gap-3">
             {filteredDays.map((d) => {
               const isSelected = selectedDayNumber === d.dayNumber;
+              const isAllowed = !sevaLockInfo || sevaLockInfo.allowedDays.includes(d.dayNumber);
               const isConcludingCard = d.dayNumber === 28;
 
               return (
@@ -287,12 +370,15 @@ export default function SpecialSevaDaySelectionPage() {
                   key={d.id}
                   type="button"
                   onClick={() => handleSelectDay(d.dayNumber)}
-                  className={`group relative flex flex-col items-center justify-between p-3 rounded-xl border text-center transition-all duration-200 cursor-pointer select-none min-h-[110px] ${
-                    isSelected
-                      ? 'bg-gradient-to-b from-[#5A0714] to-[#3B040B] border-[#F2C14E] shadow-[0_0_18px_rgba(214,165,50,0.5)] ring-2 ring-[#D6A532] scale-[1.03]'
+                  disabled={!isAllowed}
+                  className={`group relative flex flex-col items-center justify-between p-3 rounded-xl border text-center transition-all duration-200 select-none min-h-[110px] ${
+                    !isAllowed
+                      ? 'bg-[#180204]/60 border-zinc-800 text-zinc-600 opacity-35 cursor-not-allowed pointer-events-none'
+                      : isSelected
+                      ? 'bg-gradient-to-b from-[#5A0714] to-[#3B040B] border-[#F2C14E] shadow-[0_0_18px_rgba(214,165,50,0.5)] ring-2 ring-[#D6A532] scale-[1.03] cursor-pointer'
                       : isConcludingCard
-                      ? 'bg-[#3A040B]/90 border-[#F2C14E]/40 hover:border-[#F2C14E] hover:bg-[#4A0714]'
-                      : 'bg-[#230206]/90 border-[#D6A532]/25 hover:border-[#D6A532]/60 hover:bg-[#35030A]'
+                      ? 'bg-[#3A040B]/90 border-[#F2C14E]/40 hover:border-[#F2C14E] hover:bg-[#4A0714] cursor-pointer'
+                      : 'bg-[#230206]/90 border-[#D6A532]/25 hover:border-[#D6A532]/60 hover:bg-[#35030A] cursor-pointer'
                   }`}
                 >
                   {/* Top Badge: Day Number */}

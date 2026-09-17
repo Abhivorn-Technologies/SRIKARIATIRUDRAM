@@ -12,6 +12,7 @@ import {
   ApplicableSevaOption,
 } from '@/data/nakshatras';
 import { bookingService } from '@/services/booking.service';
+import { getSevaLockInfo } from '@/services/specialSevaBooking.service';
 import { BookingStepper } from '@/components/booking/BookingStepper';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -30,12 +31,22 @@ import {
   Unlock,
 } from 'lucide-react';
 
+import { useDevoteeAuth } from '@/context/DevoteeAuthContext';
+
 export default function SelectNakshatraAndSevaPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const locale = useLocale();
   const isTe = locale === 'te';
   const isHi = locale === 'hi';
+  const { session, isLoading } = useDevoteeAuth();
+
+  useEffect(() => {
+    if (!isLoading && !session?.phone) {
+      const currentPath = typeof window !== 'undefined' ? window.location.pathname + window.location.search : `/${locale}/book-seva/date`;
+      router.push(`/${locale}/account/login?mode=signup&redirect=${encodeURIComponent(currentPath)}`);
+    }
+  }, [session, isLoading, locale, router]);
 
   const dayParam = searchParams.get('day');
   const nakshatraParam = searchParams.get('nakshatra');
@@ -75,10 +86,75 @@ export default function SelectNakshatraAndSevaPage() {
   // Lock day selection state (locked by default when booking a day so user cannot select other days)
   const [isDayLocked, setIsDayLocked] = useState<boolean>(true);
 
+  const [dbAssignedSevas, setDbAssignedSevas] = useState<ApplicableSevaOption[]>([]);
+
+  // Fetch live assigned sevas from API for selectedDayNumber
+  useEffect(() => {
+    async function loadAssignedSevas() {
+      try {
+        const res = await fetch('/api/schedule');
+        const json = await res.json();
+        if (json.success && json.data) {
+          const dayMatch = json.data.find((d: any) => d.day_number === selectedDayNumber);
+          if (dayMatch && dayMatch.assigned_sevas && dayMatch.assigned_sevas.length > 0) {
+            const formatted: ApplicableSevaOption[] = dayMatch.assigned_sevas
+              .filter((sa: any) => sa.status !== 'HIDDEN')
+              .map((sa: any) => ({
+                id: sa.seva_id,
+                slug: sa.slug || sa.seva_id,
+                title: sa.title,
+                titleTe: sa.title_te || sa.title,
+                titleHi: sa.title,
+                price: sa.amount,
+                description: sa.short_desc || `Sacred Seva offering for Day ${selectedDayNumber}.`,
+                descriptionTe: sa.short_desc_te || `విశేష సేవ`,
+                descriptionHi: sa.short_desc || `विशेष सेवा`,
+                isSpecial: sa.category !== 'homam',
+                availableSlots: sa.available_slots,
+                status: sa.status
+              }));
+            setDbAssignedSevas(formatted);
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to load dynamic day sevas:', e);
+      }
+    }
+    loadAssignedSevas();
+  }, [selectedDayNumber]);
+
   // Auto-resolve Day, Date, Rasi, DayType, Programme Highlights and Available Sevas
   const bookingOptions: NakshatraBookingInfo = useMemo(() => {
-    return getNakshatraBookingOptions(selectedDayNumber);
-  }, [selectedDayNumber]);
+    const opts = getNakshatraBookingOptions(selectedDayNumber);
+    if (dbAssignedSevas.length > 0) {
+      const map = new Map<string, ApplicableSevaOption>();
+      
+      // Add DB assigned sevas first as primary source of truth
+      dbAssignedSevas.forEach(s => {
+        const key = (s.slug || s.id).toLowerCase().replace(/-sarpa$/, '');
+        map.set(key, s);
+      });
+
+      // Only add static sevas if not matching any DB assigned seva by key or category
+      opts.availableSevas.forEach(s => {
+        const key = (s.slug || s.id).toLowerCase().replace(/-sarpa$/, '');
+        if (!map.has(key)) {
+          // Prevent adding duplicate visesha/sarpa homams
+          const isViseshaKey = key.includes('visesha') || key.includes('sarpa');
+          const dbHasVisesha = Array.from(map.keys()).some(k => k.includes('visesha') || k.includes('sarpa'));
+          if (!isViseshaKey || !dbHasVisesha) {
+            map.set(key, s);
+          }
+        }
+      });
+
+      return {
+        ...opts,
+        availableSevas: Array.from(map.values())
+      };
+    }
+    return opts;
+  }, [selectedDayNumber, dbAssignedSevas]);
 
   // Selected Seva option within available sevas
   const [selectedSeva, setSelectedSeva] = useState<ApplicableSevaOption>(() => {
@@ -102,14 +178,25 @@ export default function SelectNakshatraAndSevaPage() {
     return opts.availableSevas[0];
   });
 
-  // When selectedDayNumber changes, ensure selectedSeva is valid for the new day
+  const sevaLockInfo = useMemo(() => {
+    return getSevaLockInfo(selectedSeva?.id || selectedSeva?.slug || selectedSeva?.title);
+  }, [selectedSeva]);
+
+  // Lock selectedDayNumber if Seva is locked to specific day(s)
   useEffect(() => {
-    const opts = getNakshatraBookingOptions(selectedDayNumber);
-    const stillValid = opts.availableSevas.find((s) => s.id === selectedSeva.id || s.slug === selectedSeva.slug);
-    if (!stillValid) {
-      setSelectedSeva(opts.availableSevas[0]);
+    if (sevaLockInfo && !sevaLockInfo.allowedDays.includes(selectedDayNumber)) {
+      setSelectedDayNumber(sevaLockInfo.defaultDay);
     }
-  }, [selectedDayNumber, selectedSeva.id, selectedSeva.slug]);
+  }, [sevaLockInfo, selectedDayNumber]);
+
+  // When selectedDayNumber or bookingOptions change, ensure selectedSeva is valid
+  useEffect(() => {
+    const stillValid = bookingOptions.availableSevas.find((s) => s.id === selectedSeva.id || s.slug === selectedSeva.slug);
+    if (!stillValid && bookingOptions.availableSevas.length > 0) {
+      const paramMatch = sevaParam ? bookingOptions.availableSevas.find(s => s.slug.toLowerCase() === sevaParam.toLowerCase() || s.id.toLowerCase() === sevaParam.toLowerCase()) : null;
+      setSelectedSeva(paramMatch || bookingOptions.availableSevas[0]);
+    }
+  }, [selectedDayNumber, bookingOptions.availableSevas, selectedSeva.id, selectedSeva.slug, sevaParam]);
 
   // Filtered Programme Days list (28 days)
   const filteredDays = useMemo(() => {
@@ -194,11 +281,17 @@ export default function SelectNakshatraAndSevaPage() {
         {/* Top Navigation Row: Back Button */}
         <div className="flex items-center justify-between">
           <Link
-            href="/sevas"
+            href="/schedule"
             className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl border border-[#D6A532]/40 bg-[#230206]/80 text-[#FAF4E6] hover:bg-[#5A0714] hover:border-[#D6A532] text-xs sm:text-sm font-cinzel font-bold tracking-wider transition-all shadow-sm"
           >
             <ArrowLeft className="w-4 h-4 text-[#F2C14E]" />
-            <span>{isTe ? 'వెనుకకు' : isHi ? 'वापस' : 'Back'}</span>
+            <span>
+              {isTe
+                ? '← 28 రోజుల షెడ్యూల్‌కు తిరిగి వెళ్ళు'
+                : isHi
+                ? '← 28-दिवसीय कार्यक्रम पर वापस जाएं'
+                : '← Back to 28-Day Schedule'}
+            </span>
           </Link>
         </div>
 

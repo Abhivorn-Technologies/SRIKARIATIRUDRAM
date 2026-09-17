@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
+import { Pagination } from '@/components/ui/Pagination';
 import { Users, Search, Phone, Mail, MapPin, RefreshCw, AlertCircle, Eye, X } from 'lucide-react';
 
 export default function AdminDevoteesPage() {
@@ -14,6 +15,10 @@ export default function AdminDevoteesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDevotee, setSelectedDevotee] = useState<any | null>(null);
   const [historyLoading, setHistoryLoading] = useState(false);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const fetchDevotees = async () => {
     try {
@@ -35,7 +40,14 @@ export default function AdminDevoteesPage() {
 
   useEffect(() => {
     fetchDevotees();
+    setCurrentPage(1);
   }, [searchQuery]);
+
+  const totalPages = Math.ceil(devotees.length / itemsPerPage) || 1;
+  const paginatedDevotees = devotees.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const handleViewDevotee = async (devotee: any) => {
     try {
@@ -122,8 +134,8 @@ export default function AdminDevoteesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gold/10">
-              {devotees.length > 0 ? (
-                devotees.map((d) => (
+              {paginatedDevotees.length > 0 ? (
+                paginatedDevotees.map((d) => (
                   <tr key={d.id} className="hover:bg-gold/5 transition-colors">
                     <td className="py-3 px-4 font-semibold text-ivory">
                       {d.full_name}
@@ -171,6 +183,15 @@ export default function AdminDevoteesPage() {
             </tbody>
           </table>
         </div>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={devotees.length}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+          onItemsPerPageChange={setItemsPerPage}
+          className="rounded-t-none border-t border-gold/15"
+        />
       </Card>
 
       {/* Devotee History Drawer/Modal */}
