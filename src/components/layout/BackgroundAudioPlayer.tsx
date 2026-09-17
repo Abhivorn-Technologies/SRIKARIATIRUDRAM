@@ -3,43 +3,72 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Volume2, VolumeX, Music, Play, Pause } from 'lucide-react';
 
-const YOUTUBE_SONG_ID = 'gFzfO-Uyt7M';
+const LOCAL_AUDIO_SRC = '/assets/background_chant.mpeg';
 
 export function BackgroundAudioPlayer() {
-  const [isPlaying, setIsPlaying] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     setIsLoaded(true);
   }, []);
 
+  useEffect(() => {
+    if (!audioRef.current) return;
+
+    audioRef.current.muted = isMuted;
+
+    // Attempt automatic playback if permitted by browser policy
+    const promise = audioRef.current.play();
+    if (promise !== undefined) {
+      promise
+        .then(() => {
+          setIsPlaying(true);
+        })
+        .catch(() => {
+          // Autoplay blocked until user interaction
+          setIsPlaying(false);
+        });
+    }
+  }, [isLoaded]);
+
   const togglePlay = () => {
-    setIsPlaying((prev) => !prev);
+    if (!audioRef.current) return;
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      audioRef.current
+        .play()
+        .then(() => {
+          setIsPlaying(true);
+        })
+        .catch((err) => {
+          console.error('Audio playback error:', err);
+        });
+    }
   };
 
   const toggleMute = () => {
-    setIsMuted((prev) => !prev);
+    if (!audioRef.current) return;
+    const nextMute = !isMuted;
+    audioRef.current.muted = nextMute;
+    setIsMuted(nextMute);
   };
 
   if (!isLoaded) return null;
 
-  // YouTube embed URL with infinite loop (loop=1&playlist=VIDEO_ID)
-  const embedUrl = `https://www.youtube.com/embed/${YOUTUBE_SONG_ID}?autoplay=1&loop=1&playlist=${YOUTUBE_SONG_ID}&enablejsapi=1&controls=0&mute=${isMuted ? 1 : 0}`;
-
   return (
     <div className="fixed bottom-20 left-4 sm:bottom-6 sm:left-6 z-50">
-      {/* Hidden YouTube Iframe for Infinite Background Audio */}
-      {isPlaying && (
-        <iframe
-          ref={iframeRef}
-          src={embedUrl}
-          title="Sacred Background Chanting"
-          allow="autoplay; encrypted-media"
-          className="w-0 h-0 opacity-0 pointer-events-none absolute"
-        />
-      )}
+      {/* Local HTML5 Audio Element */}
+      <audio
+        ref={audioRef}
+        src={LOCAL_AUDIO_SRC}
+        loop
+        preload="auto"
+      />
 
       {/* Floating Sacred Audio Player Widget */}
       <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-full bg-burgundy-deep/95 border border-gold/40 shadow-gold-md backdrop-blur-md text-ivory transition-all hover:border-gold">
@@ -61,11 +90,12 @@ export function BackgroundAudioPlayer() {
           <p className="text-[11px] font-bold text-gold-light tracking-wide uppercase font-cinzel leading-none">
             Sacred Devotional Chant
           </p>
-          <p className="text-[9px] text-ivory/70 font-sans mt-0.5">Continuous Infinite Playback</p>
+          <p className="text-[9px] text-ivory/70 font-sans mt-0.5">Continuous Playback</p>
         </div>
 
         {/* Play/Pause Button */}
         <button
+          type="button"
           onClick={togglePlay}
           className="p-1.5 rounded-full hover:bg-gold/20 text-gold-light transition-colors"
           title={isPlaying ? 'Pause Background Audio' : 'Play Background Audio'}
@@ -75,6 +105,7 @@ export function BackgroundAudioPlayer() {
 
         {/* Mute/Unmute Button */}
         <button
+          type="button"
           onClick={toggleMute}
           className="p-1.5 rounded-full hover:bg-gold/20 text-gold-light transition-colors"
           title={isMuted ? 'Unmute Audio' : 'Mute Audio'}
