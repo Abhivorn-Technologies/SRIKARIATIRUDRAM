@@ -41,7 +41,13 @@ export default function DevoteeDashboardPage() {
         if (local && local.length > 0) {
           setData({
             profile: { fullName: session?.fullName || 'Sacred Devotee', phone: session?.phone },
-            stats: { totalBookings: local.length, upcomingSevas: local.length, donationsCount: 0, annadanamDays: 0, totalContributed: 216 },
+            stats: { 
+              totalBookings: local.length, 
+              upcomingSevas: local.length, 
+              donationsCount: 0, 
+              annadanamDays: 0, 
+              totalContributed: local.reduce((sum, b) => sum + Number(b.grandTotal || b.amount || 0), 0) 
+            },
             bookings: local,
             donations: [],
             annadanam: []

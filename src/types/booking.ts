@@ -52,6 +52,8 @@ export interface ConfirmedBooking extends BookingState {
   status: 'confirmed' | 'completed' | 'cancelled';
   receiptUrl?: string;
   transactionRef: string;
+  transactionId?: string;
+  paymentDate?: string;
   paymentStatus?: 'CONFIRMED' | 'PENDING' | 'FAILED';
   devoteeParticipation?: 'attending' | 'not-attending';
 }

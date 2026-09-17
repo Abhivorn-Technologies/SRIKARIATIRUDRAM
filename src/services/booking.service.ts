@@ -26,47 +26,7 @@ const defaultDraft: BookingDraft = {
   paymentStatus: 'PENDING',
 };
 
-const mockInitialBookings: ConfirmedBooking[] = [
-  {
-    bookingId: "SAR-2026-000123",
-    bookingDate: "2026-11-20",
-    status: "confirmed",
-    paymentStatus: "CONFIRMED",
-    transactionRef: "UPI/TXN949046265201",
-    sevaId: "nakshatra-shanthi",
-    sevaSlug: "nakshatra-shanthi",
-    sevaName: "NAKSHATRA SHANTHI",
-    amount: 10116,
-    selectedDate: "9 December 2026",
-    date: "9 December 2026",
-    dayNumber: 15,
-    nakshatra: "Jyeshta",
-    rasi: "Vrischika",
-    timeSlot: "08:30 AM – 11:30 AM",
-    primaryDevotee: {
-      fullName: "K. Satyanarayana Sharma",
-      gotram: "Bharadwaja",
-      nakshatra: "Jyeshta",
-      sankalpamNames: "K. Satyanarayana Sharma, Annapurna, Shiva Karthik",
-      phone: "+91 98765 43210",
-      email: "satya.sharma@example.com",
-      city: "Hyderabad",
-      country: "India",
-      attendingPersonally: "yes",
-      rasi: "Vrischika",
-      address: "Flat 402, Sri Nilayam, Banjara Hills, Hyderabad"
-    },
-    familyMembers: [
-      { name: "Smt. K. Annapurna", relation: "Spouse", gotram: "Bharadwaja", nakshatra: "Rohini", rasi: "Vrishabha" },
-      { name: "Chi. K. Shiva Karthik", relation: "Son", gotram: "Bharadwaja", nakshatra: "Hastha", rasi: "Kanya" }
-    ],
-    deliveryOption: "postal_courier",
-    paymentMethod: "upi",
-    totalDakshina: 10116,
-    convenienceFee: 0,
-    grandTotal: 10116
-  }
-];
+const mockInitialBookings: ConfirmedBooking[] = [];
 
 export const bookingService = {
   // --- Active Booking Draft Management (Session / Local persistence) ---
@@ -302,23 +262,6 @@ export const bookingService = {
       const current = await this.getDevoteeBookings();
       const updated = [confirmed, ...current];
       localStorage.setItem(BOOKINGS_STORAGE_KEY, JSON.stringify(updated));
-
-      // Auto-save devotee session so Devotee Portal opens immediately with this booking
-      const devoteePhone = confirmed.primaryDevotee?.phone || (isDraft ? (booking as any).mobile : '');
-      if (devoteePhone) {
-        const cleanPhone = devoteePhone.replace(/\D/g, '').slice(-10);
-        if (cleanPhone.length === 10) {
-          const sessionData = {
-            phone: cleanPhone,
-            fullName: confirmed.primaryDevotee?.fullName || '',
-            gotram: confirmed.primaryDevotee?.gotram || '',
-            nakshatra: confirmed.primaryDevotee?.nakshatra || '',
-            email: confirmed.primaryDevotee?.email || '',
-            address: confirmed.primaryDevotee?.address || ''
-          };
-          localStorage.setItem('srikari_devotee_session', JSON.stringify(sessionData));
-        }
-      }
     }
 
     return confirmed;

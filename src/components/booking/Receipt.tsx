@@ -241,9 +241,9 @@ export function ReceiptCard({
           </div>
 
           {/* Payment & Dakshina Summary */}
-          <div className="space-y-1.5 bg-burgundy-deep/80 p-3.5 sm:p-4 rounded-xl border border-gold/30 print:bg-[#FAF7F2] print:border-[#D6A532]/70 print:p-3 flex flex-col justify-between">
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-1.5 border-b border-gold/20 print:border-[#D6A532]/40 pb-1 mb-1.5">
+          <div className="space-y-1.5 bg-burgundy-deep/80 p-3.5 sm:p-4 rounded-xl border border-gold/30 print:bg-[#FAF7F2] print:border-[#D6A532]/70 print:p-2.5 flex flex-col justify-between">
+            <div className="space-y-1">
+              <div className="flex items-center gap-1.5 border-b border-gold/20 print:border-[#D6A532]/40 pb-1 mb-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-gold print:bg-[#8B1E2D]" />
                 <span className="text-[11px] text-gold uppercase font-bold tracking-wider print:text-[#8B1E2D] font-cinzel">
                   PAYMENT & DAKSHINA DETAILS
@@ -256,14 +256,26 @@ export function ReceiptCard({
                 </span>
               </div>
               <div className="flex justify-between items-center text-xs">
-                <span className="text-ivory/70 print:text-gray-600">Payment Reference:</span>
-                <span className="font-mono text-ivory/90 print:text-[#1A0004] font-semibold">
-                  {booking.transactionRef}
+                <span className="text-ivory/70 print:text-gray-600">Payment Date:</span>
+                <span className="font-semibold text-ivory/90 print:text-[#1A0004]">
+                  {booking.bookingDate || booking.date || new Date().toISOString().split('T')[0]}
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-ivory/70 print:text-gray-600">Transaction ID / Ref:</span>
+                <span className="font-mono text-ivory/90 print:text-[#1A0004] font-bold">
+                  {booking.transactionRef || booking.transactionId || 'RAZORPAY_VERIFIED'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-ivory/70 print:text-gray-600">Payment Channel / UPI:</span>
+                <span className="font-semibold text-gold-light print:text-[#8B1E2D] uppercase">
+                  {booking.paymentMethod ? booking.paymentMethod.toUpperCase() : 'UPI / ONLINE GATEWAY'}
                 </span>
               </div>
             </div>
 
-            <div className="pt-2 border-t border-gold/25 print:border-[#D6A532]/40 flex items-center justify-between">
+            <div className="pt-1.5 mt-1 border-t border-gold/25 print:border-[#D6A532]/40 flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-ivory/80 print:text-[#5A0714] font-cinzel">
                 Total Dakshina:
               </span>
