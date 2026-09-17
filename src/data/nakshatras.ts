@@ -194,15 +194,27 @@ export function getNakshatraBookingOptions(identifier: string | number): Nakshat
   // 1. BASE SEVAS (Present for regular and special days 1–27)
   const baseSevas: ApplicableSevaOption[] = [
     {
-      id: "nakshatra-hawan-seva",
-      slug: "nakshatra-hawan-seva",
-      title: "Nakshatra Hawan Seva",
-      titleTe: "నక్షత్ర హవన్ సేవ",
-      titleHi: "नक्षत्र हवन सेवा",
+      id: "ati-rudram-donation",
+      slug: "ati-rudram-donation",
+      title: "Ati Rudram Donation",
+      titleTe: "అతి రుద్రం పవిత్ర విరాళం",
+      titleHi: "अति रुद्रम दान",
       price: 216,
-      description: "Sacred Hawan offering dedicated to your Janma Nakshatra day.",
-      descriptionTe: "మీ జన్మ నక్షత్ర పర్వదినాన సమర్పించే పవిత్ర నక్షత్ర హవనం.",
-      descriptionHi: "संकल्प के साथ नक्षत्र हवन में सहभागिता।",
+      description: "Support the sacred Srikari Ati Rudra Mahayajnam through this contribution.",
+      descriptionTe: "ఈ పవిత్ర విరాళం ద్వారా శ్రీకరీ అతిరుద్ర మహాయజ్ఞ నిర్వహణలో భాగస్వామ్యం పొందండి.",
+      descriptionHi: "इस पावन योगदान के माध्यम से श्रीकरी अति रुद्र महायज्ञ में सहयोग करें।",
+      isSpecial: false,
+    },
+    {
+      id: "ekadasa-rudra-abhishekam",
+      slug: "ekadasa-rudra-abhishekam",
+      title: "Ekadasa Rudra Abhishekam",
+      titleTe: "ఏకాదశ రుద్ర అభిషేకం",
+      titleHi: "एकादश रुद्र अभिषेक",
+      price: 5116,
+      description: "Participate in Ekadasa Rudra Abhishekam with Sankalpam.",
+      descriptionTe: "సంకల్పంతో ఏకాదశ రుద్ర అభిషేకంలో పాల్గొనండి.",
+      descriptionHi: "संकल्प के साथ एकादश रुद्र अभिषेक में भाग लें।",
       isSpecial: false,
     },
     {
@@ -215,6 +227,18 @@ export function getNakshatraBookingOptions(identifier: string | number): Nakshat
       description: "Complete Janma Nakshatra Shanthi performed with Sankalpam in the devotee's name.",
       descriptionTe: "భక్తుని పేరిట సంకల్పంతో నిర్వహించే సంపూర్ణ జన్మ నక్షత్ర శాంతి హోమం.",
       descriptionHi: "भक्त के नाम से संकल्प सहित संपूर्ण जन्म नक्षत्र शांति।",
+      isSpecial: false,
+    },
+    {
+      id: "one-day-annadanam",
+      slug: "one-day-annadanam",
+      title: "One-Day Annadanam",
+      titleTe: "ఒక రోజు అన్నదానం",
+      titleHi: "एक दिवसीय अन्नदान",
+      price: 25116,
+      description: "Sponsor Annadanam for one complete day of the Srikari Ati Rudra Mahayajnam.",
+      descriptionTe: "శ్రీకరీ అతిరుద్ర మహాయజ్ఞంలో ఒక రోజు సంపూర్ణ అన్నదానాన్ని స్పాన్సర్ చేయండి.",
+      descriptionHi: "श्रीकरी अति रुद्र महायज्ञ में एक संपूर्ण दिन के अन्नदान का प्रायोजन करें।",
       isSpecial: false,
     },
   ];
@@ -412,6 +436,6 @@ export function getNakshatraBookingOptions(identifier: string | number): Nakshat
     specialSevaTe: specialSevaNameTe,
     specialSevaHi: specialSevaNameHi,
     programmeHighlights,
-    availableSevas,
+    availableSevas: availableSevas.sort((a, b) => a.price - b.price),
   };
 }

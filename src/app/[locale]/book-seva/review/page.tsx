@@ -202,7 +202,9 @@ export default function BookingReviewPage() {
                   <span>
                     {draft.devoteeParticipation === 'attending'
                       ? (isTe ? 'అవును, నేను స్వయంగా పాల్గొంటాను' : isHi ? 'हाँ, मैं उपस्थित रहूँगा' : 'Yes, I will attend')
-                      : (isTe ? 'కాదు, నేను హాజరు కాలేను' : isHi ? 'नहीं, मैं उपस्थित नहीं हो पाऊँగా' : 'No, I will not attend')}
+                      : (Number(draft.amount || 0) >= 5000
+                          ? (isTe ? 'కాదు, నేను హాజరు కాలేను (ప్రసాదం పోస్ట్ ద్వారా)' : isHi ? 'नहीं, मैं उपस्थित नहीं हो पाऊँगा (डाक द्वारा प्रसाद)' : 'No, I will not attend (Courier Prasadam)')
+                          : (isTe ? 'కాదు, నేను హాజరు కాలేను (సంకల్పం మీ పేరుతో)' : isHi ? 'नहीं, मैं उपस्थित नहीं हो पाऊँगा (आपके नाम से संकल्प)' : 'No, I will not attend (Sankalpam in your name)'))}
                   </span>
                 </span>
               </div>
@@ -220,7 +222,7 @@ export default function BookingReviewPage() {
               </div>
             )}
 
-            {draft.address && (
+            {Number(draft.amount || 0) >= 5000 && draft.address && (
               <div className="pt-2 border-t border-[#D6A532]/20 space-y-1">
                 <span className="text-[10px] uppercase font-bold text-[#E8C76A]/80 tracking-widest block flex items-center gap-1">
                   <MapPin className="w-3.5 h-3.5 text-[#F2C14E]" />

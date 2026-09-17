@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Link } from '@/i18n/routing';
 import { Flame, RefreshCw, Calendar } from 'lucide-react';
+import { bookingService } from '@/services/booking.service';
 
 export default function AccountBookingsPage() {
   const { session } = useDevoteeAuth();
@@ -18,12 +19,21 @@ export default function AccountBookingsPage() {
     setLoading(true);
     fetch(`/api/devotee/dashboard?phone=${encodeURIComponent(session?.phone || '')}`)
       .then((r) => r.json())
-      .then((json) => {
-        if (json.success && json.data?.bookings) {
-          setBookings(json.data.bookings);
+      .then(async (json) => {
+        let list: any[] = [];
+        if (json.success && Array.isArray(json.data?.bookings) && json.data.bookings.length > 0) {
+          list = json.data.bookings;
+        } else {
+          const local = await bookingService.getDevoteeBookings();
+          if (local && local.length > 0) list = local;
         }
+        setBookings(list);
       })
-      .catch((err) => console.error('Failed to load bookings from MongoDB:', err))
+      .catch(async (err) => {
+        console.error('Failed to load bookings from MongoDB:', err);
+        const local = await bookingService.getDevoteeBookings();
+        if (local && local.length > 0) setBookings(local);
+      })
       .finally(() => setLoading(false));
   }, [session?.phone]);
 

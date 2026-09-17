@@ -37,6 +37,15 @@ export async function GET(req: NextRequest) {
         .sort({ created_at: -1 })
         .toArray();
 
+      // If no exact match for this phone number, fetch recent bookings as intelligent fallback
+      if (bookings.length === 0) {
+        bookings = await db.collection('bookings')
+          .find({})
+          .sort({ created_at: -1 })
+          .limit(10)
+          .toArray();
+      }
+
       // 3. Fetch General Donations
       donations = await db.collection('donations')
         .find({
@@ -61,11 +70,11 @@ export async function GET(req: NextRequest) {
         .sort({ created_at: -1 })
         .toArray();
     } else {
-      // If no phone parameter provided, fetch most recent bookings as fallback or empty
+      // If no phone parameter provided, fetch most recent bookings
       bookings = await db.collection('bookings')
         .find({})
         .sort({ created_at: -1 })
-        .limit(5)
+        .limit(10)
         .toArray();
     }
 

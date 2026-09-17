@@ -195,7 +195,9 @@ export function DayScheduleCard({ day }: { day: ScheduleDay }) {
         {/* Row 5: Status Row & Pending Tickets Counter */}
         <div className="pt-2 border-t border-[#D6A532]/25 flex items-center justify-between gap-2">
           {(() => {
-            const activeSevas = ((day as any).assigned_sevas || []).filter((s: any) => s.status !== 'HIDDEN');
+            const activeSevas = ((day as any).assigned_sevas || [])
+              .filter((s: any) => s && s.status !== 'HIDDEN' && (s.amount > 0 || s.price > 0))
+              .sort((a: any, b: any) => (a.amount || a.price || 0) - (b.amount || b.price || 0));
             const totalAvailable = activeSevas.reduce((sum: number, s: any) => sum + (s.available_slots || 0), 0);
             const hasSevas = activeSevas.length > 0;
 

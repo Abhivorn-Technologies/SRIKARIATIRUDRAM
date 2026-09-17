@@ -302,6 +302,23 @@ export const bookingService = {
       const current = await this.getDevoteeBookings();
       const updated = [confirmed, ...current];
       localStorage.setItem(BOOKINGS_STORAGE_KEY, JSON.stringify(updated));
+
+      // Auto-save devotee session so Devotee Portal opens immediately with this booking
+      const devoteePhone = confirmed.primaryDevotee?.phone || (isDraft ? (booking as any).mobile : '');
+      if (devoteePhone) {
+        const cleanPhone = devoteePhone.replace(/\D/g, '').slice(-10);
+        if (cleanPhone.length === 10) {
+          const sessionData = {
+            phone: cleanPhone,
+            fullName: confirmed.primaryDevotee?.fullName || '',
+            gotram: confirmed.primaryDevotee?.gotram || '',
+            nakshatra: confirmed.primaryDevotee?.nakshatra || '',
+            email: confirmed.primaryDevotee?.email || '',
+            address: confirmed.primaryDevotee?.address || ''
+          };
+          localStorage.setItem('srikari_devotee_session', JSON.stringify(sessionData));
+        }
+      }
     }
 
     return confirmed;

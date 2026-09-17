@@ -156,7 +156,9 @@ export default function SpecialSevaPaymentPage() {
                 <span>
                   {draft.devoteeParticipation === 'attending'
                     ? (isTe ? 'అవును, నేను స్వయంగా పాల్గొంటాను' : isHi ? 'हाँ, मैं उपस्थित रहूँगा' : 'YES, I WILL ATTEND')
-                    : (isTe ? 'కాదు, నేను హాజరు కాలేను (ప్రసాదం పోస్ట్ ద్వారా)' : isHi ? 'नहीं, मैं उपस्थित नहीं हो पाऊँगा' : 'NO, I WILL NOT ATTEND (Courier Delivery)')}
+                    : (Number(draft.amount || 0) >= 5000
+                        ? (isTe ? 'కాదు, నేను హాజరు కాలేను (ప్రసాదం పోస్ట్ ద్వారా)' : isHi ? 'नहीं, मैं उपस्थित नहीं हो पाऊँगा' : 'NO, I WILL NOT ATTEND (Courier Delivery)')
+                        : (isTe ? 'కాదు, నేను హాజరు కాలేను (సంకల్పం మీ పేరుతో)' : isHi ? 'नहीं, मैं उपस्थित नहीं हो पाऊँगा (आपके नाम से संकल्प)' : 'NO, I WILL NOT ATTEND (Sankalpam in your name)'))}
                 </span>
               </span>
             </div>

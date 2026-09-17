@@ -37,7 +37,32 @@ export function DevoteeAuthProvider({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(SESSION_STORAGE_KEY);
+      let stored = localStorage.getItem(SESSION_STORAGE_KEY);
+      if (!stored) {
+        const bookingsStored = localStorage.getItem('srikari_devotee_bookings');
+        if (bookingsStored) {
+          const list = JSON.parse(bookingsStored);
+          if (Array.isArray(list) && list.length > 0) {
+            const first = list[0];
+            const p = first.primaryDevotee || {};
+            const rawPhone = p.phone || first.phone_number || first.mobile || '';
+            const clean = rawPhone.replace(/\D/g, '').slice(-10);
+            if (clean.length === 10) {
+              const autoSession = {
+                phone: clean,
+                fullName: p.fullName || first.full_name || 'Sacred Devotee',
+                gotram: p.gotram || first.gotram || '',
+                nakshatra: p.nakshatra || first.nakshatra || '',
+                email: p.email || first.email || '',
+                address: p.address || first.address || ''
+              };
+              localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(autoSession));
+              stored = JSON.stringify(autoSession);
+            }
+          }
+        }
+      }
+
       if (stored) {
         const parsed = JSON.parse(stored);
         if (parsed && parsed.phone) {

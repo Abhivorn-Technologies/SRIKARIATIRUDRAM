@@ -62,12 +62,14 @@ export const sevaService = {
     try {
       const dbSevas = await sevaServerService.getAllSevas(true);
       if (dbSevas && dbSevas.length > 0) {
-        return dbSevas.map(s => mapDbSevaToSeva(s));
+        return dbSevas
+          .map(s => mapDbSevaToSeva(s))
+          .sort((a, b) => (a.amount || a.price || 0) - (b.amount || b.price || 0));
       }
     } catch (err) {
       console.warn('Falling back to static sevasList due to DB error:', err);
     }
-    return sevasList;
+    return [...sevasList].sort((a, b) => (a.amount || a.price || 0) - (b.amount || b.price || 0));
   },
 
   async getSevaBySlug(slug: string): Promise<Seva | undefined> {
