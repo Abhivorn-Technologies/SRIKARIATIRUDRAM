@@ -17,6 +17,7 @@ export function loadRazorpayScript(): Promise<boolean> {
 
     const script = document.createElement('script');
     script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
     script.onload = () => resolve(true);
     script.onerror = () => resolve(false);
     document.body.appendChild(script);
@@ -24,7 +25,8 @@ export function loadRazorpayScript(): Promise<boolean> {
 }
 
 export interface InitiatePaymentOptions {
-  amount: number; // In Rupees (INR)
+  amount: number; // Amount in INR or Paise
+  isPaise?: boolean;
   title?: string;
   description?: string;
   recordId?: string;
@@ -51,11 +53,12 @@ export async function initiateRazorpayPayment(options: InitiatePaymentOptions) {
     }
 
     // 1. Create order via backend API
-    const orderRes = await fetch('/api/payments/create-order', {
+    const orderRes = await fetch('/api/create-order', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         amount: options.amount,
+        isPaise: options.isPaise,
         receipt: `rcpt_${Date.now()}`,
         notes: {
           record_id: options.recordId || '',
@@ -66,17 +69,25 @@ export async function initiateRazorpayPayment(options: InitiatePaymentOptions) {
     });
 
     const orderJson = await orderRes.json();
-    if (!orderJson.success || !orderJson.data) {
-      options.onError(orderJson.error || 'Could not initiate payment order');
+    if (!orderRes.ok || !orderJson.success) {
+      options.onError(orderJson.error || 'Could not initiate Razorpay payment order');
       return;
     }
 
-    const { orderId, key, amount, currency } = orderJson.data;
+    const orderId = orderJson.order_id || orderJson.orderId || orderJson.data?.order_id || orderJson.data?.orderId;
+    const key = orderJson.key || orderJson.data?.key || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+    const amount = orderJson.amount || orderJson.data?.amount;
+    const currency = orderJson.currency || orderJson.data?.currency || 'INR';
 
-    // Public HTTPS Cloudinary URL for Official Temple Logo (accessible by Razorpay's iframe)
+    if (!orderId || !key) {
+      options.onError('Invalid order response from payment server');
+      return;
+    }
+
+    // Public logo for temple checkout header
     const logoUrl = 'https://res.cloudinary.com/ic0bztee/image/upload/v1789277394/srikari_atirudram/official_temple_logo.png';
 
-    // 2. Configure Razorpay checkout options
+    // 2. Configure Razorpay checkout modal options
     const razorpayOptions = {
       key: key,
       amount: amount,
@@ -95,8 +106,8 @@ export async function initiateRazorpayPayment(options: InitiatePaymentOptions) {
       },
       handler: async function (response: any) {
         try {
-          // 3. Verify payment signature on backend
-          const verifyRes = await fetch('/api/payments/verify-payment', {
+          // 3. Send razorpay_payment_id, razorpay_order_id, razorpay_signature to backend verify endpoint
+          const verifyRes = await fetch('/api/verify-payment', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -109,29 +120,36 @@ export async function initiateRazorpayPayment(options: InitiatePaymentOptions) {
           });
 
           const verifyJson = await verifyRes.json();
-          if (verifyJson.success) {
+          if (verifyRes.ok && (verifyJson.success || verifyJson.verified)) {
             options.onSuccess({
-              transactionId: verifyJson.transactionId || response.razorpay_payment_id,
+              transactionId: response.razorpay_payment_id,
               orderId: response.razorpay_order_id,
               record: verifyJson.data,
             });
           } else {
-            options.onError(verifyJson.error || 'Payment verification failed');
+            options.onError(verifyJson.error || 'Payment signature verification failed.');
           }
         } catch (err: any) {
-          options.onError(err.message || 'Error verifying payment signature');
+          options.onError(err.message || 'Error verifying payment signature.');
         }
       },
       modal: {
         ondismiss: function () {
-          options.onError('Payment window closed by user.');
+          options.onError('Payment window was cancelled by user.');
         },
       },
     };
 
     const rzp = new (window as any).Razorpay(razorpayOptions);
+
+    // Handle payment.failed event
+    rzp.on('payment.failed', function (response: any) {
+      const failReason = response?.error?.description || response?.error?.reason || 'Payment failed.';
+      options.onError(`Payment failed: ${failReason}`);
+    });
+
     rzp.open();
   } catch (err: any) {
-    options.onError(err.message || 'Payment initiation failed');
+    options.onError(err.message || 'Payment initiation failed.');
   }
 }

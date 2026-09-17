@@ -36,11 +36,18 @@ export async function POST(req: NextRequest) {
     }
 
     const numAmount = Number(rawAmount);
+
+    // Determine amount in paise.
+    // If amount is passed in Rupees (e.g., 500), convert to paise (50000).
+    // If amount is passed in paise (e.g., 50000), keep as paise.
+    // Standard minimum requirement: amount must be >= 100 paise (₹1).
     let amountInPaise: number;
 
     if (body.isPaise || numAmount >= 1000) {
+      // Amount is already in paise
       amountInPaise = Math.round(numAmount);
     } else {
+      // Amount is provided in Rupees (e.g. 1 to 999.99), convert to paise
       amountInPaise = Math.round(numAmount * 100);
     }
 
@@ -77,14 +84,17 @@ export async function POST(req: NextRequest) {
     });
   } catch (error: any) {
     console.error('Razorpay Create Order Error:', error);
+    
+    // Handle auth errors (401)
     if (error.statusCode === 401 || error.status === 401) {
       return NextResponse.json(
         { success: false, error: 'Razorpay authentication failed. Invalid Key ID or Secret.' },
         { status: 401 }
       );
     }
+
     return NextResponse.json(
-      { success: false, error: error.message || 'Failed to create payment order' },
+      { success: false, error: error.message || 'Failed to create Razorpay order' },
       { status: 500 }
     );
   }

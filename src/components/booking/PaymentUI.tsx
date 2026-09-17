@@ -49,8 +49,8 @@ export function PaymentUI({
         },
         onError: (err) => {
           setLoading(false);
-          if (err.includes('closed by user')) {
-            setErrorMessage('Payment window was closed before completion. Please click below to try again.');
+          if (err.toLowerCase().includes('closed') || err.toLowerCase().includes('cancelled')) {
+            setErrorMessage('Payment window was cancelled. Please click below to try again.');
           } else {
             setErrorMessage(err);
           }

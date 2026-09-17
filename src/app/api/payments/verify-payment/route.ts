@@ -16,18 +16,25 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const body = await req.json();
-    const {
-      razorpay_order_id,
-      razorpay_payment_id,
-      razorpay_signature,
-      record_id,
-      type = 'booking', // 'booking' | 'annadanam' | 'donation'
-    } = body;
-
-    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+    let body: any = {};
+    try {
+      body = await req.json();
+    } catch {
       return NextResponse.json(
-        { success: false, error: 'Missing Razorpay signature verification parameters' },
+        { success: false, error: 'Invalid JSON request body' },
+        { status: 400 }
+      );
+    }
+
+    const order_id = body.razorpay_order_id || body.order_id;
+    const payment_id = body.razorpay_payment_id || body.payment_id;
+    const signature = body.razorpay_signature || body.signature;
+    const record_id = body.record_id;
+    const type = body.type || 'booking';
+
+    if (!order_id || !payment_id || !signature) {
+      return NextResponse.json(
+        { success: false, error: 'Missing required Razorpay verification parameters: order_id, payment_id, and signature' },
         { status: 400 }
       );
     }
@@ -35,41 +42,45 @@ export async function POST(req: NextRequest) {
     // Verify Razorpay HMAC SHA256 signature
     const generatedSignature = crypto
       .createHmac('sha256', key_secret)
-      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+      .update(`${order_id}|${payment_id}`)
       .digest('hex');
 
-    if (generatedSignature !== razorpay_signature) {
+    if (generatedSignature !== signature) {
       return NextResponse.json(
-        { success: false, error: 'Payment signature verification failed. Invalid transaction.' },
+        { success: false, error: 'Payment signature verification failed. Invalid transaction signature.' },
         { status: 400 }
       );
     }
 
-    // Update database record status to SUCCESS based on transaction type
+    // Signature verified successfully -> update database record status if record_id is provided
     let updatedRecord: any = null;
 
     if (type === 'booking' && record_id) {
       updatedRecord = await bookingServerService.verifyAndConfirmPayment(
         record_id,
-        razorpay_payment_id,
-        { razorpay_order_id, razorpay_payment_id, razorpay_signature }
+        payment_id,
+        { razorpay_order_id: order_id, razorpay_payment_id: payment_id, razorpay_signature: signature }
       );
     } else if (type === 'annadanam' && record_id) {
       updatedRecord = await annadanamServerService.updateAnnadanam(record_id, {
         payment_status: 'SUCCESS',
-        transaction_id: razorpay_payment_id,
+        transaction_id: payment_id,
       });
     } else if (type === 'donation' && record_id) {
       updatedRecord = await donationServerService.updateDonation(record_id, {
         payment_status: 'SUCCESS',
-        transaction_id: razorpay_payment_id,
+        transaction_id: payment_id,
       });
     }
 
     return NextResponse.json({
       success: true,
-      transactionId: razorpay_payment_id,
-      orderId: razorpay_order_id,
+      verified: true,
+      message: 'Payment signature verified successfully',
+      transactionId: payment_id,
+      orderId: order_id,
+      order_id,
+      payment_id,
       data: updatedRecord,
     });
   } catch (error: any) {
