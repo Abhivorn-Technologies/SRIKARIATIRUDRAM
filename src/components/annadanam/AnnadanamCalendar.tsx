@@ -343,16 +343,18 @@ export function AnnadanamSection() {
       {flowStep === 1 && (
         <div className="text-center space-y-4 max-w-4xl mx-auto">
           <Badge variant="gold" size="lg" className="font-cinzel tracking-widest uppercase">
-            {isTe ? 'అన్నదానం సమం దానం న భూతో న భవిష్యతి' : 'Sacred 28-Day Maha Annadanam Service'}
+            {isTe ? 'అన్నదానం సమం దానం న భూతో న భవిష్యతి' : isHi ? 'अन्नदानं समं दानं न भूतो न भविष्यति' : 'Sacred 28-Day Maha Annadanam Service'}
           </Badge>
 
           <div className="space-y-1">
             <h1 className="font-cinzel text-3xl sm:text-4xl md:text-5xl font-black text-gold tracking-wide">
-              {isTe ? 'అన్నదానం మహాదానం' : isHi ? 'अन्नदानं महादानम्' : 'అన్నదానం మహాదానం'}
+              {isTe ? 'అన్నదానం మహాదానం' : isHi ? 'अन्नदानं महादानम्' : 'ANNADANAM MAHADANAM'}
             </h1>
             <h2 className="font-cinzel text-xl sm:text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-gold-lighter via-ivory to-gold tracking-tight uppercase">
               {isTe
                 ? 'శ్రీకరీ అతి రుద్ర మహాయజ్ఞంలో అన్నదానం సమర్పించండి'
+                : isHi
+                ? 'श्रीकरी अति रुद्र महायज्ञ में अन्नदान अर्पित करें'
                 : 'SPONSOR ANNADANAM DURING SRIKARI ATI RUDRA MAHAYAJNAM'}
             </h2>
           </div>
@@ -379,35 +381,37 @@ export function AnnadanamSection() {
               <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gold/15 border border-gold/40 text-gold-lighter text-xs font-bold font-cinzel uppercase tracking-wider">
                   <Sparkles className="w-3.5 h-3.5 text-gold" />
-                  <span>Maha Annadana Seva</span>
+                  <span>{isTe ? 'మహా అన్నదాన సేవ' : isHi ? 'महा अन्नदान सेवा' : 'Maha Annadana Seva'}</span>
                 </div>
 
                 {/* Real-time slot availability badge */}
                 {oneDayStats.availableSlots <= 0 ? (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-950/80 text-rose-300 border border-rose-500/50 text-xs font-extrabold font-sans uppercase tracking-wider">
                     <span className="w-2 h-2 rounded-full bg-rose-500" />
-                    NOT AVAILABLE / FULLY BOOKED
+                    {isTe ? 'అందుబాటులో లేదు / పూర్తి అయింది' : isHi ? 'उपलब्ध नहीं / पूर्ण बुक' : 'NOT AVAILABLE / FULLY BOOKED'}
                   </span>
                 ) : oneDayStats.availableSlots <= 3 ? (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-950/90 text-amber-300 border border-amber-500/60 text-xs font-extrabold font-sans uppercase tracking-wider animate-pulse">
                     <Flame className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                    ONLY {oneDayStats.availableSlots} SLOTS LEFT!
+                    {isTe ? `కేవలం ${oneDayStats.availableSlots} స్లాట్‌లు మాత్రమే ఉన్నాయి!` : isHi ? `केवल ${oneDayStats.availableSlots} स्थान शेष!` : `ONLY ${oneDayStats.availableSlots} SLOTS LEFT!`}
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/80 text-emerald-300 border border-emerald-500/50 text-xs font-extrabold font-sans uppercase tracking-wider">
                     <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    🎟️ {oneDayStats.availableSlots} of 11 SLOTS AVAILABLE
+                    {isTe ? `🎟️ 11 లో ${oneDayStats.availableSlots} స్లాట్‌లు అందుబాటులో ఉన్నాయి` : isHi ? `🎟️ 11 में से ${oneDayStats.availableSlots} स्थान उपलब्ध` : `🎟️ ${oneDayStats.availableSlots} of 11 SLOTS AVAILABLE`}
                   </span>
                 )}
               </div>
 
               <h3 className="font-cinzel text-2xl sm:text-3xl lg:text-4xl font-black text-ivory">
-                ONE-DAY ANNADANAM SPONSORSHIP
+                {isTe ? 'ఒక రోజు సంపూర్ణ అన్నదానం స్పాన్సర్‌షిప్' : isHi ? 'एक दिवसीय संपूर्ण अन्नदान प्रायोजन' : 'ONE-DAY ANNADANAM SPONSORSHIP'}
               </h3>
 
               <p className="text-sm sm:text-base text-ivory/85 font-sans max-w-2xl leading-relaxed">
                 {isTe
                   ? 'ఒక భక్తుడు మహాయజ్ఞంలో ఒక పూర్తి రోజు అన్నదానాన్ని ₹25,116తో సమర్పించవచ్చు. (మొత్తం 11 స్లాట్‌లు మాత్రమే ఉన్నాయి).'
+                  : isHi
+                  ? 'एक भक्त महायज्ञ में ₹25,116 में एक पूरे दिन का अन्नदान प्रायोजित कर सकते हैं (कुल केवल 11 स्थान उपलब्ध हैं)।'
                   : 'A devotee can sponsor Annadanam for one complete day of the Mahayajnam for ₹25,116 (Strictly limited to 11 slots total).'}
               </p>
             </div>
@@ -415,13 +419,13 @@ export function AnnadanamSection() {
             <div className="flex flex-col sm:flex-row lg:flex-col items-center gap-4 shrink-0">
               <div className="text-center lg:text-right">
                 <span className="text-xs text-gold-light uppercase font-bold tracking-widest block font-cinzel">
-                  One Full Day Sponsorship
+                  {isTe ? 'ఒక పూర్తి రోజు స్పాన్సర్‌షిప్' : isHi ? 'एक संपूर्ण दिवस प्रायोजन' : 'One Full Day Sponsorship'}
                 </span>
                 <span className="font-cinzel text-3xl sm:text-4xl lg:text-5xl font-black text-gold drop-shadow-md">
                   ₹25,116
                 </span>
                 <span className="text-[11px] text-ivory/70 font-sans block mt-0.5">
-                  ({oneDayStats.bookedCount} / 11 Slots Booked)
+                  ({oneDayStats.bookedCount} / 11 {isTe ? 'స్లాట్‌లు బుక్ అయ్యాయి' : isHi ? 'स्थान बुक' : 'Slots Booked'})
                 </span>
               </div>
 
@@ -440,8 +444,8 @@ export function AnnadanamSection() {
                 className="font-bold uppercase tracking-wider text-sm sm:text-base px-8 py-4 shadow-gold-md"
               >
                 {oneDayStats.availableSlots <= 0
-                  ? (isTe ? 'అందుబాటులో లేదు / పూర్తి అయింది' : 'FULLY BOOKED / NOT AVAILABLE')
-                  : (isTe ? 'అన్నదానం సమర్పించండి' : 'SPONSOR ANNADANAM')}
+                  ? (isTe ? 'అందుబాటులో లేదు / పూర్తి అయింది' : isHi ? 'उपलब्ध नहीं / पूर्ण बुक' : 'FULLY BOOKED / NOT AVAILABLE')
+                  : (isTe ? 'అన్నదానం సమర్పించండి' : isHi ? 'अन्नदान अर्पित करें' : 'SPONSOR ANNADANAM')}
               </Button>
             </div>
           </div>
@@ -455,11 +459,13 @@ export function AnnadanamSection() {
         <div ref={calendarSectionRef} className="space-y-6 pt-4">
           <div className="text-center space-y-2 max-w-2xl mx-auto">
             <h3 className="font-cinzel text-2xl sm:text-3xl font-black text-gold-lighter tracking-wide uppercase">
-              28-DAY ANNADANAM CALENDAR
+              {isTe ? '28 రోజుల అన్నదాన క్యాలెండర్' : isHi ? '28-दिवसीय अन्नदान कैलेंडर' : '28-DAY ANNADANAM CALENDAR'}
             </h3>
             <p className="text-xs sm:text-sm text-ivory/75 font-sans">
               {isTe
                 ? '28 రోజుల మహాయజ్ఞంలో మీకు అనుకూలమైన పవిత్ర దినాన్ని ఎంచుకోండి. (కేవలం AVAILABLE దినాలను మాత్రమే ఎంచుకోవచ్చు).'
+                : isHi
+                ? '28 दिवसीय महायज्ञ में अन्नदान हेतु अपनी सुविधा अनुसार पावन दिन चुनें।'
                 : 'Select an available auspicious day to sponsor Annadanam. Sponsored days are reserved.'}
             </p>
           </div>
@@ -492,19 +498,19 @@ export function AnnadanamSection() {
                   {/* Card Top: Day number & Status Badge */}
                   <div className="flex items-center justify-between gap-2 border-b border-gold/15 pb-2.5">
                     <span className="font-cinzel text-xs font-black text-gold-lighter uppercase tracking-wider">
-                      DAY {String(day.day).padStart(2, '0')}
+                      {isTe ? `రోజు ${String(day.day).padStart(2, '0')}` : isHi ? `दिन ${String(day.day).padStart(2, '0')}` : `DAY ${String(day.day).padStart(2, '0')}`}
                     </span>
 
                     {/* ONLY TWO STATUSES: AVAILABLE or SPONSORED */}
                     {isAvailable ? (
                       <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-950/80 text-emerald-400 border border-emerald-500/40 uppercase tracking-wide">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                        AVAILABLE
+                        {isTe ? 'అందుబాటులో ఉంది' : isHi ? 'उपलब्ध' : 'AVAILABLE'}
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-burgundy-deep text-rose-300 border border-rose-400/30 uppercase tracking-wide">
                         <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
-                        SPONSORED
+                        {isTe ? 'రిజర్వ్ అయింది' : isHi ? 'आरक्षित' : 'SPONSORED'}
                       </span>
                     )}
                   </div>
@@ -522,7 +528,7 @@ export function AnnadanamSection() {
 
                     {!isAvailable && day.sponsorName && (
                       <div className="text-[11px] text-ivory/60 font-sans italic pt-1 truncate">
-                        Sponsor: {day.sponsorName}
+                        {isTe ? `దాత: ${day.sponsorName}` : isHi ? `प्रायोजक: ${day.sponsorName}` : `Sponsor: ${day.sponsorName}`}
                       </div>
                     )}
                   </div>
@@ -543,15 +549,15 @@ export function AnnadanamSection() {
                         {isSelected ? (
                           <>
                             <Check className="w-3.5 h-3.5 mr-1 stroke-[3]" />
-                            {isTe ? 'ఎంపికైంది' : 'SELECTED'}
+                            {isTe ? 'ఎంపికైంది' : isHi ? 'चयनित' : 'SELECTED'}
                           </>
                         ) : (
-                          isTe ? 'అన్నదానం సమర్పించండి' : 'SPONSOR ANNADANAM'
+                          isTe ? 'అన్నదానం సమర్పించండి' : isHi ? 'अन्नदान अर्पित करें' : 'SPONSOR ANNADANAM'
                         )}
                       </Button>
                     ) : (
                       <div className="text-center text-[11px] text-ivory/50 uppercase font-sans font-semibold py-1.5">
-                        {isTe ? 'పూర్తయింది (రిజర్వ్ అయింది)' : 'Day Reserved'}
+                        {isTe ? 'పూర్తయింది (రిజర్వ్ అయింది)' : isHi ? 'आरक्षित दिवस' : 'Day Reserved'}
                       </div>
                     )}
                   </div>
@@ -569,11 +575,13 @@ export function AnnadanamSection() {
         <div ref={participationSectionRef} className="space-y-6 pt-6">
           <div className="text-center space-y-2 max-w-2xl mx-auto">
             <h3 className="font-cinzel text-2xl sm:text-3xl font-black text-gold-lighter tracking-wide uppercase">
-              ANNADANAM PARTICIPATION
+              {isTe ? 'అన్నదాన భాగస్వామ్యం' : isHi ? 'अन्नदान सहभागिता' : 'ANNADANAM PARTICIPATION'}
             </h3>
             <p className="text-xs sm:text-sm text-ivory/75 font-sans">
               {isTe
                 ? 'మీ అనుకూలమైన మొత్తాన్ని ఎంచుకోండి. ₹25,116 ఒక పూర్తి రోజు స్పాన్సర్‌షిప్.'
+                : isHi
+                ? 'अन्नदान सहभागिता हेतु अपनी इच्छानुसार राशि चुनें। ₹25,116 एक पूर्ण दिवस प्रायोजन है।'
                 : 'Choose an amount or enter a custom contribution to participate in the Annadanam.'}
             </p>
           </div>
@@ -599,15 +607,15 @@ export function AnnadanamSection() {
                   {item.isOneDay && (
                     oneDayStats.availableSlots <= 0 ? (
                       <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-rose-600 text-white uppercase font-cinzel absolute -top-2.5 left-1/2 -translate-x-1/2 shadow-sm whitespace-nowrap">
-                        NOT AVAILABLE
+                        {isTe ? 'పూర్తి అయింది' : isHi ? 'पूर्ण बुक' : 'NOT AVAILABLE'}
                       </span>
                     ) : oneDayStats.availableSlots <= 3 ? (
                       <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-amber-500 text-burgundy-deep uppercase font-cinzel absolute -top-2.5 left-1/2 -translate-x-1/2 shadow-sm whitespace-nowrap animate-pulse">
-                        🔥 ONLY {oneDayStats.availableSlots} LEFT
+                        🔥 {isTe ? `కేవలం ${oneDayStats.availableSlots} మిగిలాయి` : isHi ? `केवल ${oneDayStats.availableSlots} शेष` : `ONLY ${oneDayStats.availableSlots} LEFT`}
                       </span>
                     ) : (
                       <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-emerald-500 text-burgundy-deep uppercase font-cinzel absolute -top-2.5 left-1/2 -translate-x-1/2 shadow-sm whitespace-nowrap">
-                        🎟️ {oneDayStats.availableSlots}/11 SLOTS
+                        🎟️ {oneDayStats.availableSlots}/11 {isTe ? 'స్లాట్‌లు' : isHi ? 'स्थान' : 'SLOTS'}
                       </span>
                     )
                   )}
@@ -616,7 +624,7 @@ export function AnnadanamSection() {
                       {item.label}
                     </span>
                     <span className="text-[11px] text-ivory/75 font-sans block mt-1 leading-tight">
-                      {isTe ? item.descTe : item.desc}
+                      {isTe ? item.descTe : isHi ? item.descHi : item.desc}
                     </span>
                   </div>
 
@@ -630,7 +638,7 @@ export function AnnadanamSection() {
                           : 'text-ivory/50'
                       }`}
                     >
-                      {isOneDayDisabled ? 'Full' : isSelected ? 'Selected' : 'Select'}
+                      {isOneDayDisabled ? (isTe ? 'పూర్తయింది' : isHi ? 'पूर्ण' : 'Full') : isSelected ? (isTe ? 'ఎంపికైంది' : isHi ? 'चयनित' : 'Selected') : (isTe ? 'ఎంచుకోండి' : isHi ? 'चुनें' : 'Select')}
                     </span>
                   </div>
                 </div>
@@ -648,10 +656,10 @@ export function AnnadanamSection() {
             >
               <div>
                 <span className="font-cinzel text-base sm:text-lg font-black text-gold block">
-                  CUSTOM
+                  {isTe ? 'ఇతర మొత్తం' : isHi ? 'अन्य राशि' : 'CUSTOM'}
                 </span>
                 <span className="text-[11px] text-ivory/75 font-sans block mt-1 leading-tight">
-                  {isTe ? 'ఇతర మొత్తం' : 'Custom Amount'}
+                  {isTe ? 'ఇతర మొత్తం నమోదు చేయండి' : isHi ? 'अन्य राशि दर्ज करें' : 'Custom Amount'}
                 </span>
               </div>
 
@@ -706,7 +714,7 @@ export function AnnadanamSection() {
           <Card variant="sacred" className="p-6 md:p-8 space-y-6 max-w-4xl mx-auto">
             <div className="border-b border-gold/25 pb-3">
               <span className="text-xs font-bold text-gold uppercase tracking-wider block font-sans">
-                Devotee Registration
+                {isTe ? 'భక్తుల నమోదు' : isHi ? 'भक्त पंजीकरण' : 'Devotee Registration'}
               </span>
               <h3 className="font-cinzel text-xl sm:text-2xl font-bold text-gold-lighter mt-1">
                 {isTe ? 'అన్నదాత వివరాలు' : isHi ? 'अन्नदाता विवरण' : 'Sponsor Details'}
@@ -714,6 +722,8 @@ export function AnnadanamSection() {
               <p className="text-xs sm:text-sm text-ivory/75 font-sans mt-1">
                 {isTe
                   ? 'మీ అన్నదాన సంకల్పం మరియు రశీదు కొరకు వివరాలను నమోదు చేయండి.'
+                  : isHi
+                  ? 'अपने अन्नदान संकल्प एवं रसीद हेतु विवरण दर्ज करें।'
                   : 'Enter your name and contact details for the sacred Annadanam sponsorship record.'}
               </p>
             </div>
@@ -723,11 +733,11 @@ export function AnnadanamSection() {
               <div className="flex items-center gap-2">
                 <CalendarIcon className="w-4 h-4 text-gold shrink-0" />
                 <span className="text-ivory">
-                  Annadanam Date: <strong className="text-gold-lighter">{selectedDay.date}</strong> (Day {selectedDay.day} - {selectedDay.nakshatra})
+                  {isTe ? 'అన్నదాన దినం: ' : isHi ? 'अन्नदान तिथि: ' : 'Annadanam Date: '}<strong className="text-gold-lighter">{isTe ? selectedDay.dateTe : isHi ? selectedDay.dateHi : selectedDay.date}</strong> ({isTe ? `రోజు ${selectedDay.day}` : isHi ? `दिन ${selectedDay.day}` : `Day ${selectedDay.day}`} - {isTe ? selectedDay.nakshatraTe : isHi ? selectedDay.nakshatraHi : selectedDay.nakshatra})
                 </span>
               </div>
               <div className="font-cinzel text-base font-black text-gold">
-                Amount: {formatCurrency(effectiveAmount)}
+                {isTe ? 'మొత్తం: ' : isHi ? 'राशि: ' : 'Amount: '}{formatCurrency(effectiveAmount)}
               </div>
             </div>
 
@@ -736,7 +746,7 @@ export function AnnadanamSection() {
                 {/* Sponsor Name */}
                 <div className="space-y-1.5">
                   <label className="block text-xs font-bold uppercase tracking-wider text-gold">
-                    {isTe ? 'స్పాన్సర్ / దాత పేరు' : 'SPONSOR NAME'} *
+                    {isTe ? 'స్పాన్సర్ / దాత పేరు' : isHi ? 'प्रायोजक / दाता का नाम' : 'SPONSOR NAME'} *
                   </label>
                   <Input
                     value={formData.sponsorName}
@@ -752,7 +762,7 @@ export function AnnadanamSection() {
                 {/* Mobile Number */}
                 <div className="space-y-1.5">
                   <label className="block text-xs font-bold uppercase tracking-wider text-gold">
-                    {isTe ? 'మొబైల్ నంబర్' : 'MOBILE NUMBER'} *
+                    {isTe ? 'మొబైల్ నంబర్' : isHi ? 'मोबाइल नंबर' : 'MOBILE NUMBER'} *
                   </label>
                   <Input
                     type="tel"
@@ -769,7 +779,7 @@ export function AnnadanamSection() {
                 {/* Email Address */}
                 <div className="space-y-1.5">
                   <label className="block text-xs font-bold uppercase tracking-wider text-gold">
-                    {isTe ? 'ఈమెయిల్ చిరునామా' : 'EMAIL ADDRESS'} (Optional)
+                    {isTe ? 'ఈమెయిల్ చిరునామా' : isHi ? 'ईमेल पता' : 'EMAIL ADDRESS'} (Optional)
                   </label>
                   <Input
                     type="email"
@@ -786,7 +796,7 @@ export function AnnadanamSection() {
                 {/* Display Name */}
                 <div className="space-y-1.5">
                   <label className="block text-xs font-bold uppercase tracking-wider text-gold">
-                    {isTe ? 'ప్రదర్శిత నామం' : 'DISPLAY NAME'} (Optional)
+                    {isTe ? 'ప్రదర్శిత నామం' : isHi ? 'प्रदर्शित नाम' : 'DISPLAY NAME'} (Optional)
                   </label>
                   <Input
                     value={formData.displayName}

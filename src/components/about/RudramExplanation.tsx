@@ -10,6 +10,7 @@ import { Flame, Shield, Sparkles, BookOpen } from 'lucide-react';
 export function RudramExplanation() {
   const locale = useLocale();
   const isTe = locale === 'te';
+  const isHi = locale === 'hi';
   const t = useTranslations('about');
 
   return (
@@ -44,7 +45,7 @@ export function RudramExplanation() {
       {/* Japa Progression Hierarchy Table */}
       <div className="space-y-6">
         <h3 className="font-cinzel text-2xl font-bold text-gold-light text-center">
-          The Hierarchy of Sacred Rudra Yajnas
+          {isTe ? 'పవిత్ర రుద్ర యజ్ఞాల క్రమం' : isHi ? 'पावन रुद्र यज्ञों का क्रम' : 'The Hierarchy of Sacred Rudra Yajnas'}
         </h3>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -55,16 +56,16 @@ export function RudramExplanation() {
               className="p-5 space-y-2.5"
             >
               <Badge variant={idx === 3 ? 'gold' : 'maroon'} size="sm">
-                Stage {idx + 1}
+                {isTe ? `దశ ${idx + 1}` : isHi ? `चरण ${idx + 1}` : `Stage ${idx + 1}`}
               </Badge>
               <h4 className="font-cinzel text-lg font-bold text-ivory">
-                {tier.name}
+                {isTe ? tier.nameTe || tier.name : isHi ? tier.nameHi || tier.name : tier.name}
               </h4>
               <span className="font-mono text-sm font-black text-gold-light block">
                 {tier.japas}
               </span>
               <p className="text-xs text-ivory/70 font-sans leading-relaxed">
-                {tier.desc}
+                {isTe ? tier.descTe || tier.desc : isHi ? tier.descHi || tier.desc : tier.desc}
               </p>
             </Card>
           ))}
@@ -74,31 +75,39 @@ export function RudramExplanation() {
       {/* Organizing Samiti */}
       <div className="space-y-6">
         <h3 className="font-cinzel text-2xl font-bold text-gold-light text-center">
-          {isTe ? 'నిర్వాహక వర్గం' : 'Organizing Samiti'}
+          {isTe ? 'నిర్వాహక వర్గం' : isHi ? 'आयोजन समिति' : 'Organizing Samiti'}
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card variant="sacred" className="p-5 space-y-2">
             <h4 className="font-cinzel text-base font-bold text-gold-lighter">
-              {isTe ? aboutContent.organizers.primaryTe : aboutContent.organizers.primary}
+              {isTe ? aboutContent.organizers.primaryTe : isHi ? aboutContent.organizers.primaryHi || aboutContent.organizers.primary : aboutContent.organizers.primary}
             </h4>
             <span className="text-xs text-gold-light font-semibold block uppercase tracking-wide">
-              {isTe ? 'ప్రధాన నిర్వాహకులు' : 'Primary Organizer'}
+              {isTe ? 'ప్రధాన నిర్వాహకులు' : isHi ? 'मुख्य आयोजक' : 'Primary Organizer'}
             </span>
             <p className="text-xs text-ivory/70 font-sans">
-              {isTe ? 'శ్రీకరీ సేవా సమితి వారిచే లోకకళ్యాణార్థం నిర్వహించబడుతున్న మహాయజ్ఞం.' : 'Organized with devotion and Vedic resolve for Lokakalyanam and universal welfare.'}
+              {isTe
+                ? 'శ్రీకరీ సేవా సమితి వారిచే లోకకళ్యాణార్థం నిర్వహించబడుతున్న మహాయజ్ఞం.'
+                : isHi
+                ? 'श्रीकरी सेवा समिति द्वारा विश्व शांति एवं लोककल्याणार्थ आयोजित पावन महायज्ञ।'
+                : 'Organized with devotion and Vedic resolve for Lokakalyanam and universal welfare.'}
             </p>
           </Card>
 
           <Card variant="sacred" className="p-5 space-y-2">
             <h4 className="font-cinzel text-base font-bold text-gold-lighter">
-              {isTe ? aboutContent.organizers.associateTe : aboutContent.organizers.associate}
+              {isTe ? aboutContent.organizers.associateTe : isHi ? aboutContent.organizers.associateHi || aboutContent.organizers.associate : aboutContent.organizers.associate}
             </h4>
             <span className="text-xs text-gold-light font-semibold block uppercase tracking-wide">
-              {isTe ? 'సహకారం' : 'In Association With'}
+              {isTe ? 'సహకారం' : isHi ? 'सहयोग' : 'In Association With'}
             </span>
             <p className="text-xs text-ivory/70 font-sans">
-              {isTe ? 'గ్లోబల్ భక్తుల సమన్వయం మరియు ఆధ్యాత్మిక సహకారం.' : 'Global devotee coordination and spiritual association from North Carolina, USA.'}
+              {isTe
+                ? 'గ్లోబల్ భక్తుల సమన్వయం మరియు ఆధ్యాత్మిక సహకారం.'
+                : isHi
+                ? 'नॉर्थ कैरोलिना (USA) से वैश्विक भक्त समन्वय एवं आध्यात्मिक सहयोग।'
+                : 'Global devotee coordination and spiritual association from North Carolina, USA.'}
             </p>
           </Card>
         </div>

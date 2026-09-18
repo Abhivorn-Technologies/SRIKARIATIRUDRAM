@@ -23,48 +23,72 @@
   --font-sans: 'Plus Jakarta Sans', sans-serif;
 }
 
-/* Telugu Typography & Glyph Clipping Prevention */
-[lang="te"] .font-cinzel,
-.font-telugu {
-  font-family: var(--font-telugu);
-  letter-spacing: normal;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
+/* Telugu & Hindi Typography & Glyph Clipping Prevention */
+h1, h2, h3, h4, h5, h6 {
+  overflow: visible !important;
 }
 
+/* Universal Gradient Text Clipping Fix for WebKit/Blink */
+.bg-clip-text {
+  -webkit-box-decoration-break: clone !important;
+  box-decoration-break: clone !important;
+  padding-top: 0.15em !important;
+  padding-bottom: 0.25em !important;
+  margin-top: -0.15em;
+  margin-bottom: -0.25em;
+  overflow: visible !important;
+}
+
+[lang="te"] .bg-clip-text,
+[lang="hi"] .bg-clip-text,
+.font-telugu.bg-clip-text,
+.font-hindi.bg-clip-text {
+  padding-top: 0.2em !important;
+  padding-bottom: 0.3em !important;
+  line-height: 1.48 !important;
+}
+
+/* Telugu Typography & Glyph Height Safety */
+[lang="te"] .font-cinzel,
 [lang="te"] h1,
 [lang="te"] h2,
 [lang="te"] h3,
-[lang="te"] h4 {
-  line-height: 1.4;
-  overflow: visible;
+[lang="te"] h4,
+[lang="te"] h5,
+[lang="te"] h6,
+.font-telugu {
+  font-family: var(--font-telugu);
+  letter-spacing: 0 !important;
+  line-height: 1.48 !important;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  overflow: visible !important;
 }
 
 /* Hindi / Devanagari Typography */
 [lang="hi"] .font-cinzel,
-.font-hindi {
-  font-family: var(--font-hindi);
-  letter-spacing: normal;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-}
-
 [lang="hi"] h1,
 [lang="hi"] h2,
 [lang="hi"] h3,
-[lang="hi"] h4 {
-  line-height: 1.4;
-  overflow: visible;
+[lang="hi"] h4,
+[lang="hi"] h5,
+[lang="hi"] h6,
+.font-hindi {
+  font-family: var(--font-hindi);
+  letter-spacing: 0 !important;
+  line-height: 1.48 !important;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  overflow: visible !important;
 }
 
 .telugu-clip-safe {
-  padding-top: 0.25em;
-  padding-bottom: 0.35em;
-  padding-left: 0.1em;
-  padding-right: 0.1em;
-  line-height: 1.42 !important;
+  padding-top: 0.2em !important;
+  padding-bottom: 0.3em !important;
+  padding-left: 0.1em !important;
+  padding-right: 0.1em !important;
+  line-height: 1.48 !important;
   overflow: visible !important;
-  display: inline-block;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
 }

@@ -10,6 +10,7 @@ export function SriRudramSection() {
   const t = useTranslations('about.sriRudram');
   const locale = useLocale();
   const isTe = locale === 'te';
+  const isHi = locale === 'hi';
 
   return (
     <section className="py-16 md:py-20 bg-burgundy-deep/70 border-y border-gold/25 relative overflow-hidden font-sans">
@@ -28,11 +29,11 @@ export function SriRudramSection() {
           >
             <div className="space-y-3">
               <div className="inline-flex items-center px-3.5 py-1 rounded-md bg-[#2B0005] border border-[#D6A532]/60 shadow-xs">
-                <span className={`text-[10px] sm:text-xs font-bold text-[#F2C14E] uppercase tracking-widest ${isTe ? 'font-telugu tracking-normal' : 'font-cinzel'}`}>
-                  {isTe ? 'కృష్ణ యజుర్వేద తైత్తిరీయ సంహిత' : 'Krishna Yajurvedic Taittiriya Samhita'}
+                <span className={`text-[10px] sm:text-xs font-bold text-[#F2C14E] uppercase tracking-widest ${isTe ? 'font-telugu tracking-normal' : isHi ? 'font-hindi tracking-normal' : 'font-cinzel'}`}>
+                  {isTe ? 'కృష్ణ యజుర్వేద తైత్తిరీయ సంహిత' : isHi ? 'कृष्ण यजुर्वेद तैत्तिरीय संहिता' : 'Krishna Yajurvedic Taittiriya Samhita'}
                 </span>
               </div>
-              <h2 className={`${isTe ? 'font-telugu text-2xl sm:text-3xl lg:text-4xl font-bold leading-[1.35]' : 'font-cinzel text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight leading-tight'} text-[#F2C14E]`}>
+              <h2 className={`${isTe ? 'font-telugu text-2xl sm:text-3xl lg:text-4xl font-bold leading-[1.48] block w-full overflow-visible' : isHi ? 'font-hindi text-2xl sm:text-3xl lg:text-4xl font-bold leading-[1.48] block w-full overflow-visible' : 'font-cinzel text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight leading-normal block w-full overflow-visible'} text-[#F2C14E]`}>
                 {t('heading')}
               </h2>
               <p className="text-sm sm:text-base text-[#FAF4E6]/90 font-sans leading-relaxed">
@@ -64,8 +65,8 @@ export function SriRudramSection() {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-burgundy-deep/90 via-transparent to-transparent" />
             <div className="absolute bottom-4 left-4 right-4 text-center">
-              <span className={`text-xs font-bold text-[#FAF4E6] tracking-widest uppercase ${isTe ? 'font-telugu tracking-normal' : 'font-cinzel'}`}>
-                {isTe ? 'శ్రీ రుద్ర నమకం & చమకం' : 'Sri Rudra Namakam & Chamakam'}
+              <span className={`text-xs font-bold text-[#FAF4E6] tracking-widest uppercase ${isTe ? 'font-telugu tracking-normal' : isHi ? 'font-hindi tracking-normal' : 'font-cinzel'}`}>
+                {isTe ? 'శ్రీ రుద్ర నమకం & చమకం' : isHi ? 'श्री रुद्र नमकम एवं चमकम्' : 'Sri Rudra Namakam & Chamakam'}
               </span>
             </div>
           </motion.div>

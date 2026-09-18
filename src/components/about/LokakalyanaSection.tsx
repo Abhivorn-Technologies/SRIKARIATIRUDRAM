@@ -24,11 +24,11 @@ export function LokakalyanaSection() {
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/40 rounded-full blur-[120px] pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 space-y-12">
-        <div className="text-center max-w-3xl mx-auto space-y-3">
+        <div className="text-center max-w-3xl mx-auto flex flex-col items-center justify-center gap-3 space-y-0">
           <Badge variant="gold" size="lg" className="font-cinzel tracking-widest uppercase">
             Universal Well-being &amp; Peace
           </Badge>
-          <h2 className="font-cinzel text-2xl sm:text-3xl lg:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-gold-lighter via-ivory to-gold">
+          <h2 className="font-cinzel text-2xl sm:text-3xl lg:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-gold-lighter via-ivory to-gold py-2 px-1 block w-full text-center overflow-visible">
             {t('heading')}
           </h2>
           <p className="text-sm sm:text-base text-ivory/85 font-sans leading-relaxed">

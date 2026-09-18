@@ -15,6 +15,7 @@ export function NakshatraInfoSection() {
   const t = useTranslations('about.nakshatras');
   const locale = useLocale();
   const isTe = locale === 'te';
+  const isHi = locale === 'hi';
 
   // Four sample highlights from central 28-day schedule (Day 1, 2, 3, 28)
   const sampleDays = [
@@ -31,11 +32,11 @@ export function NakshatraInfoSection() {
         {/* Header Intro */}
         <div className="text-center max-w-3xl mx-auto space-y-3">
           <div className="inline-flex items-center px-3.5 py-1 rounded-md bg-[#2B0005] border border-[#D6A532]/60 shadow-xs">
-            <span className={`text-[10px] sm:text-xs font-bold text-[#F2C14E] uppercase tracking-widest ${isTe ? 'font-telugu tracking-normal' : 'font-cinzel'}`}>
-              {isTe ? 'విశ్వ నక్షత్ర చక్రం' : 'COSMIC ALIGNMENT'}
+            <span className={`text-[10px] sm:text-xs font-bold text-[#F2C14E] uppercase tracking-widest ${isTe ? 'font-telugu tracking-normal' : isHi ? 'font-hindi tracking-normal' : 'font-cinzel'}`}>
+              {isTe ? 'విశ్వ నక్షత్ర చక్రం' : isHi ? 'ब्रह्मांडीय नक्षत्र चक्र' : 'COSMIC ALIGNMENT'}
             </span>
           </div>
-          <h2 className={`${isTe ? 'font-telugu text-2xl sm:text-3xl lg:text-4xl font-bold leading-[1.35]' : 'font-cinzel text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight leading-tight'} text-[#F2C14E]`}>
+          <h2 className={`${isTe ? 'font-telugu text-2xl sm:text-3xl lg:text-4xl font-bold leading-[1.48] block w-full overflow-visible' : isHi ? 'font-hindi text-2xl sm:text-3xl lg:text-4xl font-bold leading-[1.48] block w-full overflow-visible' : 'font-cinzel text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight leading-normal block w-full overflow-visible'} text-[#F2C14E]`}>
             {t('heading')}
           </h2>
           <p className="text-sm sm:text-base text-[#FAF4E6]/85 font-sans leading-relaxed">
@@ -64,8 +65,8 @@ export function NakshatraInfoSection() {
                     </span>
                     <Star className="w-4 h-4 text-[#F2C14E] fill-[#F2C14E]/30 shrink-0" />
                   </div>
-                  <h4 className={`${isTe ? 'font-telugu font-bold text-lg sm:text-xl' : 'font-cinzel text-lg sm:text-xl font-bold'} text-[#FAF4E6]`}>
-                    {isTe ? item.nakshatraTe : item.nakshatra}
+                  <h4 className={`${isTe ? 'font-telugu font-bold text-lg sm:text-xl' : isHi ? 'font-hindi font-bold text-lg sm:text-xl' : 'font-cinzel text-lg sm:text-xl font-bold'} text-[#FAF4E6]`}>
+                    {isTe ? item.nakshatraTe : isHi ? item.nakshatraHi : item.nakshatra}
                   </h4>
                 </div>
 
@@ -76,7 +77,7 @@ export function NakshatraInfoSection() {
                     <span>{t('labels.programmeDate')}:</span>
                   </div>
                   <strong className="text-[#F2C14E] block font-semibold text-xs sm:text-[13px] pt-0.5">
-                    {isTe ? `రోజు ${item.dayNumber} (${item.date})` : `Day ${item.dayNumber} (${item.date})`}
+                    {isTe ? `రోజు ${item.dayNumber} (${item.dateTe || item.date})` : isHi ? `दिन ${item.dayNumber} (${item.dateHi || item.date})` : `Day ${item.dayNumber} (${item.date})`}
                   </strong>
                 </div>
 
@@ -87,7 +88,7 @@ export function NakshatraInfoSection() {
                     <span>{t('labels.specialSeva')}:</span>
                   </div>
                   <p className="text-ivory/95 font-medium text-xs sm:text-[13px] leading-snug pt-0.5">
-                    {isTe ? item.pradhanaHomamTe : item.pradhanaHomam}
+                    {isTe ? item.pradhanaHomamTe : isHi ? item.pradhanaHomamHi : item.pradhanaHomam}
                   </p>
                 </div>
 

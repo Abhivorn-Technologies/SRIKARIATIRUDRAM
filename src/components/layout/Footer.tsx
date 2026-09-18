@@ -3,14 +3,15 @@
 import React from 'react';
 import Image from 'next/image';
 import { Link, usePathname } from '@/i18n/routing';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { siteConfig } from '@/data/site';
-import { mainNavigation } from '@/data/navigation';
 import { Phone, Mail, MapPin, MessageCircle, Heart, Flame } from 'lucide-react';
 
 export function Footer() {
   const t = useTranslations('nav');
-  const tHome = useTranslations('home');
+  const locale = useLocale();
+  const isTe = locale === 'te';
+  const isHi = locale === 'hi';
   const pathname = usePathname();
 
   // Do not render public footer inside admin portal
@@ -38,19 +39,29 @@ export function Footer() {
             </Link>
 
             <p className="text-xs md:text-sm text-ivory/80 leading-relaxed font-sans">
-              Lokakalyanahita Nakshatra Shanthi Sahita Srikari Ati Rudra Mahayagnam • 28 Days • 27 Nakshatras • Rohini to Rohini (25 Nov – 22 Dec 2026).
+              {isTe
+                ? 'లోకకల్యాణహిత నక్షత్ర శాంతి సహిత శ్రీకరీ అతి రుద్ర మహాయజ్ఞం • 28 రోజులు • 27 నక్షత్రాలు • రోహిణి నుండి రోహిణి (25 నవంబర్ – 22 డిసెంబర్ 2026).'
+                : isHi
+                ? 'लोककल्याणहित नक्षत्र शांति सहित श्रीकरी अति रुद्र महायज्ञम् • 28 दिन • 27 नक्षत्र • रोहिणी से रोहिणी (25 नवम्बर – 22 दिसम्बर 2026)।'
+                : 'Lokakalyanahita Nakshatra Shanthi Sahita Srikari Ati Rudra Mahayagnam • 28 Days • 27 Nakshatras • Rohini to Rohini (25 Nov – 22 Dec 2026).'}
             </p>
 
             <div className="p-3 rounded-lg bg-burgundy-deep/80 border border-gold/25 text-xs text-gold-lighter font-sans">
-              <span className="font-bold block text-gold">Organized by:</span>
-              Srikari Seva Samiti (in assoc. with Srikari Spiritual NC, USA)
+              <span className="font-bold block text-gold">
+                {isTe ? 'నిర్వహణ:' : isHi ? 'आयोजक:' : 'Organized by:'}
+              </span>
+              {isTe
+                ? 'శ్రీకరీ సేవా సమితి (శ్రీకరీ స్పిరిచువల్ NC, USA సౌజన్యంతో)'
+                : isHi
+                ? 'श्रीकरी सेवा समिति (श्रीकरी स्पिरिचुअल NC, USA के सहयोग से)'
+                : 'Srikari Seva Samiti (in assoc. with Srikari Spiritual NC, USA)'}
             </div>
           </div>
 
           {/* Col 2: Quick Links */}
           <div className="space-y-3">
             <h4 className="font-cinzel text-sm font-bold text-gold tracking-widest uppercase border-b border-gold/20 pb-2">
-              Auspicious Offerings
+              {isTe ? 'పావన సేవలు & నివేదనలు' : isHi ? 'पावन सेवाएँ एवं अर्पण' : 'Auspicious Offerings'}
             </h4>
             <ul className="space-y-2 text-xs md:text-sm">
               <li>
@@ -89,7 +100,7 @@ export function Footer() {
           {/* Col 3: Media & Information */}
           <div className="space-y-3">
             <h4 className="font-cinzel text-sm font-bold text-gold tracking-widest uppercase border-b border-gold/20 pb-2">
-              Information & Media
+              {isTe ? 'సమాచారం & ప్రసారం' : isHi ? 'सूचना एवं मीडिया' : 'Information & Media'}
             </h4>
             <ul className="space-y-2 text-xs md:text-sm">
               <li>
@@ -119,7 +130,7 @@ export function Footer() {
           {/* Col 4: Contact & Venue */}
           <div className="space-y-3">
             <h4 className="font-cinzel text-sm font-bold text-gold tracking-widest uppercase border-b border-gold/20 pb-2">
-              Venue & Contact
+              {isTe ? 'ప్రాంగణం & సంప్రదించండి' : isHi ? 'स्थान एवं संपर्क' : 'Venue & Contact'}
             </h4>
             <div className="space-y-2.5 text-xs text-ivory/80 font-sans">
               <a
@@ -130,18 +141,20 @@ export function Footer() {
                 className="flex items-start gap-2.5 hover:text-gold transition-colors group cursor-pointer"
               >
                 <MapPin className="w-4 h-4 text-gold-light shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
-                <span className="leading-snug group-hover:underline">{siteConfig.venue.title}</span>
+                <span className="leading-snug group-hover:underline">
+                  {isTe ? 'శ్రీకరీ దేవాలయం, నందనవనం లేఅవుట్, హైదరాబాద్' : isHi ? 'श्रीकरी मंदिर, नंदनवनम लेआउट, हैदराबाद' : siteConfig.venue.title}
+                </span>
               </a>
               <div className="flex items-center gap-2.5">
                 <Phone className="w-4 h-4 text-gold-light shrink-0" />
                 <a href={`tel:${siteConfig.contact.primary}`} className="hover:text-gold transition-colors">
-                  Primary: {siteConfig.contact.primary}
+                  {isTe ? 'ముఖ్య సంఖ్య:' : isHi ? 'प्राथमिक:' : 'Primary:'} {siteConfig.contact.primary}
                 </a>
               </div>
               <div className="flex items-center gap-2.5">
                 <Phone className="w-4 h-4 text-gold-light shrink-0" />
                 <a href={`tel:${siteConfig.contact.secondary}`} className="hover:text-gold transition-colors">
-                  Secondary: {siteConfig.contact.secondary}
+                  {isTe ? 'మరొక సంఖ్య:' : isHi ? 'द्वितीयक:' : 'Secondary:'} {siteConfig.contact.secondary}
                 </a>
               </div>
               <div className="flex items-center gap-2.5">
@@ -167,10 +180,27 @@ export function Footer() {
 
         {/* Bottom Copyright */}
         <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-ivory/60">
-          <p>© 2026 Srikari Seva Samiti. All Rights Reserved.</p>
+          <p>
+            {isTe
+              ? '© 2026 శ్రీకరీ సేవా సమితి. సర్వ హక్కులూ ప్రత్యేకించబడినవి.'
+              : isHi
+              ? '© 2026 श्रीकरी सेवा समिति। सर्वाधिकार सुरक्षित।'
+              : '© 2026 Srikari Seva Samiti. All Rights Reserved.'}
+          </p>
+          <p className="text-ivory/70">
+            {isTe ? 'రూపకల్పన & అభివృద్ధి' : isHi ? 'द्वारा विकसित' : 'Developed by'}{' '}
+            <a
+              href="https://abhivorn.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gold-light hover:underline font-medium"
+            >
+              Abhivorn Technologies Pvt. Ltd.
+            </a>
+          </p>
           <div className="flex items-center gap-6">
-            <Link href="/schedule" className="hover:text-gold-light">Schedule</Link>
-            <Link href="/contact" className="hover:text-gold-light">Contact</Link>
+            <Link href="/schedule" className="hover:text-gold-light">{t('schedule')}</Link>
+            <Link href="/contact" className="hover:text-gold-light">{t('contact')}</Link>
           </div>
         </div>
       </div>

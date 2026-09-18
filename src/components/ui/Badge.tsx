@@ -23,9 +23,9 @@ export function Badge({
   };
 
   const sizes = {
-    sm: 'text-[10px] px-2 py-0.5 rounded font-medium tracking-wide uppercase',
-    md: 'text-xs px-2.5 py-1 rounded-md font-semibold tracking-wide',
-    lg: 'text-sm px-3.5 py-1.5 rounded-lg font-semibold tracking-wider',
+    sm: 'text-[10px] px-2 py-1 rounded font-medium tracking-wide leading-normal overflow-visible',
+    md: 'text-xs px-2.5 py-1.5 rounded-md font-semibold tracking-wide leading-normal overflow-visible',
+    lg: 'text-sm px-3.5 py-2 rounded-lg font-semibold tracking-wider leading-normal overflow-visible',
   };
 
   return (
