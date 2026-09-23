@@ -67,24 +67,24 @@ export function GallerySection() {
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   loading="lazy"
                   unoptimized
-                  className="object-cover group-hover:scale-105 transition-transform duration-500"
+                  className="object-cover object-top group-hover:scale-105 transition-transform duration-500"
                 />
 
                 {/* Gradient Scrim */}
-                <div className="absolute inset-0 bg-gradient-to-t from-burgundy-deep via-burgundy-deep/40 to-transparent opacity-80 group-hover:opacity-95 transition-opacity" />
+                <div className="absolute inset-0 bg-gradient-to-t from-burgundy-deep via-burgundy-deep/70 via-50% to-transparent opacity-90 group-hover:opacity-100 transition-opacity" />
 
                 {/* Card Content & Badge */}
-                <div className="absolute inset-0 p-5 flex flex-col justify-between">
+                <div className="absolute inset-0 p-5 flex flex-col justify-between pointer-events-none">
                   <span className="self-start inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-burgundy-deep/90 text-gold-lighter border border-gold/40 shadow-xs">
                     <ImageIcon className="w-3 h-3 text-gold" />
                     <span>PHOTO</span>
                   </span>
 
-                  <div className="space-y-1">
-                    <h4 className="font-cinzel text-base font-bold text-ivory group-hover:text-gold-light transition-colors line-clamp-1">
+                  <div className="w-full space-y-1 overflow-hidden">
+                    <h4 className="font-cinzel text-base font-bold text-ivory group-hover:text-gold-light transition-colors truncate block w-full">
                       {isTe ? item.titleTe : item.title}
                     </h4>
-                    <p className="text-xs text-ivory/75 line-clamp-1 font-sans">
+                    <p className="text-xs text-ivory/75 truncate font-sans block w-full">
                       {isTe ? item.descriptionTe : item.description}
                     </p>
                   </div>

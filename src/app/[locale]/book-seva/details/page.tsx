@@ -8,7 +8,7 @@ import { bookingService } from '@/services/booking.service';
 import { BookingStepper } from '@/components/booking/BookingStepper';
 import { Card } from '@/components/ui/Card';
 import { Select } from '@/components/ui/Select';
-import { GOTRAMS_LIST, RASIS } from '@/lib/constants';
+import { RASIS } from '@/lib/constants';
 import { formatCurrency } from '@/lib/utils';
 import { User, ArrowLeft, ArrowRight, Lock, Calendar, Star, Sparkles } from 'lucide-react';
 
@@ -22,8 +22,6 @@ export default function SankalpamDetailsPage() {
   const { session, isLoading } = useDevoteeAuth();
 
   const [draft, setDraft] = useState(() => bookingService.getActiveDraft());
-  const [customGotram, setCustomGotram] = useState('');
-  const [isOtherGotram, setIsOtherGotram] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -57,10 +55,6 @@ export default function SankalpamDetailsPage() {
     }
 
     setDraft(current);
-    if (current.gotram && !GOTRAMS_LIST.some((g) => g.id === current.gotram)) {
-      setIsOtherGotram(true);
-      setCustomGotram(current.gotram);
-    }
   }, [locale, router, session, isLoading]);
 
   const validate = (): boolean => {
@@ -72,7 +66,7 @@ export default function SankalpamDetailsPage() {
       err.devoteeName = isTe ? 'దయచేసి సరైన పేరు నమోదు చేయండి' : 'Please enter a valid full name';
     }
 
-    const effectiveGotram = isOtherGotram ? customGotram.trim() : (draft.gotram || '').trim();
+    const effectiveGotram = (draft.gotram || '').trim();
     if (!effectiveGotram) {
       err.gotram = isTe ? 'గోత్రం తప్పనిసరి' : isHi ? 'गोत्र आवश्यक है' : 'Gotram is required';
     }
@@ -99,11 +93,10 @@ export default function SankalpamDetailsPage() {
   const handleContinue = (e: React.FormEvent) => {
     e.preventDefault();
     if (validate()) {
-      const effectiveGotram = isOtherGotram ? customGotram.trim() : draft.gotram.trim();
       const cleanAddress = Number(draft.amount || 0) >= 5000 ? (draft.address || '').trim() : '';
       bookingService.saveActiveDraft({
         ...draft,
-        gotram: effectiveGotram,
+        gotram: (draft.gotram || '').trim(),
         address: cleanAddress,
         devoteeParticipation: draft.devoteeParticipation || 'attending',
       });
@@ -205,46 +198,13 @@ export default function SankalpamDetailsPage() {
                   <label className="block text-xs font-bold uppercase tracking-wider text-[#F2C14E] font-sans">
                     {isTe ? 'గోత్రం' : isHi ? 'गोत्र' : 'Gotram'} *
                   </label>
-                  {!isOtherGotram ? (
-                    <Select
-                      value={draft.gotram}
-                      onChange={(e) => {
-                        if (e.target.value === 'Other / Not Known') {
-                          setIsOtherGotram(true);
-                          setDraft({ ...draft, gotram: '' });
-                        } else {
-                          setDraft({ ...draft, gotram: e.target.value });
-                        }
-                      }}
-                    >
-                      {GOTRAMS_LIST.map((g) => (
-                        <option key={g.id} value={g.id}>
-                          {isTe ? g.nameTe : isHi ? g.nameHi : g.nameEn}
-                        </option>
-                      ))}
-                      <option value="Other / Not Known">Other / Not Known</option>
-                    </Select>
-                  ) : (
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={customGotram}
-                        onChange={(e) => setCustomGotram(e.target.value)}
-                        placeholder="Enter Gotram"
-                        className="w-full rounded-xl bg-[#1F0205] border border-[#D6A532]/40 text-[#FAF4E6] placeholder:text-[#FAF4E6]/40 text-sm p-3 focus:outline-none focus:border-[#F2C14E] focus:ring-1 focus:ring-[#F2C14E] font-sans flex-1"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsOtherGotram(false);
-                          setDraft({ ...draft, gotram: 'Bharadwaja' });
-                        }}
-                        className="px-3.5 py-2 text-xs rounded-xl border border-[#D6A532]/50 text-[#F2C14E] hover:bg-[#5A0714] shrink-0 font-cinzel font-bold"
-                      >
-                        List
-                      </button>
-                    </div>
-                  )}
+                  <input
+                    type="text"
+                    value={draft.gotram || ''}
+                    onChange={(e) => setDraft({ ...draft, gotram: e.target.value })}
+                    placeholder={isTe ? 'మీ గోత్రం నమోదు చేయండి (ఉదా. భరద్వాజ, కాశ్యప, విశ్వామిత్ర...)' : isHi ? 'अपना गोत्र दर्ज करें (उदा. भारद्वाज, कश्यप, विश्वामित्र...)' : 'Enter your Gotram (e.g. Bharadwaja, Kashyapa, Viswamitra...)'}
+                    className="w-full rounded-xl bg-[#1F0205] border border-[#D6A532]/40 text-[#FAF4E6] placeholder:text-[#FAF4E6]/40 text-sm p-3 focus:outline-none focus:border-[#F2C14E] focus:ring-1 focus:ring-[#F2C14E] font-sans transition-all"
+                  />
                   {errors.gotram && (
                     <p className="text-[11px] text-rose-400 font-semibold">{errors.gotram}</p>
                   )}

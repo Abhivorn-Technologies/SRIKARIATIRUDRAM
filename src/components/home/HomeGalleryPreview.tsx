@@ -88,9 +88,9 @@ export function HomeGalleryPreview() {
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 20vw"
                       loading="lazy"
                       unoptimized
-                      className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      className="object-cover object-top group-hover:scale-105 transition-transform duration-500"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#2B0005] via-[#2B0005]/30 to-transparent opacity-85 group-hover:opacity-95 transition-opacity" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#1F0205] via-[#1F0205]/70 via-50% to-transparent opacity-90 group-hover:opacity-100 transition-opacity" />
                   </>
                 )}
 
@@ -110,11 +110,11 @@ export function HomeGalleryPreview() {
                     )}
                   </span>
 
-                  <div>
-                    <h4 className="font-cinzel text-xs sm:text-sm font-bold text-[#FAF4E6] group-hover:text-[#F2C14E] transition-colors line-clamp-1">
+                  <div className="w-full space-y-0.5 overflow-hidden">
+                    <h4 className="font-cinzel text-xs sm:text-sm font-bold text-[#FAF4E6] group-hover:text-[#F2C14E] transition-colors truncate block w-full">
                       {isTe ? item.titleTe : item.title}
                     </h4>
-                    <p className="text-[10px] sm:text-[11px] text-[#FAF4E6]/70 line-clamp-1 font-sans mt-0.5">
+                    <p className="text-[10px] sm:text-[11px] text-[#FAF4E6]/75 truncate font-sans block w-full">
                       {isTe ? item.descriptionTe : item.description}
                     </p>
                   </div>

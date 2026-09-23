@@ -84,7 +84,7 @@ export function EkadasaRudramSection() {
             </div>
 
             {/* 2. Main Heading */}
-            <h2 className={`${isTe ? 'font-telugu text-2xl sm:text-3xl lg:text-4xl font-bold leading-[1.35]' : 'font-cinzel text-2xl sm:text-3xl lg:text-4xl xl:text-[40px] font-black tracking-tight leading-tight'} text-[#F2C14E]`}>
+            <h2 className={`${isTe ? 'font-telugu text-2xl sm:text-3xl lg:text-4xl font-bold leading-[1.48] py-1.5 block w-full overflow-visible' : 'font-cinzel text-2xl sm:text-3xl lg:text-4xl xl:text-[40px] font-black tracking-tight leading-normal py-1 block w-full overflow-visible'} text-[#F2C14E]`}>
               {t('heading')}
             </h2>
 

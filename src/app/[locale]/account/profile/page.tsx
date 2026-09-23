@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
-import { GOTRAMS_LIST, NAKSHATRAS, RASIS } from '@/lib/constants';
+import { NAKSHATRAS, RASIS } from '@/lib/constants';
 import { CheckCircle, RefreshCw } from 'lucide-react';
 import { useLocale } from 'next-intl';
 
@@ -134,21 +134,16 @@ export default function AccountProfilePage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Input
                     type="email"
-                    label="Email Address"
+                    label={isTe ? 'ఈమెయిల్ చిరునామా' : isHi ? 'ईमेल पता' : 'Email Address'}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
-                  <Select
-                    label="Gotram"
+                  <Input
+                    label={isTe ? 'గోత్రం' : isHi ? 'गोत्र' : 'Gotram'}
                     value={gotram}
                     onChange={(e) => setGotram(e.target.value)}
-                  >
-                    {GOTRAMS_LIST.map((g) => (
-                      <option key={g.id} value={g.nameEn}>
-                        {isTe ? g.nameTe : isHi ? g.nameHi : g.nameEn}
-                      </option>
-                    ))}
-                  </Select>
+                    placeholder={isTe ? 'మీ గోత్రం నమోదు చేయండి (ఉదా: భరద్వాజ, కాశ్యప)' : isHi ? 'अपना गोत्र दर्ज करें (उदा: भारद्वाज, कश्यप)' : 'Enter your Gotram (e.g. Bharadwaja, Kashyapa)'}
+                  />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

@@ -20,16 +20,50 @@ export const aboutContent = {
     { value: "Rohini → Rohini", label: "27-Nakshatra Cycle", labelTe: "27 నక్షత్రాల పరిక్రమణ" }
   ],
   rudramHierarchy: [
-    { name: "Rudra Ekadasani", japas: "121 Japas", desc: "11 recitations of Sri Rudram by 11 ritwiks in 1 day." },
-    { name: "Laghu Rudram", japas: "1,331 Japas", desc: "11 Rudra Ekadasanis (121 x 11)." },
-    { name: "Maha Rudram", japas: "1,331 Japas x 11", desc: "11 Laghu Rudrams = 1,331 recitations by 121 ritwiks in 11 days." },
-    { name: "Ati Rudram (Supreme)", japas: "14,641 Japas", desc: "11 Maha Rudrams = 14,641 Sri Rudram recitations with complete Havis oblations across 28 days." }
+    {
+      name: "Rudra Ekadasani",
+      nameTe: "రుద్ర ఏకాదశిని",
+      nameHi: "रुद्र एकादशीनी",
+      japas: "121 Japas",
+      desc: "11 recitations of Sri Rudram by 11 ritwiks in 1 day.",
+      descTe: "1 రోజులో 11 మంది ఋత్విక్కులచే 11 సార్లు శ్రీ రుద్ర పారాయణం.",
+      descHi: "1 दिन में 11 ऋत्विकों द्वारा 11 बार श्री रुद्रम् का पारायण।"
+    },
+    {
+      name: "Laghu Rudram",
+      nameTe: "లఘు రుద్రం",
+      nameHi: "लघु रुद्रम्",
+      japas: "1,331 Japas",
+      desc: "11 Rudra Ekadasanis (121 x 11).",
+      descTe: "11 రుద్ర ఏకాదశినులు (121 x 11).",
+      descHi: "11 रुद्र एकादशीनी (121 x 11)।"
+    },
+    {
+      name: "Maha Rudram",
+      nameTe: "మహా రుద్రం",
+      nameHi: "महा रुद्रम्",
+      japas: "1,331 Japas x 11",
+      desc: "11 Laghu Rudrams = 1,331 recitations by 121 ritwiks in 11 days.",
+      descTe: "11 లఘు రుద్రాలు = 11 రోజులలో 121 మంది ఋత్విక్కులచే 1,331 పారాయణాలు.",
+      descHi: "11 लघु रुद्रम् = 11 दिनों में 121 ऋत्विकों द्वारा 1,331 पारायण।"
+    },
+    {
+      name: "Ati Rudram (Supreme)",
+      nameTe: "అతి రుద్రం (సర్వోన్నతం)",
+      nameHi: "अति रुद्रम् (सर्वोच्च)",
+      japas: "14,641 Japas",
+      desc: "11 Maha Rudrams = 14,641 Sri Rudram recitations with complete Havis oblations across 28 days.",
+      descTe: "11 మహా రుద్రాలు = 28 రోజుల పాటు 14,641 శ్రీ రుద్ర పారాయణాలు మరియు పూర్ణాహుతులు.",
+      descHi: "11 महा रुद्रम् = 28 दिनों में 14,641 श्री रुद्रम् पारायण एवं हविष्य आहुतियां।"
+    }
   ],
   organizers: {
     primary: "Srikari Seva Samiti",
     primaryTe: "శ్రీకరీ సేవా సమితి",
+    primaryHi: "श्रीकरी सेवा समिति",
     associate: "Srikari Spiritual NC (USA)",
-    associateTe: "శ్రీకరీ స్పిరిచువల్ NC (USA)"
+    associateTe: "శ్రీకరీ స్పిరిచువల్ NC (USA)",
+    associateHi: "श्रीकरी स्पिरिचुअल NC (USA)"
   }
 };
 

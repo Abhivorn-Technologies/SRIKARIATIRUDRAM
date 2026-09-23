@@ -19,9 +19,9 @@ export function PeetadhipathiBlessingsSection() {
       
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 space-y-10">
         {/* Top Header Badge */}
-        <div className="text-center space-y-3">
-          <Badge variant="gold" size="lg" className="font-cinzel tracking-widest uppercase">
-            <Sparkles className="w-3.5 h-3.5 mr-1.5 text-gold fill-gold" />
+        <div className="text-center flex flex-col items-center justify-center gap-3 overflow-visible">
+          <Badge variant="gold" size="lg" className={`font-cinzel py-2 overflow-visible ${isTe || isHi ? '' : 'tracking-widest uppercase'}`}>
+            <Sparkles className="w-3.5 h-3.5 mr-1.5 text-gold fill-gold shrink-0" />
             {isTe
               ? 'దివ్య ఆధ్యాత్మిక మార్గదర్శకత్వం & ఆశీర్వచనాలు'
               : isHi
@@ -29,7 +29,7 @@ export function PeetadhipathiBlessingsSection() {
               : 'Divine Spiritual Guidance & Blessings'}
           </Badge>
 
-          <h2 className="font-cinzel text-2xl sm:text-3xl lg:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-gold-lighter via-ivory to-gold tracking-wide uppercase">
+          <h2 className={`font-cinzel text-2xl sm:text-3xl lg:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-gold-lighter via-ivory to-gold py-2 px-1 block w-full text-center overflow-visible ${isTe || isHi ? '' : 'uppercase tracking-wide'}`}>
             {isTe ? 'పీఠాధిపతి ఆశీర్వచనాలు' : isHi ? 'पीठाधिपति आशीर्वाद' : 'PEETADHIPATHI BLESSINGS'}
           </h2>
         </div>
@@ -90,7 +90,7 @@ export function PeetadhipathiBlessingsSection() {
                   ? 'श्री हम्पी विरूपाक्ष विद्यारण्य महा संस्थानम्'
                   : 'Sri Hampi Virupaksha Vidyaranya Maha Samsthanam'}
               </span>
-              <h3 className="font-cinzel text-xl sm:text-2xl md:text-3xl font-black text-ivory leading-tight">
+              <h3 className="font-cinzel text-xl sm:text-2xl md:text-3xl font-black text-ivory leading-normal py-1 overflow-visible telugu-clip-safe">
                 {isTe
                   ? 'పరమపూజ్య శ్రీ శ్రీ శ్రీ జగద్గురు శంకరాచార్య శ్రీ విద్యారణ్య భారతీ స్వామీజీ'
                   : isHi
